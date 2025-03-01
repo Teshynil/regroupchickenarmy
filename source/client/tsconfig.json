@@ -14,7 +14,7 @@
 		// Ideally, all other files needed should be included through imports/ref tags in the above files.
 		// If you have other files that are not imported, you can include them here.
 		// Manually add any node_modules *.ts here. All other imports should be included automatically.
-		// "../../node_modules/bga-ts-template/typescript/cookbook/common.ts",
+		"../../node_modules/bga-ts-template/typescript/cookbook/common.ts",
 	],
 	"include": [
 		"build/**/*.ts",

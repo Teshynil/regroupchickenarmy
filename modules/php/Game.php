@@ -1,4 +1,5 @@
 <?php
+
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
@@ -14,6 +15,7 @@
  *
  * In this PHP file, you are going to defines the rules of the game.
  */
+
 declare(strict_types=1);
 
 namespace Bga\Games\RegroupChickenArmy;
@@ -43,7 +45,7 @@ class Game extends \Table
             "my_second_global_variable" => 11,
             "my_first_game_variant" => 100,
             "my_second_game_variant" => 101,
-        ]);        
+        ]);
 
         self::$CARD_TYPES = [
             1 => [
@@ -161,13 +163,14 @@ class Game extends \Table
      *
      * The action method of state `nextPlayer` is called everytime the current game state is set to `nextPlayer`.
      */
-    public function stNextPlayer(): void {
+    public function stNextPlayer(): void
+    {
         // Retrieve the active player ID.
         $player_id = (int)$this->getActivePlayerId();
 
         // Give some extra time to the active player when he completed an action
         $this->giveExtraTime($player_id);
-        
+
         $this->activeNextPlayer();
 
         // Go to another gamestate
@@ -188,21 +191,21 @@ class Game extends \Table
      */
     public function upgradeTableDb($from_version)
     {
-//       if ($from_version <= 1404301345)
-//       {
-//            // ! important ! Use DBPREFIX_<table_name> for all tables
-//
-//            $sql = "ALTER TABLE DBPREFIX_xxxxxxx ....";
-//            $this->applyDbUpgradeToAllDB( $sql );
-//       }
-//
-//       if ($from_version <= 1405061421)
-//       {
-//            // ! important ! Use DBPREFIX_<table_name> for all tables
-//
-//            $sql = "CREATE TABLE DBPREFIX_xxxxxxx ....";
-//            $this->applyDbUpgradeToAllDB( $sql );
-//       }
+        //       if ($from_version <= 1404301345)
+        //       {
+        //            // ! important ! Use DBPREFIX_<table_name> for all tables
+        //
+        //            $sql = "ALTER TABLE DBPREFIX_xxxxxxx ....";
+        //            $this->applyDbUpgradeToAllDB( $sql );
+        //       }
+        //
+        //       if ($from_version <= 1405061421)
+        //       {
+        //            // ! important ! Use DBPREFIX_<table_name> for all tables
+        //
+        //            $sql = "CREATE TABLE DBPREFIX_xxxxxxx ....";
+        //            $this->applyDbUpgradeToAllDB( $sql );
+        //       }
     }
 
     /*
@@ -238,7 +241,7 @@ class Game extends \Table
      */
     protected function getGameName()
     {
-        return "rcarmy";
+        return "regroupchickenarmy";
     }
 
     /**
@@ -277,11 +280,6 @@ class Game extends \Table
         $this->reattributeColorsBasedOnPreferences($players, $gameinfos["player_colors"]);
         $this->reloadPlayersBasicInfos();
 
-        // Init global values with their initial values.
-
-        // Dummy content.
-        $this->setGameStateInitialValue("my_first_global_variable", 0);
-
         // Init game statistics.
         //
         // NOTE: statistics used in this file must be defined in your `stats.inc.php` file.
@@ -318,11 +316,10 @@ class Game extends \Table
 
         if ($state["type"] === "activeplayer") {
             switch ($state_name) {
-                default:
-                {
-                    $this->gamestate->nextState("zombiePass");
-                    break;
-                }
+                default: {
+                        $this->gamestate->nextState("zombiePass");
+                        break;
+                    }
             }
 
             return;
@@ -335,5 +332,62 @@ class Game extends \Table
         }
 
         throw new \feException("Zombie mode not supported at this game state: \"{$state_name}\".");
+    }
+
+
+    public function selectLeader(int $leader_id)
+    {
+        $player_id = (int)$this->getActivePlayerId();
+
+        // check input values
+
+        try {
+            $result = $this->getUniqueValueFromDB(
+                "SELECT `player_id` `id`, `position` FROM `player` WHERE position = $leader_id"
+            );
+            if ($result == null) {
+                $checkAllLeadersSelected = (int) $this->getUniqueValueFromDB(
+                    "SELECT COUNT(*) FROM `player` WHERE position is null"
+                );
+                $this->dump("Check", $checkAllLeadersSelected);
+                $transition = "selected";
+                if ($checkAllLeadersSelected == 1) { // All leaders selected
+                    $transition = "allSelectedLeader";
+                }
+
+                $sql = "UPDATE player SET position='$leader_id'
+                    WHERE `player_id` = '$player_id'";
+
+                $this->DbQuery($sql);
+
+                // Notify all players
+                $this->notify->all("leaderSelected", clienttranslate('${player_name} selected a leader'), [
+                    "player_id" => $player_id,
+                    "player_name" => $this->getActivePlayerName(),
+                    "leader_id" => $leader_id
+                ]);
+                
+                $this->gamestate->nextState($transition);
+            } else {
+                // Leader already selected
+                $this->gamestate->nextState("notSelected");
+            }
+        } catch (\Throwable $th) {
+            $this->error("Multiple players with the same leader");
+            $this->gamestate->nextState("notSelected");
+        }
+    }
+    public function stLeaderSelected()
+    {
+        $checkAllLeadersSelected = (int) $this->getUniqueValueFromDB(
+            "SELECT COUNT(*) FROM `player` WHERE position is null"
+        );
+        $transition = "selectLeader";
+        if ($checkAllLeadersSelected == 0) {
+            $transition = "allSelectedLeader";
+        }
+        $player_id = (int)$this->activeNextPlayer();
+        $this->dump("nextPlayer", $player_id);
+        $this->gamestate->nextState($transition);
     }
 }

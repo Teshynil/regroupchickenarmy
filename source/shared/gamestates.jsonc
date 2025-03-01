@@ -43,11 +43,20 @@
 			],
 		},
 		"transitions": {
-			"selectLeader": 2,
-			"allSelectedLeader": 3
+			"selected": 3,
+			"notSelected": 2
 		}
 	},
 	"3": {
+		"name": "leaderSelected",
+		"type": "game",
+		"action": "stLeaderSelected",
+		"transitions": {
+			"selectLeader": 2,
+			"allSelectedLeader": 4
+		}
+	},
+	"4": {
 		"name": "turnSetup",
 		"description": "${actplayer} must select a leader",
 		"descriptionmyturn": "${you} must select a leader",

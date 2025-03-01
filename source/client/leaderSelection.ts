@@ -18,12 +18,13 @@ export class LeaderSelection {
         });
     }
 
-    select(id: number) {
+    select(id: number, noop: boolean = false) {
         this.leaders.forEach((leader => {
             leader.id == id
-                ? leader.selectLeader()
-                : leader.deselectLeader()
+                ? leader.selectLeader(noop)
+                : leader.deselectLeader(noop)
         }));
+
     }
 
     hide() {
@@ -57,22 +58,25 @@ class Leader {
         this.element.addEventListener("click", () => RegroupChickenArmy.game.leaderSelection.select(this.id));
     }
 
-    selectLeader() {
+    selectLeader(noop: boolean) {
         this.element.classList.add("selected");
         const animation = RegroupChickenArmy.game.slideToObject(this.element, `leaderImg_${this.id}`, 1000, 600);
         animation.on("End", () => {
             this.element.remove();
             RegroupChickenArmy.game.playerAreas.at(this.id).enable();
-            setTimeout(() => {
-                RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/selectLeader.html`, {
-                    leader_id: this.id, lock: true, 
-                }, this, function () { });
-            }, 1000);
+            if (!noop) {
+                setTimeout(() => {
+                    RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/selectLeader.html`, {
+                        leader_id: this.id, lock: true,
+                    }, this, function () { });
+                }, 1000);
+            }
         });
         animation.play();
     }
 
-    deselectLeader() {
+    deselectLeader(noop: boolean) {
+        if (noop) return;
         this.element.classList.remove("selected");
         this.element.classList.add("not_selected");
     }
