@@ -1,0 +1,20 @@
+# Built files
+source/client/build/
+gameinfos.inc.php
+regroupchickenarmy.action.php
+regroupchickenarmy.css
+regroupchickenarmy.js
+states.inc.php
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE files
+.vscode/
+.idea/
+
+# Dependency lock files
+package-lock.json
+yarn.lock

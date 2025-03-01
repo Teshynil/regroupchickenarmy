@@ -1,0 +1,415 @@
+/*
+ *------
+ * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
+ * RegroupChickenArmy implementation : © Teshynil me@teshynil.dev
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ */
+
+ @font-face {
+	font-family: 'Gagalin';
+	font-style: normal;
+	font-weight: normal;
+	src: local('Gagalin'), url("/misc/gagalin.ttf") format('ttf');
+}
+
+// Main board layout
+#board {
+	--cell-size: 2.63vw;
+	--animation_quick: 0.5s;
+	--animation_normal: 1s;
+	--animation_long: 2s;
+
+
+	display: grid;
+	grid-template-columns: 1fr repeat(2, 0.5fr) 1fr;
+	grid-template-rows: 1fr repeat(2, 0.3fr) 1fr;
+	gap: 0.5em;
+	width: 100%;
+	height: 100vh;
+
+	.playerArea {
+		box-sizing: content-box;
+		position: relative;
+		transition: opacity var(--animation_long);
+		width: 100%;
+		height: 100%;
+
+		// Player area positions
+		@for $i from 0 through 3 {
+			&#playerArea_#{$i} {
+
+				@if $i ==0 {
+					grid-area: 1/1/1/3;
+				}
+
+				@if $i ==1 {
+					grid-area: 1/3/1/5;
+				}
+
+				@if $i ==2 {
+					grid-area: 4/1/4/3;
+				}
+
+				@if $i ==3 {
+					grid-area: 4/3/4/5;
+				}
+			}
+		}
+
+		.mapContainer {
+			position: absolute;
+			width: 100%;
+			height: 100% !important;
+		}
+	}
+
+	.playerBackground {
+		content: ' ';
+		display: block;
+		position: relative;
+		width: 100%;
+		height: 100%;
+		opacity: 0.8;
+		background-repeat: no-repeat;
+		background-size: cover;
+		z-index: -1;
+		transition: filter var(--animation_long);
+
+		@for $i from 0 through 3 {
+			&#playerBackground_#{$i} {
+				@if $i ==0 {
+					grid-area: 1/1/3/3;
+				}
+
+				@if $i ==1 {
+					grid-area: 1/3/3/5;
+				}
+
+				@if $i ==2 {
+					grid-area: 3/1/5/3;
+				}
+
+				@if $i ==3 {
+					grid-area: 3/3/5/5;
+				}
+
+				background-image: url("img/Leaders/LeaderBackground_#{$i}.webp");
+			}
+		}
+
+		&.inactive {
+			opacity: 1;
+			filter: brightness(0.5);
+		}
+	}
+
+	#centralArea {
+		grid-area: 2/2/4/4;
+
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr;
+		gap: 0px;
+		padding: 0.6vw;
+		box-sizing: border-box;
+		border-image: url("img/Gui/GeneralBackground.webp");
+		border-image-slice: 30%;
+		border-image-repeat: round;
+		border-image-width: 4.1vw;
+		border-image-outset: 1.3vw;
+		background-image: url("img/Gui/Background.webp");
+		background-size: cover;
+		background-position: center;
+
+		#market {
+
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			grid-template-rows: 1fr 0.5fr;
+			column-gap: 0.2vw;
+			width: 100%;
+			height: 100%;
+
+			#deck {
+				grid-area: 1/1;
+				filter: drop-shadow(0px 5px 3px #7f6743);
+			}
+
+			.card {
+				filter: drop-shadow(0px 5px 3px #7f6743);
+				background-size: calc(var(--cell-size)* 2);
+				width: 100%;
+				height: 100%;
+
+				@for $i from 0 through 2 {
+					&#market_card_#{$i} {
+						grid-area: 1/#{$i+2};
+					}
+				}
+			}
+
+			@for $i from 0 through 1 {
+				#market_cost_#{$i} {
+					width: 100%;
+					height: 100%;
+					grid-area: 2/#{$i+2};
+					background-image: url("img/Gui/MarketCoin_#{2-$i}.webp");
+					background-repeat: no-repeat;
+					background-size: contain;
+					background-position: top;
+				}
+			}
+		}
+
+		#leaderSelectionArea {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			column-gap: 0.2vw;
+			width: 100%;
+			height: 100%;
+
+			.leaderImg {
+				width: calc(var(--cell-size) * 2);
+				height: calc(var(--cell-size) * 2);
+				place-self: center;
+				transition: transform var(--animation_quick), filter var(--animation_quick);
+				filter: drop-shadow(0px 5px 3px #7f6743);
+			}
+
+			@for $i from 0 through 3 {
+				#leaderSelection_#{$i} {
+					grid-area: 1/#{$i+1};
+				}
+			}
+		}
+	}
+
+	.card {
+		width: calc(var(--cell-size) * 2);
+		height: calc(var(--cell-size) * 2);
+		background-repeat: no-repeat;
+		background-size: contain;
+		background-position: center;
+		background-image: url("img/Cards/Card_Back.webp");
+
+		@for $i from 0 through 42 {
+			&.card_#{$i} {
+				background-image: url("img/Cards/Card_#{$i}.webp");
+			}
+		}
+	}
+
+	.playerPanel {
+		width: 100%;
+		height: 100%;
+		display: grid;
+		gap: 5px;
+
+		@for $i from 0 through 3 {
+			&#playerPanel_#{$i} {
+				@if $i % 2==0 {
+					grid-template-columns: 0.6fr 1fr;
+				}
+
+				@else {
+					grid-template-columns: 1fr 0.6fr;
+				}
+
+				@if $i ==0 {
+					grid-area: 2/1/2/1;
+				}
+
+				@if $i ==1 {
+					grid-area: 2/4/2/4;
+				}
+
+				@if $i ==2 {
+					grid-area: 3/1/3/1;
+				}
+
+				@if $i ==3 {
+					grid-area: 3/4/3/4;
+				}
+
+			}
+		}
+
+	}
+
+	.inactive {
+		opacity: 0;
+		pointer-events: none;
+		user-select: none;
+		touch-action: none;
+	}
+
+}
+
+// Grid system
+.grid {
+	display: grid;
+	position: absolute;
+	grid-template-columns: repeat(14, var(--cell-size));
+	grid-template-rows: repeat(14, var(--cell-size));
+	gap: 0;
+
+	.cell {
+		width: var(--cell-size);
+		height: var(--cell-size);
+		background-color: red;
+		border: 1px solid black;
+		box-sizing: border-box;
+		display: none;
+
+		&.active {
+			background-color: blue;
+			display: block;
+		}
+	}
+}
+
+// Panel components
+.leaderPanel,
+.resourcePanel {
+	display: grid;
+	width: 100%;
+	height: 100%;
+	transition: opacity var(--animation_long);
+
+	&.rtl {
+		direction: rtl;
+
+		>* {
+			direction: ltr;
+		}
+	}
+}
+
+.leaderPanel {
+	grid-template-columns: repeat(2, 1fr);
+	text-align: center;
+
+	.healthMarker {
+		align-content: center;
+		font-size: calc(100vw/40);
+		font-family: 'Gagalin', sans-serif;
+		transition: opacity var(--animation_long);
+
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-image: url("img/Gui/GeneralBackground.webp");
+	}
+
+	@for $i from 0 through 3 {
+		&#leaderPanel_#{$i} {
+			@if $i % 2==1 {
+				grid-area: 1/2;
+			}
+		}
+	}
+}
+
+.leaderImg {
+	background-size: calc(var(--cell-size)* 2);
+	background-repeat: no-repeat;
+	background-position: center;
+	position: relative;
+
+	@for $i from 0 through 3 {
+		&.leader_#{$i} {
+			background-image: url("img/Leaders/Leader_#{$i}.webp");
+
+			&.noBack {
+				background-image: url("img/Leaders/LeaderNoBack_#{$i}.webp");
+
+				&.alt {
+					background-image: url("img/Leaders/LeaderAltNoBack_#{$i}.webp");
+				}
+			}
+
+			&.alt {
+				background-image: url("img/Leaders/LeaderAlt_#{$i}.webp");
+			}
+		}
+	}
+
+	&.hasPlayerToken::after {
+		content: '';
+		display: block;
+		position: absolute;
+		width: 50%;
+		height: 50%;
+		background-image: url(img/Gui/CurrentPlayerToken.webp);
+		background-repeat: no-repeat;
+		background-size: contain;
+		right: -15%;
+		bottom: -15%;
+	}
+
+}
+
+.resourcePanel {
+	grid-template-columns: repeat(6, 1fr);
+
+	.resource {
+
+		background-repeat: no-repeat;
+		background-size: contain;
+		background-position: center;
+		position: relative;
+		width: 100%;
+		height: 100%;
+
+		$types: 'Defense_Physic', 'Attack_Physic', 'Defense_Magic', 'Attack_Magic', 'Potion', 'Coin';
+
+		@each $type in $types {
+			&.#{$type} {
+				background-image: url("img/Gui/#{$type}.webp");
+			}
+		}
+
+
+		.resourceCounter {
+			font-size: 1vw;
+			text-align: center;
+			font-family: "Gagalin", sans-serif;
+			position: absolute;
+			display: block;
+			text-shadow: 0px 0px 5px white;
+			color: black;
+			right: 0.4vw;
+			bottom: 1.3vw;
+		}
+	}
+
+}
+
+// Utility overrides
+.scrollmap_btns_flex.scrollmap_btns_divs_wrapper {
+	display: none;
+}
+
+//Animaciones
+#board.activePlayer {
+	#centralArea {
+		.leaderImg {
+			&:not(.selected):not(.not_selected):hover {
+				transform: scale(1.1);
+			}
+
+			&.selected {
+				filter: none !important;
+				box-shadow: none !important;
+			}
+
+			&.not_selected {
+				filter: saturate(0.5) !important;
+			}
+
+		}
+	}
+}
