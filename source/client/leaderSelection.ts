@@ -66,8 +66,9 @@ class Leader {
             RegroupChickenArmy.game.playerAreas.at(this.id).enable();
             if (!noop) {
                 setTimeout(() => {
-                    RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/selectLeader.html`, {
-                        leader_id: this.id, lock: true,
+                    RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/executeAction.html`, {
+                        act: 'selectLeader',
+                        args: { leader_id: this.id }
                     }, this, function () { });
                 }, 1000);
             }
