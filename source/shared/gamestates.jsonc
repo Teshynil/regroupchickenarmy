@@ -48,9 +48,9 @@
 		}
 	},
 	"3": {
-		"name": "leaderSelected",
+		"name": "leaderSelectionPost",
 		"type": "game",
-		"action": "stLeaderSelected",
+		"action": "st",
 		"transitions": {
 			"selectLeader": 2,
 			"allSelectedLeader": 4

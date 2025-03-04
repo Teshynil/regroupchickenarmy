@@ -10,11 +10,11 @@
 declare namespace BGA {
 
 	/** Goto {@link Gamedatas} or hover name for info. */
-	interface Gamedatas extends Record<string, any> {}
+	interface Gamedatas extends Record<string, any> { }
 
 	/** Goto {@link NotifTypes} or hover name for info. */
 	interface NotifTypes {
-		[name: string]: any; // RECOMMENDED: comment out this line to type notifications specific to it's name using BGA.Notif<"name">.
+		["selectLeader"]: { player_name: string, player_id: string, leader_id: number };
 	}
 
 	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */

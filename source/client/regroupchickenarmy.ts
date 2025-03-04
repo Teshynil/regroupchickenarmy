@@ -19,11 +19,11 @@
 import Gamegui = require("ebg/core/gamegui");
 import CommonMixer = require("cookbook/common");
 import "ebg/counter";
-import "./modules/scrollmapWithZoom";
+import "./modules/thirdparty/scrollmapWithZoom";
 
-import { PlayerArea } from "./playerArea";
-import { MarketArea } from "./marketArea";
-import { LeaderSelection } from "./leaderSelection";
+import { PlayerArea } from "./modules/playerArea";
+import { MarketArea } from "./modules/marketArea";
+import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
 
 /** See {@link BGA.Gamegui} for more information. */
@@ -219,11 +219,9 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     override setupNotifications = () => {
         console.log("notifications subscriptions setup");
 
-        // TODO: here, associate your game notifications with local methods
-
         // Builtin example...
         // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
-        dojo.subscribe("leaderSelected", this, "ntf_selectLeader");
+        //dojo.subscribe("leaderSelected", this, "ntf_selectLeader");
         // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
         // dojo.subscribe( 'cardPlayed_1', this, "ntf_cardPlayed" );
 
@@ -234,9 +232,6 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         // this.subscribeNotif( "cardPlayed_1", this.ntf_cardPlayed );
     };
 
-    ntf_selectLeader(notif: BGA.Notif) {
-        this.leaderSelection.select(notif.args["leader_id"] as number, true);
-    }
     /* Example:
   
     ntf_any( notif: BGA.Notif )
