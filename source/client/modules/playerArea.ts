@@ -1,41 +1,40 @@
+import { RegroupChickenArmy } from "../regroupchickenarmy";
+import { GameElement } from "../utils/gameElement";
+import { ListenerElement } from "../utils/listenerElement";
 import { Grid } from "./grid";
 import { PlayerPanel } from "./playerPanel";
-export class PlayerArea {
-    id: number;
-    active: boolean = false;
+export class PlayerArea extends ListenerElement {
+
+    get listeners() {
+        return {
+        }
+    };
+
+    PARENT_ID = "board";
+    ELEMENT_ID = `playerArea_${this.id}`;
+
+    htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="playerArea"></div>`;
+
     grid: Grid;
     panel: PlayerPanel;
 
-    constructor(id: number) {
-        this.id = id;
+    override afterConstructor() {
+        this.grid = new Grid(this.id);
+        this.panel = new PlayerPanel(this.id);
     }
 
-    render() {
-        const board = document.getElementById('board');
-        if (board == null) throw new Error("Board not found");
-        board.insertAdjacentHTML('beforeend', `
-            <div id="playerBackground_${this.id}" class="playerBackground ${!this.active ? "inactive" : ""}"></div>
-			<div id="playerArea_${this.id}" class="playerArea ${!this.active ? "inactive" : ""}">
-                <div id="mapContainer_${this.id}" class="mapContainer">
-                </div>
-			</div>
-		  `);
-        this.grid = new Grid(this.id);
-        this.grid.generateGrid();
-
-        this.panel = new PlayerPanel(this.id, this.active);
+    override afterRender(force: boolean): void {
+        this.grid.render();
         this.panel.render();
     }
 
-    enable() {
-        this.panel.enable();
-        document.getElementById(`playerBackground_${this.id}`).classList.remove("inactive");
-        document.getElementById(`playerArea_${this.id}`).classList.remove("inactive");
+    override afterShow() {
+        this.panel.show();
+        RegroupChickenArmy.game.board.backgrounds[this.id].isActive = true;
     }
 
-    disable() {
-        document.getElementById(`playerBackground_${this.id}`).classList.add("inactive");
-        document.getElementById(`playerArea_${this.id}`).classList.add("inactive");
-        this.panel.disable();
+    override afterHide() {
+        this.panel.hide();
+        RegroupChickenArmy.game.board.backgrounds[this.id].isActive = false;
     }
 }

@@ -20,7 +20,6 @@ export class MarketArea extends ListenerElement {
         <div id="market_cost_0"></div>
         <div id="market_cost_1"></div>
     </div>`;
-    override insertPosition: InsertPosition = "beforeend";
 
     deck: HTMLDivElement;
     cards: HTMLDivElement[] = [null, null, null];

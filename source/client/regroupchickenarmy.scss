@@ -125,6 +125,7 @@
 		background-position: center;
 
 		#market {
+			grid-area: 1/1;
 
 			display: grid;
 			grid-template-columns: repeat(4, 1fr);
@@ -165,6 +166,8 @@
 		}
 
 		#leaderSelectionArea {
+			grid-area: 1/1;
+
 			display: grid;
 			grid-template-columns: repeat(4, 1fr);
 			column-gap: 0.2vw;
@@ -238,15 +241,6 @@
 		}
 
 	}
-
-	.inactive {
-		opacity: 0;
-		pointer-events: none;
-		user-select: none;
-		touch-action: none;
-	}
-
-
 
 	// Grid system
 	.grid {

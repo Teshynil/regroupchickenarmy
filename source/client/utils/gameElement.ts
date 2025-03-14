@@ -12,11 +12,16 @@ export abstract class GameElement {
     private _enabledForEvents: boolean = true;
 
     abstract get htmlDefinition(): string;
-    abstract get insertPosition(): InsertPosition;
+    get insertPosition(): InsertPosition {
+        return `beforeend`;
+    }
 
     constructor(id: number = 0) {
         this._id = id;
+        this.afterConstructor();
     }
+
+    public afterConstructor() { }
 
     get element() {
         if (this._element !== undefined)
@@ -61,17 +66,19 @@ export abstract class GameElement {
     public show() {
         this.element.style.removeProperty("display");
         this.element.classList.remove("hidden");
-        return this;
+        this.afterShow();
     }
+    public afterShow() { }
 
     public hide() {
         this.element.classList.add("hidden");
-        return this;
+        this.afterHide();
     }
+
+    public afterHide() { }
 
     public deactivate() {
         this.element.style.display = "none";
-        return this;
     }
 
     public enableEvents() {

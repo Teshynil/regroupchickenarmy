@@ -1,33 +1,50 @@
-export class PlayerPanel {
-    id: number;
-    active: boolean;
+import { GameElement } from "../utils/gameElement";
 
-    constructor(id: number, active: boolean) {
-        this.id = id;
-        this.active = active;
+export class PlayerPanel extends GameElement {
+    PARENT_ID = `board`;
+    ELEMENT_ID = `playerPanel_${this.id}`;
+    htmlDefinition: string = `<div id="playerPanel_${this.id}" class="playerPanel"></div>`;
+
+    leaderPanel: LeaderPanel;
+    resourcePanel: ResourcePanel;
+
+    public override afterConstructor(): void {
+        this.leaderPanel = new LeaderPanel(this.id);
+        this.resourcePanel = new ResourcePanel(this.id);
     }
 
+    override afterRender() {
+        this.leaderPanel.render();
+        this.resourcePanel.render();
+    }
+}
 
-    render() {
-        const board = document.getElementById(`board`);
-        if (board == null) throw new Error(`Central Area not found`);
-        board.insertAdjacentHTML('beforeend', `
-			<div id="playerPanel_${this.id}" class="playerPanel ${!this.active ? "inactive" : ""}">
-			</div>
-		  `);
-        const playerPanel = document.getElementById(`playerPanel_${this.id}`);
-        const isRTL = this.id % 2 == 1 ? "rtl" : "";
-        playerPanel.insertAdjacentHTML('beforeend', `
-			<div id="leaderPanel_${this.id}" class="leaderPanel ${isRTL}">
-                <div id="healthMarker_${this.id}" class="healthMarker">
-                    30
+class LeaderPanel extends GameElement {
+    PARENT_ID = `playerPanel_${this.id}`;
+    ELEMENT_ID = `leaderPanel_${this.id}`;
+
+    get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
+
+    htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
+                <div id="healthMarker_${this.id}" class="healthMarker">30</div>
+                    <div id="leaderImg_${this.id}" class="leaderImg leader_${this.id}">
                 </div>
-                    <div id="leaderImg_${this.id}" class="leaderImg leader_${this.id} ${!this.active ? "inactive" : ""}">
-                </div>
-			</div>
-		  `);
-        playerPanel.insertAdjacentHTML('beforeend', `
-			<div id="resourcePanel_${this.id}" class="resourcePanel ${isRTL}">
+			</div>`;
+    get healthElement() {
+        return document.getElementById(`healthMarker_${this.id}`);
+    }
+
+    get leaderElement() {
+        return document.getElementById(`leaderImg_${this.id}`);
+    }
+}
+
+class ResourcePanel extends GameElement {
+    PARENT_ID = `playerPanel_${this.id}`;
+    ELEMENT_ID = `resourcePanel_${this.id}`;
+    get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
+
+    htmlDefinition = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic" id="resourceContainer_${this.id}">
                     <span id="defPhy_${this.id}" class="resourceCounter">3</span>
                 </div>
@@ -46,17 +63,13 @@ export class PlayerPanel {
                 <div class="resource Coin" id="resourceContainer_${this.id}">
                     <span id="coins_${this.id}" class="resourceCounter">5</span>
                 </div>
-			</div>
-		  `);
-    }
+			</div>`;
+            
+            get shieldElement(){ return document.getElementById(`defPhy_${this.id}`)};
+            get fighterElement(){ return document.getElementById(`atkPhy_${this.id}`)};
+            get barrierElement(){ return document.getElementById(`defMag_${this.id}`)};
+            get wizardElement(){ return document.getElementById(`atkMag_${this.id}`)};
+            get potionElement(){ return document.getElementById(`potion_${this.id}`)};
+            get coinElement(){ return document.getElementById(`coins_${this.id}`)};
 
-    enable() {
-        document.getElementById(`leaderImg_${this.id}`).classList.remove("inactive");
-        document.getElementById(`playerPanel_${this.id}`).classList.remove("inactive");
-    }
-
-    disable() {
-        document.getElementById(`leaderImg_${this.id}`).classList.add("inactive");
-        document.getElementById(`playerPanel_${this.id}`).classList.add("inactive");
-    }
 }

@@ -1,7 +1,13 @@
 import { remove } from "dojo/dom-class";
+import { GameElement } from "../utils/gameElement";
 
-export class Grid {
-    id: number;
+export class Grid extends GameElement {
+
+    PARENT_ID = `playerArea_${this.id}`;
+    ELEMENT_ID = `mapContainer_${this.id}`;
+
+    htmlDefinition = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
+
     scrollmap: ScrollmapWithZoomNS.ScrollmapWithZoom;
     gridDiv: HTMLDivElement;
     base_grid: number[][] = [
@@ -21,15 +27,7 @@ export class Grid {
         [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
     ];
 
-    constructor(id: number) {
-        this.id = id;
-    }
-
-
-    generateGrid() {
-        const mapContainer = document.getElementById(`mapContainer_${this.id}`);
-        if (mapContainer == null) throw new Error(`Map Container ${this.id} not found`);
-
+    public override afterRender(force: boolean): void {
         //@ts-ignore    
         this.scrollmap = new ebg.scrollmapWithZoom();
         this.scrollmap.minZoom = 0.5;
@@ -38,7 +36,7 @@ export class Grid {
         //@ts-ignore
         window.grids[this.id] = this;
         this.scrollmap.startPosition = { x: 0, y: 0 };
-        this.scrollmap.createCompletely($(mapContainer));
+        this.scrollmap.createCompletely($(this.element));
         this.scrollmap.zoomingOptions.bWheelZooming = false;
         document.querySelectorAll(".scrollmap_button_wrapper:not(.reset), .scrollmap_icon_always_visible").forEach(e => e.remove());
 

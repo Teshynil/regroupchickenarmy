@@ -21,6 +21,7 @@ import CommonMixer = require("cookbook/common");
 import "ebg/counter";
 import "./modules/thirdparty/scrollmapWithZoom";
 
+import { Board } from "./modules/Board";
 import { PlayerArea } from "./modules/playerArea";
 import { MarketArea } from "./modules/marketArea";
 import { LeaderSelection } from "./modules/leaderSelection";
@@ -38,7 +39,7 @@ dojo.Animation.prototype.playAsync = async function () {
 /** See {@link BGA.Gamegui} for more information. */
 export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   static game: RegroupChickenArmy;
-  boardDiv: HTMLDivElement;
+  board: Board = new Board();
   playerAreas: PlayerArea[] = [
     new PlayerArea(0),
     new PlayerArea(1),
@@ -60,38 +61,14 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     console.log("Starting game setup");
     // Setting up player boards
 
-    document.getElementById("game_play_area").insertAdjacentHTML(
-      "beforeend",
-      `
-			<div id="board">
-			<div id="centralArea"></div>
-			</div>
-		  `
-    );
-    this.boardDiv = document.getElementById("board") as HTMLDivElement;
+    this.board.render();
 
-    let player_id: BGA.ID;
-    let i = 0;
     //@ts-ignore
     window.grids = {};
     this.marketArea = new MarketArea();
     this.leaderSelection = new LeaderSelection();
 
-    for (player_id in gamedatas.players) {
-      const player = gamedatas.players[player_id] as Player;
-      const playerPosition = player.position
-      if (playerPosition !== null) {
-        this.playerAreas[playerPosition].active = true;
-        this.leaderSelection.leaders[playerPosition] = null;
-      }
-      i++;
-    }
-
-    if (this.isCurrentPlayerActive()) {
-      this.boardDiv.classList.add("activePlayer");
-    } else {
-      this.boardDiv.classList.remove("activePlayer");
-    }
+    this.board.isActive = this.isCurrentPlayerActive();
 
     this.renderGui(gamedatas);
     // Setup game notifications to handle (see "setupNotifications" method below)
@@ -103,8 +80,20 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   renderGui(gamedatas: BGA.Gamedatas) {
     for (let i = 0; i < 4; i++) {
       this.playerAreas[i].render();
+      this.playerAreas.at(i).hide();
     }
     this.marketArea.render();
+
+    let player_id: BGA.ID;
+    for (player_id in gamedatas.players) {
+      const player = gamedatas.players[player_id] as Player;
+      const playerPosition = player.position
+      if (playerPosition !== null) {
+        this.leaderSelection.leaders[playerPosition] = null;
+        this.board.backgrounds[playerPosition].isActive = true;
+        this.playerAreas.at(playerPosition).show();
+      }
+    }
   }
 
   ///////////////////////////////////////////////////
@@ -116,16 +105,33 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   ): void {
     console.log("Entering state: " + stateName);
 
-    if (this.isCurrentPlayerActive()) {
-      this.boardDiv.classList.add("activePlayer");
-    } else {
-      this.boardDiv.classList.remove("activePlayer");
-    }
+    this.board.isActive = this.isCurrentPlayerActive();
 
     switch (stateName) {
       case "leaderSelection":
         this.marketArea.hide();
         this.leaderSelection.render();
+        break;
+      case "leaderSelectionGame":
+        break;
+      case "turnSetup":
+        this.marketArea.show();
+        //TODO: this.marketArea.animateDealCards();
+        this.leaderSelection.hide();
+        break;
+      case "playerTurn":
+        break;
+      case "playerTurnGame":
+        break;
+      case "atkPhase":
+        break;
+      case "atkPhaseGame":
+        break;
+      case "healingPhase":
+        break;
+      case "healingPhaseGame":
+        break;
+      case "gameEnd":
         break;
     }
   }
@@ -146,11 +152,11 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   ): void {
     console.log("onUpdateActionButtons: " + stateName, args);
 
-    if (!this.isCurrentPlayerActive()) {
-      this.boardDiv.classList.remove("activePlayer");
+    this.board.isActive = this.isCurrentPlayerActive();
+
+    if (!this.board.isActive) {
       return;
     }
-    this.boardDiv.classList.add("activePlayer");
 
     switch (stateName) {
       case "leaderSelection":

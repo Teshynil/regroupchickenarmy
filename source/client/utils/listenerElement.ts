@@ -4,8 +4,8 @@ import { GameElement } from "./gameElement";
 export abstract class ListenerElement extends GameElement {
     abstract get listeners(): { [key: string]: { callback: Function, handle?: DojoJS.Handle } };
 
-    constructor() {
-        super();
+    constructor(id: number = 0) {
+        super(id);
         this.setupNotifications();
     }
 

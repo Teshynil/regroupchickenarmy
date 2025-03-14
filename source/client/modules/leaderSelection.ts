@@ -16,7 +16,6 @@ export class LeaderSelection extends ListenerElement {
     leaders: Leader[] = [new Leader(0), new Leader(1), new Leader(2), new Leader(3)];
 
     override htmlDefinition: string = `<div id="${this.ELEMENT_ID}"></div>`;
-    override insertPosition: InsertPosition = "beforeend";
 
     override afterRender() {
         this.leaders.forEach(leader => {
@@ -42,7 +41,8 @@ export class LeaderSelection extends ListenerElement {
             await animation.playAsync();
             this.leaders[leader_id].destroy();
             this.leaders[leader_id] = null
-            RegroupChickenArmy.game.playerAreas.at(leader_id).enable();
+            RegroupChickenArmy.game.playerAreas.at(leader_id).show();
+            RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;
         });
 
     }
@@ -54,7 +54,8 @@ export class LeaderSelection extends ListenerElement {
         const animation = RegroupChickenArmy.game.slideToObject(element, `leaderImg_${leader_id}`, 1000, 600);
         await animation.playAsync();
         element.remove();
-        RegroupChickenArmy.game.playerAreas.at(leader_id).enable();
+        RegroupChickenArmy.game.playerAreas.at(leader_id).show();
+        RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;
     }
 }
 
@@ -64,7 +65,6 @@ class Leader extends GameElement {
 
 
     htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="leaderImg leader_${this.id}"></div>`;
-    insertPosition: InsertPosition = "beforeend";
 
     override afterRender() {
         this.addEventListeners();
