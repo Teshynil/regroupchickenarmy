@@ -11,6 +11,7 @@
 	"files": [
 		"regroupchickenarmy.ts",
 		"regroupchickenarmy.d.ts",
+		"utils/extensions.d.ts",
 		// Ideally, all other files needed should be included through imports/ref tags in the above files.
 		// If you have other files that are not imported, you can include them here.
 		// Manually add any node_modules *.ts here. All other imports should be included automatically.

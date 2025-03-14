@@ -5,7 +5,7 @@
         "watch": "npx bga-build --watch"
     },
     "dependencies": {
-        "bga-ts-template": "github:Teshynil/bga-ts-template",
+        "bga-ts-template": "github:Teshynil/bga-ts-template#teshynil",
         "typescript": "^5.7.3"
     }
 }

@@ -5,5 +5,5 @@
   "php-version": "8.2.17",
   "developers": "Teshynil me@teshynil.dev",
   "source-to-project": "..",
-  "source-to-template": "../node_modules/bga-ts-template"
+  "source-to-template": "node_modules/bga-ts-template"
 }

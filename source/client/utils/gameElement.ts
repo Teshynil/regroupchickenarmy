@@ -1,14 +1,22 @@
+import { RegroupChickenArmy } from "../regroupchickenarmy";
+
 export abstract class GameElement {
     abstract get PARENT_ID(): string;
     abstract get ELEMENT_ID(): string;
+
     get id(): number {
         return this._id
     };
     protected _id: number = 0;
     private _element?: HTMLDivElement;
+    private _enabledForEvents: boolean = true;
 
     abstract get htmlDefinition(): string;
     abstract get insertPosition(): InsertPosition;
+
+    constructor(id: number = 0) {
+        this._id = id;
+    }
 
     get element() {
         if (this._element !== undefined)
@@ -19,12 +27,21 @@ export abstract class GameElement {
         return this._element
     }
 
-    public beforeRender(): void { };
+    private get elementSafe() {
+        try {
+            return this.element;
+        } catch (error) {
+            return undefined;
+        }
+    }
 
-    public render(force: boolean = false) {
-        this.beforeRender();
+    public beforeRender(force: boolean): void { };
 
-        if (this._element && !force) {
+    public render(force?: boolean) {
+        if (force === undefined) force = false;
+        this.beforeRender(force);
+
+        if (this.elementSafe && !force) {
             console.info(`Element ${this.consoleId} was already on the board`);
             return this;
         }
@@ -35,11 +52,11 @@ export abstract class GameElement {
         if (parentElement == null) throw new Error(`Parent Element for ${this.consoleId} not found`);
         parentElement.insertAdjacentHTML(this.insertPosition, this.htmlDefinition);
 
-        this.afterRender();
+        this.afterRender(force);
         return this;
     }
 
-    public afterRender(): void { };
+    public afterRender(force: boolean): void { };
 
     public show() {
         this.element.style.removeProperty("display");
@@ -57,8 +74,32 @@ export abstract class GameElement {
         return this;
     }
 
+    public enableEvents() {
+        this._enabledForEvents = true;
+    }
+
+    public disableEvents() {
+        this._enabledForEvents = false;
+    }
+
+    protected addEventListeners(): void { };
+    protected removeEventListeners(): void { };
+
+    public addEventToElement(element: Element, type: string, listener: Function) {
+        const bindedListener = () => {
+            if (RegroupChickenArmy.game.isCurrentPlayerActive() && this._enabledForEvents) {
+                listener.apply(this);
+            }
+        };
+        element.addEventListener(type, bindedListener.bind(this));
+    }
+
+    public beforeDestroy(): void { };
+
     public destroy() {
-        this.element.remove();
+        try {
+            this.element.remove();
+        } catch (error) { };
     }
 
     private get consoleId() {

@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Bga\Games\RegroupChickenArmy;
 
+use Bga\Games\RegroupChickenArmy\Components\Market;
 use Table;
 
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
@@ -63,7 +64,7 @@ class Game extends \Table
 
     private function getHandlerClass(string $stateName): string
     {
-        if (str_ends_with($stateName, "Post")) {
+        if (str_ends_with($stateName, "Game")) {
             $stateName = substr($stateName, 0, -4);
         }
         $className = "\\" . __NAMESPACE__ . "\\States\\" .
@@ -74,7 +75,7 @@ class Game extends \Table
                     . "StateHandler"
             );
         if (!class_exists($className)) {
-            throw new \BgaVisibleSystemException("Missing handler class for state: $stateName");
+            throw new \BgaVisibleSystemException("Missing handler class for state: $stateName with ClassName: $className");
         }
 
         return $className;
@@ -239,7 +240,8 @@ class Game extends \Table
         // $this->initStat("table", "table_teststat1", 0);
         // $this->initStat("player", "player_teststat1", 0);
 
-        // TODO: Setup the initial game situation here.
+        Market::initializeMarket($this);
+
 
         // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();
@@ -284,62 +286,4 @@ class Game extends \Table
 
         throw new \feException("Zombie mode not supported at this game state: \"{$state_name}\".");
     }
-
-
-    // public function selectLeader(int $leader_id)
-    // {
-
-    //     $player_id = (int)$this->getActivePlayerId();
-
-    //     // check input values
-
-    //     try {
-    //         $result = $this->getUniqueValueFromDB(
-    //             "SELECT `player_id` `id`, `position` FROM `player` WHERE position = $leader_id"
-    //         );
-    //         if ($result == null) {
-    //             $checkAllLeadersSelected = (int) $this->getUniqueValueFromDB(
-    //                 "SELECT COUNT(*) FROM `player` WHERE position is null"
-    //             );
-    //             $this->dump("Check", $checkAllLeadersSelected);
-    //             $transition = "selected";
-    //             if ($checkAllLeadersSelected == 1) { // All leaders selected
-    //                 $transition = "allSelectedLeader";
-    //             }
-
-    //             $sql = "UPDATE player SET position='$leader_id'
-    //                 WHERE `player_id` = '$player_id'";
-
-    //             $this->DbQuery($sql);
-
-    //             // Notify all players
-    //             $this->notify->all("leaderSelected", clienttranslate('${player_name} selected a leader'), [
-    //                 "player_id" => $player_id,
-    //                 "player_name" => $this->getActivePlayerName(),
-    //                 "leader_id" => $leader_id
-    //             ]);
-
-    //             $this->gamestate->nextState($transition);
-    //         } else {
-    //             // Leader already selected
-    //             $this->gamestate->nextState("notSelected");
-    //         }
-    //     } catch (\Throwable $th) {
-    //         $this->error("Multiple players with the same leader");
-    //         $this->gamestate->nextState("notSelected");
-    //     }
-    // }
-    // public function stLeaderSelected()
-    // {
-    //     $checkAllLeadersSelected = (int) $this->getUniqueValueFromDB(
-    //         "SELECT COUNT(*) FROM `player` WHERE position is null"
-    //     );
-    //     $transition = "selectLeader";
-    //     if ($checkAllLeadersSelected == 0) {
-    //         $transition = "allSelectedLeader";
-    //     }
-    //     $player_id = (int)$this->activeNextPlayer();
-    //     $this->dump("nextPlayer", $player_id);
-    //     $this->gamestate->nextState($transition);
-    // }
 }

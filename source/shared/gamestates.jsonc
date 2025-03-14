@@ -15,25 +15,29 @@
  * !! It is not a good idea to modify this file when a game is running !!
  */
 {
-	"$schema": "../../node_modules/bga-ts-template/schema/gamestates.schema.json",
+	//"$schema": "../../node_modules/bga-ts-template/schema/gamestates.schema.json",
 
 	// The initial state. Please do not modify.
-	"1": {
-		"name": "gameSetup",
+	"gameSetup": {
 		"description": "",
 		"type": "manager",
-		"action": "stGameSetup",
+		//"action": "stGameSetup",
 		"transitions": {
-			"": 2
+			"": "leaderSelection"
 		}
 	},
 
 	// Note: ID=2: your first state. If not, change the transition in the gameSetup above.
-	"2": {
-		"name": "leaderSelection",
+	"leaderSelection": {
 		"description": "${actplayer} must select a leader",
 		"descriptionmyturn": "${you} must select a leader",
 		"type": "activeplayer",
+		"relatedGameState": {
+			"transitions": {
+				"selectLeader": "leaderSelection",
+				"allSelectedLeader": "turnSetup"
+			}
+		},
 		"possibleactions": {
 			"selectLeader": [
 				{
@@ -43,59 +47,100 @@
 			],
 		},
 		"transitions": {
-			"selected": 3,
-			"notSelected": 2
+			"selected": "leaderSelectionGame",
+			"notSelected": "leaderSelection"
 		}
 	},
-	"3": {
-		"name": "leaderSelectionPost",
+	"turnSetup": {
 		"type": "game",
-		"action": "st",
 		"transitions": {
-			"selectLeader": 2,
-			"allSelectedLeader": 4
+			"startRound": "playerTurn",
+			"playerEliminated": "turnSetup",
+			"gameOver": "gameEnd"
 		}
 	},
-	"4": {
-		"name": "turnSetup",
-		"description": "${actplayer} must select a leader",
-		"descriptionmyturn": "${you} must select a leader",
+	"playerTurn": {
+		"description": "${actplayer} must play a card",
+		"descriptionmyturn": "${you} must play a card",
 		"type": "activeplayer",
-		"possibleactions": {},
+		"relatedGameState": {
+			"transitions": {
+				"nextPlayer": "playerTurn",
+				"startAtkPhase": "atkPhase"
+			}
+		},
+		"possibleactions": {
+			"selectCard":[
+				{
+					"name": "market_position",
+					"type": "AT_int"
+				}
+			],
+			"putCard": [
+				{
+					"name": "card_id",
+					"type": "AT_int"
+				},
+				{
+					"name": "rotation",
+					"type": "AT_int"
+				},
+				{
+					"name": "pos_x",
+					"type": "AT_int"
+				},
+				{
+					"name": "pos_y",
+					"type": "AT_int"
+				}
+			],
+		},
 		"transitions": {
-			"": 3
+			"secretCardTaken": "playerTurn",
+			"turnEnded": "playerTurnGame"
 		}
 	},
-
-/*
-	// Examples:
-	
-	"2": {
-		"name": "nextPlayer",
-		"description": "",
-		"type": "game",
-		"action": "stNextPlayer",
-		"updateGameProgression": true,
-		"transitions": { "endGame": 99, "nextPlayer": 10 }
-	},
-
-	"10": {
-		"name": "playerTurn",
-		"description": "${actplayer} must play a card or pass",
-		"descriptionmyturn": "${you} must play a card or pass",
+	"atkPhase": {
+		"description": "${actplayer} is attacking the other leaders",
+		"descriptionmyturn": "${you} are attacking the other leaders",
 		"type": "activeplayer",
-		"possibleactions": [ "playCard", "pass" ],
-		"transitions": { "playCard": 2, "pass": 2 }
+		"relatedGameState": {
+			"transitions": {
+				"nextPlayer": "atkPhase",
+				"atkPhaseEnded": "healingPhase",
+			}
+		},
+		"possibleactions": {
+			"attack": [],
+		},
+		"transitions": {
+			"turnEnded": "atkPhaseGame",
+		}
 	},
-*/
+	"healingPhase": {
+		"description": "${actplayer} is healing themself",
+		"descriptionmyturn": "${you} are healing yourself",
+		"type": "activeplayer",
+		"relatedGameState": {
+			"transitions": {
+				"nextPlayer": "healingPhase",
+				"healingPhaseEnded": "turnSetup",
+			}
+		},
+		"possibleactions": {
+			"heal": [],
+		},
+		"transitions": {
+			"turnEnded": "healingPhaseGame",
+		}
+	},
 
 	// Final state.
 	// Please do not modify (and do not overload action/args methods}.
-	"99": {
-		"name": "gameEnd",
+	"gameEnd": {
 		"description": "End of game",
 		"type": "manager",
-		"action": "stGameEnd",
+		//"action": "stGameEnd",
 		"args": "argGameEnd",
 		"argsType": "object" // Automatically typed by framework.
 	}

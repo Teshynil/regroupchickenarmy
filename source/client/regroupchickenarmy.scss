@@ -196,7 +196,7 @@
 		background-image: url("img/Cards/Card_Back.webp");
 
 		@for $i from 0 through 42 {
-			&.card_#{$i} {
+			&[data-card-id="#{$i}"]{
 				background-image: url("img/Cards/Card_#{$i}.webp");
 			}
 		}
@@ -404,7 +404,7 @@
 	&.activePlayer {
 		#centralArea {
 			.leaderImg {
-				&:not(.selected):not(.not_selected):hover {
+				&:not(.selected):hover {
 					transform: scale(1.1);
 				}
 
@@ -412,11 +412,14 @@
 					filter: none !important;
 					box-shadow: none !important;
 				}
+			}
+		}
+	}
 
-				&.not_selected {
-					filter: saturate(0.5) !important;
-				}
-
+	&:not(.activePlayer) {
+		#centralArea {
+			.leaderImg {
+								
 			}
 		}
 	}
