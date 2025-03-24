@@ -1,4 +1,6 @@
+import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { ListenerElement } from "../utils/listenerElement";
+import { Cards, CardElement } from "./cards";
 
 export class MarketArea extends ListenerElement {
 
@@ -14,9 +16,9 @@ export class MarketArea extends ListenerElement {
     override htmlDefinition: string = `
     <div id="${this.ELEMENT_ID}">
         <div id="deck" class="deck card"></div>
-        <div id="market_card_0" class="card" data-card-id="41"></div>
-        <div id="market_card_1" class="card" data-card-id="21"></div>
-        <div id="market_card_2" class="card" data-card-id="7"></div>
+        <div id="market_card_0" class="card" data-card-id="0"></div>
+        <div id="market_card_1" class="card" data-card-id="0"></div>
+        <div id="market_card_2" class="card" data-card-id="0"></div>
         <div id="market_cost_0"></div>
         <div id="market_cost_1"></div>
     </div>`;
@@ -35,6 +37,27 @@ export class MarketArea extends ListenerElement {
         for (let key in notif.args.cards) {
             const card = notif.args.cards[key];
             this.cards[key].dataset["cardId"] = `${card.card_id}`;
+        }
+    }
+
+    private preSelectCard(card_id: number) {
+        if (card_id == -1) { // Deck selected
+
+        } else {
+            const leader_id = RegroupChickenArmy.game.leader_id;
+            const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
+            const cardCost = 2 - card_id;
+            if (availableCoins < cardCost) {
+                RegroupChickenArmy.game.showMessage(_(`You can't afford this card`),"error");
+                return;
+            }
+        }
+    }
+
+    override addEventListeners(): void {
+        this.addEventToElement(this.deck, "click", () => this.preSelectCard(-1));
+        for (let i = 0; i < 3; i++) {
+            this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i));
         }
     }
 }

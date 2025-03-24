@@ -37,12 +37,6 @@ export class LeaderSelection extends ListenerElement {
             this.leaders.forEach(leader => {
                 leader?.disableEvents();
             });
-            this.leaders[leader_id].element.classList.add("selected");
-            await animation.playAsync();
-            this.leaders[leader_id].destroy();
-            this.leaders[leader_id] = null
-            RegroupChickenArmy.game.playerAreas.at(leader_id).show();
-            RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;
         });
 
     }
@@ -50,12 +44,18 @@ export class LeaderSelection extends ListenerElement {
     async doSelect(notif: BGA.Notif<"selectLeader">) {
         const leader_id = notif.args.leader_id;
         const element = this.leaders[leader_id].element;
-        if (notif.args.player_id == RegroupChickenArmy.game.player_id) return;
         const animation = RegroupChickenArmy.game.slideToObject(element, `leaderImg_${leader_id}`, 1000, 600);
         await animation.playAsync();
         element.remove();
-        RegroupChickenArmy.game.playerAreas.at(leader_id).show();
+        this.leaders[leader_id] = null;
+        RegroupChickenArmy.game.playerAreas.at(leader_id).render();
+        if (current_player_id == notif.args.player_id) {
+            RegroupChickenArmy.game.leader_id = leader_id;
+        }
         RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;
+        if (this.leaders.every((e) => e == null)) {
+            this.hide();
+        }
     }
 }
 
@@ -65,10 +65,6 @@ class Leader extends GameElement {
 
 
     htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="leaderImg leader_${this.id}"></div>`;
-
-    override afterRender() {
-        this.addEventListeners();
-    }
 
     override addEventListeners() {
         this.addEventToElement(this.element, "click", () => RegroupChickenArmy.game.leaderSelection.select(this.element, this.id));

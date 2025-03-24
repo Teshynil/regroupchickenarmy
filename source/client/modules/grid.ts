@@ -1,16 +1,25 @@
 import { remove } from "dojo/dom-class";
 import { GameElement } from "../utils/gameElement";
+import { Slot } from "../definitions";
+import { ListenerElement } from "../utils/listenerElement";
+import { Cards, CardElement } from "./cards";
 
-export class Grid extends GameElement {
+export class Grid extends ListenerElement {
 
     PARENT_ID = `playerArea_${this.id}`;
     ELEMENT_ID = `mapContainer_${this.id}`;
+
+    get listeners() {
+        return {
+            "addCardToGrid": { callback: this.doAddCardToGrid }
+        }
+    };
 
     htmlDefinition = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
 
     scrollmap: ScrollmapWithZoomNS.ScrollmapWithZoom;
     gridDiv: HTMLDivElement;
-    base_grid: number[][] = [
+    grid: number[][] = [
         [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
         [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
         [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
@@ -46,13 +55,13 @@ export class Grid extends GameElement {
 		  `);
         const grid = document.getElementById(`grid_${this.id}`) as HTMLDivElement;
         this.gridDiv = grid;
-        if (this.base_grid.length !== this.base_grid[0].length) {
+        if (this.grid.length !== this.grid[0].length) {
             throw new Error(`Player Area ${this.id} not found`);
         }
-        const size = this.base_grid.length;
+        const size = this.grid.length;
         for (let y = 1; y <= size; y++) {
             for (let x = 1; x <= size; x++) {
-                const isActive = this.base_grid[y - 1][x - 1] != 0xF ? "active" : "";
+                const isActive = this.grid[y - 1][x - 1] != 0xF ? "active" : "";
                 grid.insertAdjacentHTML(`beforeend`, `<div id="player_${this.id}_cell_${y}_${x}" class="cell ${isActive}" data-y="${y}" data-x="${x}"></div>`);
             }
 
@@ -112,5 +121,39 @@ export class Grid extends GameElement {
         window.addEventListener("resize", (event) => {
             this.scrollmap.zoomToFitAndScrollToCenter();
         });
+    }
+
+    addCardToGrid(cardId: number, posX: number, posY: number, rotation: number) {
+        const card = Cards[cardId as keyof typeof Cards] as CardElement;
+
+        if (card == undefined) {
+            throw Error(`Card_${cardId} does not exists`);
+        }
+
+        if (posX < 0 || posY < 0 || posX > 12 || posY > 12) {
+            throw Error(`Is not possible to put Card_${cardId} on position (${posX},${posY})`);
+        }
+
+
+        let valid = false;
+        for (let row = 0; row < 2; row++) {
+            for (let col = 0; col < 2; col++) {
+                if (this.grid[row][col] != Slot.NN) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (valid) break;
+        }
+
+        const slots = card.getSlotsRotated(rotation);
+        this.grid[posY][posX] = slots[0];
+        this.grid[posY][posX + 1] = slots[1];
+        this.grid[posY + 1][posX] = slots[2];
+        this.grid[posY + 1][posX + 1] = slots[3];
+    }
+
+    async doAddCardToGrid(notif: BGA.Notif<"addCardToGrid">) {
+
     }
 }

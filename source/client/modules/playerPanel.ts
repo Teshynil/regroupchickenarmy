@@ -64,12 +64,19 @@ class ResourcePanel extends GameElement {
                     <span id="coins_${this.id}" class="resourceCounter">5</span>
                 </div>
 			</div>`;
-            
-            get shieldElement(){ return document.getElementById(`defPhy_${this.id}`)};
-            get fighterElement(){ return document.getElementById(`atkPhy_${this.id}`)};
-            get barrierElement(){ return document.getElementById(`defMag_${this.id}`)};
-            get wizardElement(){ return document.getElementById(`atkMag_${this.id}`)};
-            get potionElement(){ return document.getElementById(`potion_${this.id}`)};
-            get coinElement(){ return document.getElementById(`coins_${this.id}`)};
+
+    get shieldElement() { return document.getElementById(`defPhy_${this.id}`) };
+    get fighterElement() { return document.getElementById(`atkPhy_${this.id}`) };
+    get barrierElement() { return document.getElementById(`defMag_${this.id}`) };
+    get wizardElement() { return document.getElementById(`atkMag_${this.id}`) };
+    get potionElement() { return document.getElementById(`potion_${this.id}`) };
+    get coinElement() { return document.getElementById(`coins_${this.id}`) };
+
+    get shieldCount(): number { return Number(this.shieldElement.innerText) };
+    get fighterCount(): number { return Number(this.fighterElement.innerText) };
+    get barrierCount(): number { return Number(this.barrierElement.innerText) };
+    get wizardCount(): number { return Number(this.wizardElement.innerText) };
+    get potionCount(): number { return Number(this.potionElement.innerText) };
+    get coinCount(): number { return Number(this.coinElement.innerText) };
 
 }

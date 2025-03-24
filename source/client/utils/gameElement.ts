@@ -58,6 +58,7 @@ export abstract class GameElement {
         parentElement.insertAdjacentHTML(this.insertPosition, this.htmlDefinition);
 
         this.afterRender(force);
+        this.addEventListeners();
         return this;
     }
 

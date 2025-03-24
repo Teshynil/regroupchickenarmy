@@ -14,8 +14,9 @@ declare namespace BGA {
 
 	/** Goto {@link NotifTypes} or hover name for info. */
 	interface NotifTypes {
-		["selectLeader"]: { player_name: string, player_id: string, leader_id: number };
+		["selectLeader"]: { player_name: string, player_id: number, leader_id: number };
 		["marketUpdate"]: { cards: { order: number, card_id: number }[] };
+		["addCardToGrid"]: { card_id: number, rotation: number, leader_id: number };
 	}
 
 	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */

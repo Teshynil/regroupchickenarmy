@@ -180,6 +180,7 @@ class Game extends \Table
         $result["players"] = $this->getCollectionFromDb(
             "SELECT `player_id` `id`, `player_score` `score`, `position` FROM `player`"
         );
+        $result["market"] = Market::getAllMarketCards($this);
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 

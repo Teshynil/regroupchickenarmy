@@ -1,4 +1,4 @@
-export enum Casilla {
+export enum Slot {
     F1,
     F2,
     W1,

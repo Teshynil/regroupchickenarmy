@@ -387,7 +387,7 @@
 		display: none;
 	}
 
-	.hidden {
+	.hidden{
 		opacity: 0;
 		pointer-events: none;
 		user-select: none;
@@ -408,11 +408,16 @@
 				}
 			}
 		}
+		#market{
+			.card:not(.selected):hover {
+				transform: scale(1.1);
+			}
+		}
 	}
 
 	&:not(.activePlayer) {
 		#centralArea {
-			.leaderImg {
+			.card {
 								
 			}
 		}

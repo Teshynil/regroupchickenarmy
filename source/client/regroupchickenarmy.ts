@@ -21,31 +21,22 @@ import CommonMixer = require("cookbook/common");
 import "ebg/counter";
 import "./modules/thirdparty/scrollmapWithZoom";
 
-import { Board } from "./modules/Board";
+import { registerExtensions } from "./utils/extensions";
+import { delay } from "./utils/gameUtils";
+import { Board } from "./modules/board";
 import { PlayerArea } from "./modules/playerArea";
 import { MarketArea } from "./modules/marketArea";
 import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
 
-//@ts-ignore
-dojo.Animation.prototype.playAsync = async function () {
-  await new Promise<void>((i => {
-    dojo.connect(this, "onEnd", (() => i()));
-    this.play()
-  }
-  ))
-};
+registerExtensions();
 
 /** See {@link BGA.Gamegui} for more information. */
 export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   static game: RegroupChickenArmy;
+  leader_id: number;
   board: Board = new Board();
-  playerAreas: PlayerArea[] = [
-    new PlayerArea(0),
-    new PlayerArea(1),
-    new PlayerArea(2),
-    new PlayerArea(3),
-  ];
+  playerAreas: PlayerArea[];
   marketArea: MarketArea;
   leaderSelection: LeaderSelection;
 
@@ -60,8 +51,9 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override setup(gamedatas: BGA.Gamedatas): void {
     console.log("Starting game setup");
     // Setting up player boards
-
     this.board.render();
+
+    this.playerAreas = [new PlayerArea(0), new PlayerArea(1), new PlayerArea(2), new PlayerArea(3)];
 
     //@ts-ignore
     window.grids = {};
@@ -78,10 +70,6 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   }
 
   renderGui(gamedatas: BGA.Gamedatas) {
-    for (let i = 0; i < 4; i++) {
-      this.playerAreas[i].render();
-      this.playerAreas.at(i).hide();
-    }
     this.marketArea.render();
 
     let player_id: BGA.ID;
@@ -91,8 +79,15 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       if (playerPosition !== null) {
         this.leaderSelection.leaders[playerPosition] = null;
         this.board.backgrounds[playerPosition].isActive = true;
-        this.playerAreas.at(playerPosition).show();
+        this.playerAreas.at(playerPosition).render();
+        if (this.player_id == player_id) {
+          this.leader_id = playerPosition;
+        }
       }
+    }
+    let marketCard: { order: number, card_id: number };
+    for (marketCard of gamedatas["market"]) {
+      this.marketArea.cards[marketCard.order - 1].dataset["cardId"] = `${marketCard.card_id}`;
     }
   }
 
@@ -100,13 +95,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   //// Game & client states
 
   /** See {@link BGA.Gamegui#onEnteringState} for more information. */
-  override onEnteringState(
+  override async onEnteringState(
     ...[stateName, state]: BGA.GameStateTuple<["name", "state"]>
-  ): void {
+  ): Promise<void> {
     console.log("Entering state: " + stateName);
 
     this.board.isActive = this.isCurrentPlayerActive();
-
+    await this.board.waitAnimations();
     switch (stateName) {
       case "leaderSelection":
         this.marketArea.hide();
@@ -115,11 +110,12 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "leaderSelectionGame":
         break;
       case "turnSetup":
-        this.marketArea.show();
-        //TODO: this.marketArea.animateDealCards();
-        this.leaderSelection.hide();
         break;
       case "playerTurn":
+        await delay(2000); // Delay to avoid hiding the leader cards while still animating
+        this.leaderSelection.destroy();
+        this.marketArea.show();
+        //TODO: this.marketArea.animateDealCards();
         break;
       case "playerTurnGame":
         break;
