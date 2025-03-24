@@ -70,11 +70,7 @@
 			}
 		},
 		"possibleactions": {
-			"selectCard":[
-				{
-					"name": "market_position",
-					"type": "AT_int"
-				}
+			"pickDeckCard":[
 			],
 			"putCard": [
 				{
@@ -96,7 +92,8 @@
 			],
 		},
 		"transitions": {
-			"secretCardTaken": "playerTurn",
+			"deckCardPicked": "playerTurn",
+			"retry": "playerTurn",
 			"turnEnded": "playerTurnGame"
 		}
 	},

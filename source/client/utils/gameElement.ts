@@ -7,6 +7,7 @@ export abstract class GameElement {
     get id(): number {
         return this._id
     };
+
     protected _id: number = 0;
     private _element?: HTMLDivElement;
     private _enabledForEvents: boolean = true;
