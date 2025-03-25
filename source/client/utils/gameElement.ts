@@ -92,15 +92,19 @@ export abstract class GameElement {
     }
 
     protected addEventListeners(): void { };
-    protected removeEventListeners(): void { };
+    protected removeEventListeners(): void {
+        const clonedElement = this.element.cloneNode(true) as HTMLDivElement;
+        this.element.parentNode.replaceChild(clonedElement, this.element);
+        this._element = clonedElement;
+    };
 
     public addEventToElement(element: Element, type: string, listener: Function) {
-        const bindedListener = () => {
+        const bindedListener = (event: Event) => {
             if (RegroupChickenArmy.game.isCurrentPlayerActive() && this._enabledForEvents) {
-                listener.apply(this);
+                listener.call(this, event);
             }
         };
-        element.addEventListener(type, bindedListener.bind(this));
+        element.addEventListener(type, bindedListener);
     }
 
     public beforeDestroy(): void { };
@@ -113,5 +117,26 @@ export abstract class GameElement {
 
     private get consoleId() {
         return `${this.constructor.name}:${this.id}`
+    }
+}
+
+export abstract class DynamicGameElement extends GameElement {
+
+    override get PARENT_ID(): string {
+        return this._parent_id;
+    }
+
+    override get ELEMENT_ID(): string {
+        return this._element_id;
+    }
+
+    private _parent_id: string;
+    private _element_id: string;
+
+    constructor(id: number = 0, parent_id: string, element_id: string) {
+        super(id);
+        this._parent_id = parent_id;
+        this._element_id = element_id;
+        this.afterConstructor();
     }
 }

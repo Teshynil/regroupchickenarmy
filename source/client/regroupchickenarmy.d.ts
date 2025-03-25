@@ -17,6 +17,7 @@ declare namespace BGA {
 		["selectLeader"]: { player_name: string, player_id: number, leader_id: number };
 		["marketUpdate"]: { cards: { order: number, card_id: number }[] };
 		["addCardToGrid"]: { card_id: number, rotation: number, leader_id: number };
+		["deckCardPicked"]: { card_id: number, player_id: number, player_name: string, };
 	}
 
 	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */

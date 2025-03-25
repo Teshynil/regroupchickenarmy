@@ -2,7 +2,7 @@ import { remove } from "dojo/dom-class";
 import { GameElement } from "../utils/gameElement";
 import { Slot } from "../definitions";
 import { ListenerElement } from "../utils/listenerElement";
-import { Cards, CardElement } from "./cards";
+import { Cards, Card } from "./cards";
 
 export class Grid extends ListenerElement {
 
@@ -124,7 +124,7 @@ export class Grid extends ListenerElement {
     }
 
     addCardToGrid(cardId: number, posX: number, posY: number, rotation: number) {
-        const card = Cards[cardId as keyof typeof Cards] as CardElement;
+        const card = Cards[cardId as keyof typeof Cards] as { getSlots(rotation: number): Slot[] };
 
         if (card == undefined) {
             throw Error(`Card_${cardId} does not exists`);
@@ -146,7 +146,7 @@ export class Grid extends ListenerElement {
             if (valid) break;
         }
 
-        const slots = card.getSlotsRotated(rotation);
+        const slots = card.getSlots(rotation);
         this.grid[posY][posX] = slots[0];
         this.grid[posY][posX + 1] = slots[1];
         this.grid[posY + 1][posX] = slots[2];

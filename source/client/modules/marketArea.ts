@@ -2,7 +2,7 @@ import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "../utils/gameElement";
 import { delay } from "../utils/gameUtils";
 import { ListenerElement } from "../utils/listenerElement";
-import { Cards, CardElement } from "./cards";
+import { Cards, Card } from "./cards";
 
 export class MarketArea extends ListenerElement {
     PARENT_ID = "centralArea";
@@ -10,7 +10,8 @@ export class MarketArea extends ListenerElement {
 
     get listeners() {
         return {
-            "marketUpdate": { callback: this.doUpdateMarket }
+            "marketUpdate": { callback: this.doUpdateMarket },
+            "deckCardPicked": { callback: this.doBlockMarket }
         }
     };
 
@@ -43,14 +44,20 @@ export class MarketArea extends ListenerElement {
         }
     }
 
+    doBlockMarket(notif: BGA.Notif<"deckCardPicked">) {
+        if (notif.args.player_id == RegroupChickenArmy.game.player_id) {
+            this.preSelectCard(-1, notif.args.card_id);
+        }
+    }
+
     public pickDeckCard() {
         RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/pickDeckCard.html`, {},
             this, async function () {
-
+                this.disableEvents();
             });
     }
 
-    private async preSelectCard(card_id: number) {
+    public async preSelectCard(marketCard_order: number, deckCardId: number = 0) {
         if (this.cardRotationWindow !== null) {
             this.cardRotationWindow.destroy();
             this.cardRotationWindow = null;
@@ -58,33 +65,35 @@ export class MarketArea extends ListenerElement {
                 c.style.opacity = '1';
             })
         }
-        let card;
-        if (card_id >= 0) {
-            card = this.cards[card_id];
+        let cardId: number;
+        if (marketCard_order >= 0) {
+            const card = this.cards[marketCard_order];
             const leader_id = RegroupChickenArmy.game.leader_id;
             const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
-            const cardCost = 2 - card_id;
+            const cardCost = 2 - marketCard_order;
             if (availableCoins < cardCost) {
                 RegroupChickenArmy.game.showMessage(_(`You can't afford this card`), "error");
                 return;
             }
+            cardId = Number(card.dataset["cardId"]);
+            card.style.opacity = '0';
         } else {
-            card = this.deck;
+            cardId = deckCardId;
+            if (cardId > 0) {
+                this.disableEvents();
+                this.element.classList.add("deckCardPicked");
+            }
         }
         // At this point the card is buyable or is the deck
         RegroupChickenArmy.game.board.element.classList.add("centralAreaExpanded");
-        this.cardRotationWindow = new CardRotationWindow(Number(card.dataset["cardId"]));
-        if (card_id >= 0) {
-            card.style.opacity = '0';
-        }
+        this.cardRotationWindow = new CardRotationWindow(cardId);
         this.cardRotationWindow.render();
-        this.cardRotationWindow.element.style.opacity = '1';
     }
 
     override addEventListeners(): void {
-        this.addEventToElement(this.deck, "click", () => this.preSelectCard(-1));
+        this.addEventToElement(this.deck, "click", () => this.preSelectCard(-1, 0));
         for (let i = 0; i < 3; i++) {
-            this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i));
+            this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
         }
     }
 }
@@ -92,18 +101,19 @@ export class MarketArea extends ListenerElement {
 export class CardRotationWindow extends GameElement {
     PARENT_ID = `centralArea`;
     ELEMENT_ID = `cardRotationArea`;
-    htmlDefinition = `<div id="${this.ELEMENT_ID}" style="opacity:0;">
+    htmlDefinition = `<div id="${this.ELEMENT_ID}">
         <div id="cardRotation_card" class="card" data-card-id="${this.id}"></div>
         <div id="cardRotation_ccw" class="cardRotation_btn"></div>
         <div id="cardRotation_cw" class="cardRotation_btn"></div>
     </div>`;
 
-    card: HTMLDivElement;
+    card: Card;
     cardRotation_ccw: HTMLDivElement;
     cardRotation_cw: HTMLDivElement;
 
     public override afterRender(force: boolean): void {
-        this.card = document.getElementById("cardRotation_card") as HTMLDivElement;
+        this.card = new Card(this.id, this.ELEMENT_ID, "cardRotation_card", Cards[this.id as keyof Cards]);
+        this.card.render();
         this.cardRotation_ccw = document.getElementById("cardRotation_ccw") as HTMLDivElement;
         this.cardRotation_cw = document.getElementById("cardRotation_cw") as HTMLDivElement;
         RegroupChickenArmy.game.removeActionButtons();
@@ -114,7 +124,13 @@ export class CardRotationWindow extends GameElement {
         }
     }
 
-    protected override addEventListeners(): void {
 
+    protected override addEventListeners(): void {
+        this.addEventToElement(this.cardRotation_ccw, "click", () => this.card.rotate(-1));
+        this.addEventToElement(this.cardRotation_cw, "click", () => this.card.rotate(1));
+
+        if (this.id !== 0) {
+            this.card.isDraggable = true;
+        }
     }
 }

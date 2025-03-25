@@ -30,7 +30,6 @@ export class LeaderSelection extends ListenerElement {
     }
 
     async select(element: HTMLDivElement, leader_id: number, noop: boolean = false) {
-        const animation = RegroupChickenArmy.game.slideToObject(element, `leaderImg_${leader_id}`, 1000, 600);
         RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/selectLeader.html`, {
             leader_id: leader_id
         }, this, async function () {
@@ -48,8 +47,8 @@ export class LeaderSelection extends ListenerElement {
         await animation.playAsync();
         element.remove();
         this.leaders[leader_id] = null;
-        RegroupChickenArmy.game.playerAreas.at(leader_id).render();
-        if (current_player_id == notif.args.player_id) {
+        RegroupChickenArmy.game.playerAreas.at(leader_id).render(true);
+        if (RegroupChickenArmy.game.current_player_id == notif.args.player_id) {
             RegroupChickenArmy.game.leader_id = leader_id;
         }
         RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;

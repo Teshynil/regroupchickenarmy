@@ -35,7 +35,6 @@ class PlayerTurnStateHandler implements StateHandlerInterface
     private static function pickDeckCard(Game $game): void
     {
         $playerId = (int) $game->getCurrentPlayerId();
-        $result = [];
 
         $hasAlreadyPickADeckCard = $game->getUniqueValueFromDB(
             "SELECT `marketCardPicked` FROM `player` WHERE `player_id` = $playerId"
@@ -43,15 +42,19 @@ class PlayerTurnStateHandler implements StateHandlerInterface
 
         if ($hasAlreadyPickADeckCard != null) {
             $game->gamestate->nextState('retry');
-            throw new BgaUserException(clienttranslate("You alreay had picked a deck card "));
+            throw new BgaUserException(clienttranslate("You alreay had picked a deck card!"));
         }
-        $deckCard = Market::getMarketCard($game, 3);
-
-        $deckCardId = $deckCard["card_id"];
+        $deckCardId = Market::getMarketCard($game, 3);
 
         $game->DbQuery("UPDATE player SET marketCardPicked = $deckCardId WHERE player_id = $playerId");
 
-        $game->notifyPlayer() //TODO: notificar a todos que el player eligio una carta del deck y procesar su turno nuevamente
+        $game->notifyAllPlayers('deckCardPicked', clienttranslate('${player_name} picked a card from the deck.'), [
+            'player_name' => $game->getActivePlayerName(),
+            'player_id' => $playerId,
+            'card_id' => $deckCardId
+        ]);
+
+        $game->gamestate->nextState("deckCardPicked");
     }
 
     public static function executeGameState(Game $game): void

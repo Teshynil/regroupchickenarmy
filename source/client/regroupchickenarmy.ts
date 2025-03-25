@@ -71,6 +71,10 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   renderGui(gamedatas: BGA.Gamedatas) {
     this.marketArea.render();
+    for (let i = 0; i < 4; i++) {
+      this.playerAreas.at(i).panel.render();
+      this.playerAreas.at(i).panel.hide();
+    }
 
     let player_id: BGA.ID;
     for (player_id in gamedatas.players) {
@@ -79,7 +83,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       if (playerPosition !== null) {
         this.leaderSelection.leaders[playerPosition] = null;
         this.board.backgrounds[playerPosition].isActive = true;
-        this.playerAreas.at(playerPosition).render();
+        this.playerAreas.at(playerPosition).render(true);
         if (this.player_id == player_id) {
           this.leader_id = playerPosition;
         }
@@ -88,6 +92,14 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     let marketCard: { order: number, card_id: number };
     for (marketCard of gamedatas["market"]) {
       this.marketArea.cards[marketCard.order - 1].dataset["cardId"] = `${marketCard.card_id}`;
+    }
+    if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game to check the market status
+      if (this.board.isActive) {
+        const player = gamedatas.players[this.player_id] as Player;
+        if (player.marketCardPicked !== null) {
+          this.marketArea.preSelectCard(-1, player.marketCardPicked);
+        }
+      }
     }
   }
 
@@ -99,6 +111,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     ...[stateName, state]: BGA.GameStateTuple<["name", "state"]>
   ): Promise<void> {
     console.log("Entering state: " + stateName);
+
 
     this.board.isActive = this.isCurrentPlayerActive();
     await this.board.waitAnimations();

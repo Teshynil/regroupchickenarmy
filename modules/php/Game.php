@@ -30,7 +30,6 @@ class Game extends \Table
 
     public function __call($name, $args)
     {
-        $this->dump("call", $name);
         if (method_exists(parent::class, $name)) {
             return parent::{$name}(...$args);
         }
@@ -178,7 +177,7 @@ class Game extends \Table
         // Get information about players.
         // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
         $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score`, `position` FROM `player`"
+            "SELECT `player_id` `id`, `player_score` `score`, `position`, `marketCardPicked` FROM `player`"
         );
         $result["market"] = Market::getAllMarketCards($this);
 

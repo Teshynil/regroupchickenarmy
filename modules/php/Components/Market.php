@@ -19,7 +19,7 @@ class Market
     {
         return $game::getUniqueValueFromDB(
             sprintf(
-                "SELECT `card_id`, `order` FROM `market` ORDER BY `order` ASC LIMIT 1 OFFSET %s;",
+                "SELECT `card_id` FROM `market` ORDER BY `order` ASC LIMIT 1 OFFSET %s;",
                 $position
             )
         );

@@ -24,8 +24,8 @@ export class PlayerArea extends ListenerElement {
     }
 
     override afterRender(force: boolean): void {
-        this.grid.render();
-        this.panel.render();
+        this.grid.render(force);
+        this.panel.render(force);
     }
 
     override afterShow() {
