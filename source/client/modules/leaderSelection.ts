@@ -43,14 +43,12 @@ export class LeaderSelection extends ListenerElement {
     async doSelect(notif: BGA.Notif<"selectLeader">) {
         const leader_id = notif.args.leader_id;
         const element = this.leaders[leader_id].element;
+        RegroupChickenArmy.game.leaders_id[notif.args.player_id] = Number(leader_id);
         const animation = RegroupChickenArmy.game.slideToObject(element, `leaderImg_${leader_id}`, 1000, 600);
         await animation.playAsync();
         element.remove();
         this.leaders[leader_id] = null;
         RegroupChickenArmy.game.playerAreas.at(leader_id).render(true);
-        if (RegroupChickenArmy.game.current_player_id == notif.args.player_id) {
-            RegroupChickenArmy.game.leader_id = leader_id;
-        }
         RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;
         if (this.leaders.every((e) => e == null)) {
             this.hide();

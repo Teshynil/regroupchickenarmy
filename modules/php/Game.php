@@ -177,7 +177,10 @@ class Game extends \Table
         // Get information about players.
         // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
         $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score`, `position`, `marketCardPicked` FROM `player`"
+            "SELECT `player_id` `id`, `player_score` `score`, `leader_id`, `marketCardPicked` FROM `player`"
+        );
+        $result["boards"] = $this->getCollectionFromDb(
+            "SELECT `leader_id` `board_id`, `card_id`, `rotation` FROM `player`"
         );
         $result["market"] = Market::getAllMarketCards($this);
 

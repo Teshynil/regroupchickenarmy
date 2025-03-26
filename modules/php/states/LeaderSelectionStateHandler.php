@@ -26,12 +26,12 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
     {
         $playerId = (int)$game->getActivePlayerId();
 
-        if ($game->getUniqueValueFromDB("SELECT player_id FROM player WHERE position = $leaderId")) {
+        if ($game->getUniqueValueFromDB("SELECT player_id FROM player WHERE leader_id = $leaderId")) {
             $game->gamestate->nextState('notSelected');
             throw new BgaUserException(clienttranslate("That leader is already selected"));
         }
 
-        $game->DbQuery("UPDATE player SET position = $leaderId WHERE player_id = $playerId");
+        $game->DbQuery("UPDATE player SET leader_id = $leaderId WHERE player_id = $playerId");
         $game->notifyAllPlayers('leaderSelected', clienttranslate('${player_name} selected leader'), [
             'player_name' => $game->getActivePlayerName(),
             'player_id' => $playerId,
@@ -44,11 +44,21 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
     public static function executeGameState(Game $game): void
     {
         $checkAllLeadersSelected = (int) $game->getUniqueValueFromDB(
-            "SELECT COUNT(*) FROM `player` WHERE position is null"
+            "SELECT COUNT(*) FROM `player` WHERE leader_id is null"
         );
         $transition = "selectLeader";
         if ($checkAllLeadersSelected == 0) {
             $transition = "allSelectedLeader";
+            //We could change this if variant rule is implemented
+            $player_initial_cards = $game->getCollectionFromDB("SELECT `leader_id`, `player_id`, 99 as card_id FROM `player`");
+
+            foreach ($player_initial_cards as $grid => $value) {
+                $card_id = $value["card_id"];
+                $game->DbQuery("INSERT INTO `boards` (`movement_id`, `board_id`, `card_id`, `rotation`, `x`, `y`) VALUES (NULL, $grid, $card_id, '0', '6,6')");
+            }
+            $game->notifyAllPlayers('addInitialCards', "", [
+                'playersCards' => $player_initial_cards,
+            ]);
         }
 
         $currentPlayerId = $game->getCurrentPlayerId();

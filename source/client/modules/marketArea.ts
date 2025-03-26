@@ -68,7 +68,7 @@ export class MarketArea extends ListenerElement {
         let cardId: number;
         if (marketCard_order >= 0) {
             const card = this.cards[marketCard_order];
-            const leader_id = RegroupChickenArmy.game.leader_id;
+            const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
             const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
             const cardCost = 2 - marketCard_order;
             if (availableCoins < cardCost) {
@@ -102,7 +102,6 @@ export class CardRotationWindow extends GameElement {
     PARENT_ID = `centralArea`;
     ELEMENT_ID = `cardRotationArea`;
     htmlDefinition = `<div id="${this.ELEMENT_ID}">
-        <div id="cardRotation_card" class="card" data-card-id="${this.id}"></div>
         <div id="cardRotation_ccw" class="cardRotation_btn"></div>
         <div id="cardRotation_cw" class="cardRotation_btn"></div>
     </div>`;

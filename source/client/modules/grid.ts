@@ -3,6 +3,8 @@ import { GameElement } from "../utils/gameElement";
 import { Slot } from "../definitions";
 import { ListenerElement } from "../utils/listenerElement";
 import { Cards, Card } from "./cards";
+import { RegroupChickenArmy } from "../regroupchickenarmy";
+import { delay } from "../utils/gameUtils";
 
 export class Grid extends ListenerElement {
 
@@ -11,7 +13,8 @@ export class Grid extends ListenerElement {
 
     get listeners() {
         return {
-            "addCardToGrid": { callback: this.doAddCardToGrid }
+            "addCardToGrid": { callback: this.doAddCardToGrid },
+            "addInitialCards": { callback: this.doAddInitialCard }
         }
     };
 
@@ -35,6 +38,7 @@ export class Grid extends ListenerElement {
         [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
         [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
     ];
+    cardsPlayed: number = 0;
 
     public override afterRender(force: boolean): void {
         //@ts-ignore    
@@ -59,9 +63,9 @@ export class Grid extends ListenerElement {
             throw new Error(`Player Area ${this.id} not found`);
         }
         const size = this.grid.length;
-        for (let y = 1; y <= size; y++) {
-            for (let x = 1; x <= size; x++) {
-                const isActive = this.grid[y - 1][x - 1] != 0xF ? "active" : "";
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const isActive = this.grid[y][x] != 0xF ? "active" : "";
                 grid.insertAdjacentHTML(`beforeend`, `<div id="player_${this.id}_cell_${y}_${x}" class="cell ${isActive}" data-y="${y}" data-x="${x}"></div>`);
             }
 
@@ -71,7 +75,7 @@ export class Grid extends ListenerElement {
         setTimeout(() => {
             this.scrollmap.container_subdiv.style.opacity = "1";
             this.resizeGrid();
-        }, 1000);
+        }, 500);
     }
 
     resizeGrid() {
@@ -110,6 +114,15 @@ export class Grid extends ListenerElement {
 
         // Reposition active cells
         activeCells.forEach(cell => {
+            const newCol = parseInt(cell.dataset["x"]) - minCol + 1;
+            const newRow = parseInt(cell.dataset["y"]) - minRow + 1;
+            cell.style.gridColumn = newCol.toString();
+            cell.style.gridRow = newRow.toString();
+        });
+
+        const playedCards = this.gridDiv.querySelectorAll<HTMLDivElement>('.card');
+
+        playedCards.forEach(cell => {
             const newCol = parseInt(cell.dataset["x"]) - minCol + 1;
             const newRow = parseInt(cell.dataset["y"]) - minRow + 1;
             cell.style.gridColumn = newCol.toString();
@@ -155,5 +168,27 @@ export class Grid extends ListenerElement {
 
     async doAddCardToGrid(notif: BGA.Notif<"addCardToGrid">) {
 
+    }
+
+    async doAddInitialCard(notif: BGA.Notif<"addInitialCards">) {
+        if (notif.args.playersCards[this.id] == undefined) return;
+        await delay(3000);
+        const playerCards = notif.args.playersCards;
+        const card_id = notif.args.playersCards[this.id].card_id;
+        this.addCardToGrid(card_id, 6, 6, 0);
+        const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);
+        card.render();
+        const element = card.element;
+        const animation = RegroupChickenArmy.game.slideToObject(element, `player_${this.id}_cell_${6}_${6}`, 1000, 600);
+        await animation.playAsync();
+        element.remove();
+        this.createCardOnGrid(card_id, 6, 6);
+    }
+
+    createCardOnGrid(cardId: number, posX: number, posY: number) {
+        this.cardsPlayed++;
+        const zIndex = this.cardsPlayed;
+        this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div class="card" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="z-index:${zIndex};"></div>`);
+        this.resizeGrid();
     }
 }

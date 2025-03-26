@@ -34,7 +34,7 @@ registerExtensions();
 /** See {@link BGA.Gamegui} for more information. */
 export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   static game: RegroupChickenArmy;
-  leader_id: number;
+  leaders_id: { [key: string]: number; } = {};
   board: Board = new Board();
   playerAreas: PlayerArea[];
   marketArea: MarketArea;
@@ -79,14 +79,12 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     let player_id: BGA.ID;
     for (player_id in gamedatas.players) {
       const player = gamedatas.players[player_id] as Player;
-      const playerPosition = player.position
-      if (playerPosition !== null) {
-        this.leaderSelection.leaders[playerPosition] = null;
-        this.board.backgrounds[playerPosition].isActive = true;
-        this.playerAreas.at(playerPosition).render(true);
-        if (this.player_id == player_id) {
-          this.leader_id = playerPosition;
-        }
+      const leaderId = player.leader_id
+      if (leaderId !== null) {
+        this.leaderSelection.leaders[leaderId] = null;
+        this.board.backgrounds[leaderId].isActive = true;
+        this.playerAreas.at(leaderId).render(true);
+        this.leaders_id[player_id] = Number(leaderId);
       }
     }
     let marketCard: { order: number, card_id: number };
@@ -101,6 +99,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         }
       }
     }
+  }
+
+  getLeaderIdFromPlayerId(id: number = undefined): number {
+    if (id == undefined) {
+      id = Number(this.player_id);
+    }
+    return this.leaders_id[id];
   }
 
   ///////////////////////////////////////////////////
@@ -242,17 +247,6 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override setupNotifications = () => {
     console.log("notifications subscriptions setup");
 
-    // Builtin example...
-    // dojo.subscribe( 'cardPlayed_1', this, "ntf_any" );
-    //dojo.subscribe("leaderSelected", this, "ntf_selectLeader");
-    // dojo.subscribe( 'cardPlayed_0', this, "ntf_cardPlayed" );
-    // dojo.subscribe( 'cardPlayed_1', this, "ntf_cardPlayed" );
-
-    //	With CommonMixin from 'cookbook/common'...
-    //this.subscribeNotif("leaderSelected", this.ntf_selectLeader);
-    // this.subscribeNotif( "actionTaken", this.ntf_actionTaken );
-    // this.subscribeNotif( "cardPlayed_0", this.ntf_cardPlayed );
-    // this.subscribeNotif( "cardPlayed_1", this.ntf_cardPlayed );
   };
 
   /* Example:
