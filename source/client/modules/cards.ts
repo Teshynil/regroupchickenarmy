@@ -1,5 +1,7 @@
 import { Slot } from "../definitions";
+import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { DynamicGameElement } from "../utils/gameElement";
+import { EventBus } from "../utils/eventBus";
 
 export class Card extends DynamicGameElement {
 
@@ -35,41 +37,50 @@ export class Card extends DynamicGameElement {
     }
 
     private isDragging = false;
-    private rect = {};
     private offsetX = 0;
     private offsetY = 0;
     private currentCells: Element[] = [];
     private gridCells: Element[] = [];
+    private domEvents: { event: string, listener: Function }[] = [];
+
 
     set isDraggable(value: boolean) {
         if (value) {
             this.element.classList.add("draggable");
             this.addEventToElement(this.element, 'mousedown', this.onDragStart);
-            this.gridCells = Array.from(document.querySelectorAll('.grid > .cell'));
+            const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
+            this.gridCells = Array.from(document.querySelectorAll(`#grid_${leader_id} > .cell.active`));
         } else {
             this.element.classList.remove("draggable");
-            this.removeEventListeners();
         }
     }
 
-    onDragStart(e: MouseEvent) {
+    private onDragStart = (e: MouseEvent) => {
         this.isDragging = true;
         const cardElement = this.element;
         cardElement.classList.add("dragging");
+        cardElement.style.transition = 'scale var(--animation_quick)';
 
         const rect = cardElement.getBoundingClientRect();
 
-        this.rect = rect;
         this.offsetX = rect.x + (rect.width / 2.0);
         this.offsetY = rect.y + (rect.height / 2.0);
 
         this.onMouseMove(e);
 
-        document.addEventListener('mousemove', this.onMouseMove.bind(this));
-        document.addEventListener('mouseup', this.onMouseUp.bind(this));
-    }
+        const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
+        cardElement.style.scale = `${RegroupChickenArmy.game.playerAreas.at(leader_id).grid.scrollmap.zoom * 0.99}`;
 
-    onMouseMove(e: MouseEvent) {
+        const onMouseMove = this.onMouseMove.bind(this);
+        const onMouseUp = this.onMouseUp.bind(this);
+        this.domEvents.push({ event: 'mousemove', listener: onMouseMove });
+        this.domEvents.push({ event: 'mouseup', listener: onMouseUp });
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
+    private onMouseMove = (e: MouseEvent) => {
         if (!this.isDragging) return;
 
         const x = e.clientX - this.offsetX;
@@ -80,13 +91,38 @@ export class Card extends DynamicGameElement {
         this.detectOverlappingCells();
     }
 
-    onMouseUp() {
+    private onMouseUp = (_e: MouseEvent) => {
         this.isDragging = false;
-        this.element.style.cursor = 'grab';
-        document.removeEventListener('mousemove', this.onMouseMove.bind(this));
-        document.removeEventListener('mouseup', this.onMouseUp.bind(this));
-        this.element.style.left = `0px`;
-        this.element.style.top = `0px`;
+        this.element.classList.remove("dragging");
+
+        this.domEvents.forEach(event => {
+            document.removeEventListener(event.event, event.listener as EventListener);
+        });
+
+        // If there are highlighted cells, calculate the best position for the card
+        if (this.currentCells.length > 0) {
+            const bestPosition = this.calculateBestCardPosition();
+
+            if (bestPosition) {
+                // Dispatch an event with the cell position and card info
+                EventBus.instance.emit('cardplaced', {
+                    grid_id: RegroupChickenArmy.game.getLeaderIdFromPlayerId(),
+                    x: bestPosition.x,
+                    y: bestPosition.y,
+                    cardId: this.cardId,
+                    rotation: this.rotation
+                });
+            } else {
+                // Reset position if no valid placement found
+                this.element.style.left = `0px`;
+                this.element.style.top = `0px`;
+            }
+        } else {
+            // Reset position if not dropped on a valid cell
+            this.element.style.left = `0px`;
+            this.element.style.top = `0px`;
+        }
+
         this.clearHighlights();
     }
 
@@ -110,12 +146,6 @@ export class Card extends DynamicGameElement {
                 (cell as HTMLElement).classList.remove('highlight');
             }
         });
-
-        // Optional: Dispatch custom event with overlapping cells
-        const event = new CustomEvent('cardovercells', {
-            detail: { cells: this.currentCells }
-        });
-        this.element.dispatchEvent(event);
     }
 
     clearHighlights() {
@@ -123,6 +153,85 @@ export class Card extends DynamicGameElement {
             (cell as HTMLElement).classList.remove('highlight')
         );
         this.currentCells = [];
+    }
+
+    /**
+     * Calculates the best position for placing a 2x2 card based on overlapping active cells
+     * @returns The top-left coordinates for the card placement or null if invalid
+     */
+    private calculateBestCardPosition(): { x: number, y: number } | null {
+        if (this.currentCells.length === 0) return null;
+
+        // Extract coordinates from highlighted cells
+        const highlightedCoordinates: { x: number, y: number }[] = [];
+        this.currentCells.forEach(cell => {
+            const htmlCell = cell as HTMLElement;
+            const x = parseInt(htmlCell.dataset['x'] || '0');
+            const y = parseInt(htmlCell.dataset['y'] || '0');
+            highlightedCoordinates.push({ x, y });
+        });
+
+        // Get the grid from the game
+        const leaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
+        const grid = RegroupChickenArmy.game.playerAreas.at(leaderId).grid.grid;
+
+        // Generate all possible top-left positions for a 2x2 card that would include at least one highlighted cell
+        const possiblePositions: { x: number, y: number, overlapCount: number }[] = [];
+
+        // For each highlighted cell, check the 4 possible positions where it could be part of a 2x2 card
+        highlightedCoordinates.forEach(({ x, y }) => {
+            // The 4 possible positions where this cell could be part of a 2x2 card
+            const potentialPositions = [
+                { x: x - 1, y: y - 1 }, // top-left
+                { x: x, y: y - 1 },   // top-right
+                { x: x - 1, y: y },   // bottom-left
+                { x: x, y: y }      // bottom-right (this cell is the top-left of the card)
+            ];
+
+            potentialPositions.forEach(pos => {
+                // Skip if out of bounds
+                if (pos.x < 0 || pos.y < 0 || pos.x + 1 >= grid[0].length || pos.y + 1 >= grid.length) {
+                    return;
+                }
+
+                let overlapCount = 0;
+                let isValid = true;
+
+                // Check each of the 4 cells of the card (2x2)
+                for (let dy = 0; dy < 2 && isValid; dy++) {
+                    for (let dx = 0; dx < 2 && isValid; dx++) {
+                        const checkX = pos.x + dx;
+                        const checkY = pos.y + dy;
+
+                        // Check if this position is one of our highlighted cells
+                        const isHighlighted = highlightedCoordinates.some(c => c.x === checkX && c.y === checkY);
+
+                        if (isHighlighted) {
+                            overlapCount++;
+                        }
+                        // If not highlighted, it must be empty (not an active cell)
+                        else if (grid[checkY][checkX] !== 0xF && grid[checkY][checkX] !== Slot.NN) {
+                            isValid = false;
+                        }
+                    }
+                }
+
+                // Only consider valid positions that overlap with at least one highlighted cell
+                if (isValid && overlapCount > 0) {
+                    // Check if this position is already in our list
+                    const existingPos = possiblePositions.find(p => p.x === pos.x && p.y === pos.y);
+                    if (!existingPos) {
+                        possiblePositions.push({ ...pos, overlapCount });
+                    }
+                }
+            });
+        });
+
+        // Sort by overlap count (descending) to find the position with most overlap
+        possiblePositions.sort((a, b) => b.overlapCount - a.overlapCount);
+
+        // Return the best position or null if none found
+        return possiblePositions.length > 0 ? { x: possiblePositions[0].x, y: possiblePositions[0].y } : null;
     }
 }
 

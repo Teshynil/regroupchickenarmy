@@ -175,16 +175,16 @@ class Game extends \Table
         $current_player_id = (int) $this->getCurrentPlayerId();
 
         // Get information about players.
-        // NOTE: you can retrieve some extra field you added for "player" table in `dbmodel.sql` if you need it.
         $result["players"] = $this->getCollectionFromDb(
             "SELECT `player_id` `id`, `player_score` `score`, `leader_id`, `marketCardPicked` FROM `player`"
         );
+        
+        // Get board data with all placed cards
         $result["boards"] = $this->getCollectionFromDb(
-            "SELECT `leader_id` `board_id`, `card_id`, `rotation` FROM `player`"
+            "SELECT `board_id`, `card_id`, `rotation`, `x`, `y` FROM `boards`"
         );
+        
         $result["market"] = Market::getAllMarketCards($this);
-
-        // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
         return $result;
     }

@@ -11,7 +11,7 @@ class Market
         $game::DbQuery("INSERT INTO `market` (card_id)" .
             "SELECT card_id " .
             "FROM `cards` " .
-            "WHERE card_id < 99 " .
+            "WHERE card_id BETWEEN 1 AND 98 " .
             "ORDER BY RAND();");
     }
 

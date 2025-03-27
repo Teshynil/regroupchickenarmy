@@ -1,7 +1,7 @@
 import { remove } from "dojo/dom-class";
 import { GameElement } from "../utils/gameElement";
 import { Slot } from "../definitions";
-import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
 import { Cards, Card } from "./cards";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { delay } from "../utils/gameUtils";
@@ -11,10 +11,12 @@ export class Grid extends ListenerElement {
     PARENT_ID = `playerArea_${this.id}`;
     ELEMENT_ID = `mapContainer_${this.id}`;
 
-    get listeners() {
+    get listeners(): ListenerConfig {
         return {
             "addCardToGrid": { callback: this.doAddCardToGrid },
-            "addInitialCards": { callback: this.doAddInitialCard }
+            "addInitialCards": { callback: this.doAddInitialCard },
+
+            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true }
         }
     };
 
@@ -65,7 +67,7 @@ export class Grid extends ListenerElement {
         const size = this.grid.length;
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
-                const isActive = this.grid[y][x] != 0xF ? "active" : "";
+                const isActive = this.grid[y][x] != Slot.NN ? "active" : "";
                 grid.insertAdjacentHTML(`beforeend`, `<div id="player_${this.id}_cell_${y}_${x}" class="cell ${isActive}" data-y="${y}" data-x="${x}"></div>`);
             }
 
@@ -137,26 +139,16 @@ export class Grid extends ListenerElement {
     }
 
     addCardToGrid(cardId: number, posX: number, posY: number, rotation: number) {
+        posX = Number(posX);
+        posY = Number(posY);
         const card = Cards[cardId as keyof typeof Cards] as { getSlots(rotation: number): Slot[] };
 
         if (card == undefined) {
             throw Error(`Card_${cardId} does not exists`);
         }
 
-        if (posX < 0 || posY < 0 || posX > 12 || posY > 12) {
-            throw Error(`Is not possible to put Card_${cardId} on position (${posX},${posY})`);
-        }
-
-
-        let valid = false;
-        for (let row = 0; row < 2; row++) {
-            for (let col = 0; col < 2; col++) {
-                if (this.grid[row][col] != Slot.NN) {
-                    valid = true;
-                    break;
-                }
-            }
-            if (valid) break;
+        if (!this.isValidPlacement(posX, posY)) {
+            throw Error(`Invalid placement for card_${cardId}`);
         }
 
         const slots = card.getSlots(rotation);
@@ -164,6 +156,15 @@ export class Grid extends ListenerElement {
         this.grid[posY][posX + 1] = slots[1];
         this.grid[posY + 1][posX] = slots[2];
         this.grid[posY + 1][posX + 1] = slots[3];
+
+        for (let y = 0; y < 2; y++) {
+            for (let x = 0; x < 2; x++) {
+                const _x = posX + x;
+                const _y = posY + y;
+                const cell = document.getElementById(`player_${this.id}_cell_${_y}_${_x}`) as HTMLDivElement;
+                cell.classList.add("active");
+            }
+        }
     }
 
     async doAddCardToGrid(notif: BGA.Notif<"addCardToGrid">) {
@@ -185,10 +186,38 @@ export class Grid extends ListenerElement {
         this.createCardOnGrid(card_id, 6, 6);
     }
 
+    async doCardPlaced(event: Game.BoardEventTypes["cardplaced"]) {
+        if (this.id === event.grid_id) {
+            const data = event;
+            const card: Card = new Card(data.cardId, this.gridDiv.id, `placedCard`, Cards[data.cardId as keyof Cards]);
+            card.render();
+            card.rotation = data.rotation;
+            card.element.dataset["x"] = `${data.x}`;
+            card.element.dataset["y"] = `${data.y}`;
+            card.element.style.zIndex = `${this.cardsPlayed + 1}`;
+            this.resizeGrid();
+        }
+    }
+
     createCardOnGrid(cardId: number, posX: number, posY: number) {
         this.cardsPlayed++;
         const zIndex = this.cardsPlayed;
         this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div class="card" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="z-index:${zIndex};"></div>`);
         this.resizeGrid();
+    }
+
+    isValidPlacement(posX: number, posY: number): boolean {
+        if (posX < 0 || posY < 0 || posX > 12 || posY > 12) {
+            return false;
+        }
+
+        for (let row = 0; row < 2; row++) {
+            for (let col = 0; col < 2; col++) {
+                if (this.grid[posY + row][posX + col] != Slot.NN) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

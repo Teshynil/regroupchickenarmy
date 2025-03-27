@@ -9,18 +9,18 @@
 
 -- Create the boards
 CREATE TABLE IF NOT EXISTS `boards` (
-    `movement_id` int(1) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `board_id` int(1) UNSIGNED NOT NULL,
-    `card_id` int(3) UNSIGNED NOT NULL,
-    `rotation` int(1) UNSIGNED NOT NULL,
-    `x` int(2) UNSIGNED NOT NULL,
-    `y` int(2) UNSIGNED NOT NULL,
+    `movement_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+    `board_id` int UNSIGNED NOT NULL,
+    `card_id` int UNSIGNED NOT NULL,
+    `rotation` int UNSIGNED NOT NULL,
+    `x` int UNSIGNED NOT NULL,
+    `y` int UNSIGNED NOT NULL,
     PRIMARY KEY (`movement_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
 -- Create the available cards
 CREATE TABLE IF NOT EXISTS `cards` (
-    `card_id` int(3) UNSIGNED NOT NULL,
+    `card_id` int UNSIGNED NOT NULL,
     `s1` varchar(2) NOT NULL,
     `s2` varchar(2) NOT NULL,
     `s3` varchar(2) NOT NULL,
@@ -80,8 +80,8 @@ VALUES (0, 'EE','EE','EE','EE'),
 
 -- Create the market
 CREATE TABLE IF NOT EXISTS `market` (
-    `order` int(3) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `card_id` int(3) UNSIGNED NOT NULL,
+    `order` int UNSIGNED NOT NULL AUTO_INCREMENT,
+    `card_id` int UNSIGNED NOT NULL,
     PRIMARY KEY (`order`),
     KEY `card_id_fk` (`card_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;

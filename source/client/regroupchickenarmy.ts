@@ -79,7 +79,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     let player_id: BGA.ID;
     for (player_id in gamedatas.players) {
       const player = gamedatas.players[player_id] as Player;
-      const leaderId = player.leader_id
+      const leaderId = player.leader_id;
       if (leaderId !== null) {
         this.leaderSelection.leaders[leaderId] = null;
         this.board.backgrounds[leaderId].isActive = true;
@@ -87,9 +87,32 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         this.leaders_id[player_id] = Number(leaderId);
       }
     }
+
+    // Render board cards from saved state
+    if (gamedatas.boards) {
+      for (const boardId in gamedatas.boards) {
+        const boardData = gamedatas.boards[boardId];
+        if (boardData.card_id) {
+          this.playerAreas.at(boardData.board_id).grid.addCardToGrid(
+            boardData.card_id,
+            boardData.x,
+            boardData.y,
+            boardData.rotation
+          );
+          this.playerAreas.at(boardData.board_id).grid.createCardOnGrid(
+            boardData.card_id,
+            boardData.x,
+            boardData.y
+          );
+        }
+      }
+    }
+
     let marketCard: { order: number, card_id: number };
+    let i = 2;
     for (marketCard of gamedatas["market"]) {
-      this.marketArea.cards[marketCard.order - 1].dataset["cardId"] = `${marketCard.card_id}`;
+      this.marketArea.cards[i].dataset["cardId"] = `${marketCard.card_id}`;
+      i--;
     }
     if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game to check the market status
       if (this.board.isActive) {

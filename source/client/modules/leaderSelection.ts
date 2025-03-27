@@ -1,13 +1,13 @@
 import { anim } from "dojo";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
 import { GameElement } from "../utils/gameElement";
 export class LeaderSelection extends ListenerElement {
 
     PARENT_ID = "centralArea";
     ELEMENT_ID = "leaderSelectionArea";
 
-    get listeners() {
+    get listeners(): ListenerConfig {
         return {
             "leaderSelected": { callback: this.doSelect }
         }
@@ -40,7 +40,7 @@ export class LeaderSelection extends ListenerElement {
 
     }
 
-    async doSelect(notif: BGA.Notif<"selectLeader">) {
+    async doSelect(notif: BGA.Notif<"leaderSelected">) {
         const leader_id = notif.args.leader_id;
         const element = this.leaders[leader_id].element;
         RegroupChickenArmy.game.leaders_id[notif.args.player_id] = Number(leader_id);

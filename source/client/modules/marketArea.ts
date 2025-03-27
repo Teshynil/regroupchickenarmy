@@ -1,7 +1,7 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "../utils/gameElement";
 import { delay } from "../utils/gameUtils";
-import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
 import { Cards, Card } from "./cards";
 
 export class MarketArea extends ListenerElement {
@@ -59,8 +59,7 @@ export class MarketArea extends ListenerElement {
 
     public async preSelectCard(marketCard_order: number, deckCardId: number = 0) {
         if (this.cardRotationWindow !== null) {
-            this.cardRotationWindow.destroy();
-            this.cardRotationWindow = null;
+            this.cancelCardPlacement();
             this.cards.forEach(c => {
                 c.style.opacity = '1';
             })
@@ -96,9 +95,36 @@ export class MarketArea extends ListenerElement {
             this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
         }
     }
+    public async confirmCardPlacement() {
+
+    }
+
+    public async cancelCardPlacement() {
+        const element = document.getElementById("placedCard")!;
+        const card_id = Number(element.dataset["cardId"] ?? 0);
+        element.remove();
+        RegroupChickenArmy.game.marketArea.cardRotationWindow?.destroy();
+        RegroupChickenArmy.game.marketArea.cardRotationWindow = null;
+        RegroupChickenArmy.game.marketArea.cards.forEach(c => {
+            c.style.opacity = '1';
+        })
+        RegroupChickenArmy.game.board.element.classList.remove("centralAreaExpanded");
+        RegroupChickenArmy.game.removeActionButtons();
+
+        if (RegroupChickenArmy.game.marketArea.element.classList.contains("deckCardPicked")) {
+            RegroupChickenArmy.game.marketArea.preSelectCard(-1, card_id);
+        }
+    }
 }
 
-export class CardRotationWindow extends GameElement {
+export class CardRotationWindow extends ListenerElement {
+
+    get listeners(): ListenerConfig {
+        return {
+            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true }
+        }
+    };
+
     PARENT_ID = `centralArea`;
     ELEMENT_ID = `cardRotationArea`;
     htmlDefinition = `<div id="${this.ELEMENT_ID}">
@@ -116,13 +142,12 @@ export class CardRotationWindow extends GameElement {
         this.cardRotation_ccw = document.getElementById("cardRotation_ccw") as HTMLDivElement;
         this.cardRotation_cw = document.getElementById("cardRotation_cw") as HTMLDivElement;
         RegroupChickenArmy.game.removeActionButtons();
+        this.enableRotationButtons();
         if (this.id == 0) {
-            this.cardRotation_ccw.style.display = "none";
-            this.cardRotation_cw.style.display = "none";
+            this.disableRotationButtons();
             RegroupChickenArmy.game.addActionButton("confirmDeckPick_btn", _('Pick card from deck'), RegroupChickenArmy.game.marketArea.pickDeckCard);
         }
     }
-
 
     protected override addEventListeners(): void {
         this.addEventToElement(this.cardRotation_ccw, "click", () => this.card.rotate(-1));
@@ -130,6 +155,27 @@ export class CardRotationWindow extends GameElement {
 
         if (this.id !== 0) {
             this.card.isDraggable = true;
+            this.enableRotationButtons();
+        }
+    }
+
+    public disableRotationButtons() {
+        this.cardRotation_ccw.style.display = "none";
+        this.cardRotation_cw.style.display = "none";
+    }
+
+    public enableRotationButtons() {
+        this.cardRotation_ccw.style.display = "block";
+        this.cardRotation_cw.style.display = "block";
+    }
+
+    async doCardPlaced(event: Game.BoardEventTypes["cardplaced"]) {
+        if (this.id == event.cardId) {
+            this.card.hide();
+            this.disableRotationButtons();
+            this.card.isDraggable = false;
+            RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.marketArea.confirmCardPlacement);
+            RegroupChickenArmy.game.addActionButton("cancelCardPlacement_btn", _('Cancel'), RegroupChickenArmy.game.marketArea.cancelCardPlacement);
         }
     }
 }

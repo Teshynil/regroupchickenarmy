@@ -54,7 +54,7 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
 
             foreach ($player_initial_cards as $grid => $value) {
                 $card_id = $value["card_id"];
-                $game->DbQuery("INSERT INTO `boards` (`movement_id`, `board_id`, `card_id`, `rotation`, `x`, `y`) VALUES (NULL, $grid, $card_id, '0', '6,6')");
+                $game->DbQuery("INSERT INTO `boards` (`movement_id`, `board_id`, `card_id`, `rotation`, `x`, `y`) VALUES (NULL, $grid, $card_id, '0', '6','6')");
             }
             $game->notifyAllPlayers('addInitialCards', "", [
                 'playersCards' => $player_initial_cards,

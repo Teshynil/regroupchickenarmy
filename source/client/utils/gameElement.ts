@@ -43,7 +43,7 @@ export abstract class GameElement {
 
     public beforeRender(force: boolean): void { };
 
-    public render(force?: boolean) {
+    public render(force?: boolean): this {
         if (force === undefined) force = false;
         this.beforeRender(force);
 

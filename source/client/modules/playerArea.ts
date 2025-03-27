@@ -37,4 +37,9 @@ export class PlayerArea extends ListenerElement {
         this.panel.hide();
         RegroupChickenArmy.game.board.backgrounds[this.id].isActive = false;
     }
+
+    override beforeDestroy(): void {
+        this.grid.destroy();
+        this.panel.destroy();
+    }
 }
