@@ -1,5 +1,6 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "../utils/gameElement";
+import { MouseHitbox } from "../utils/mouseHitbox";
 import { delay } from "../utils/gameUtils";
 import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
 import { Cards, Card } from "./cards";
@@ -100,9 +101,12 @@ export class MarketArea extends ListenerElement {
     }
 
     public async cancelCardPlacement() {
-        const element = document.getElementById("placedCard")!;
-        const card_id = Number(element.dataset["cardId"] ?? 0);
-        element.remove();
+        const element = document.getElementById("placedCard");
+        let card_id;
+        if (element != null) {
+            card_id = Number(element.dataset["cardId"] ?? 0);
+            element.remove();
+        }
         RegroupChickenArmy.game.marketArea.cardRotationWindow?.destroy();
         RegroupChickenArmy.game.marketArea.cardRotationWindow = null;
         RegroupChickenArmy.game.marketArea.cards.forEach(c => {
@@ -111,7 +115,7 @@ export class MarketArea extends ListenerElement {
         RegroupChickenArmy.game.board.element.classList.remove("centralAreaExpanded");
         RegroupChickenArmy.game.removeActionButtons();
 
-        if (RegroupChickenArmy.game.marketArea.element.classList.contains("deckCardPicked")) {
+        if (RegroupChickenArmy.game.marketArea.element.classList.contains("deckCardPicked") && card_id != undefined) {
             RegroupChickenArmy.game.marketArea.preSelectCard(-1, card_id);
         }
     }
@@ -154,7 +158,11 @@ export class CardRotationWindow extends ListenerElement {
         this.addEventToElement(this.cardRotation_cw, "click", () => this.card.rotate(1));
 
         if (this.id !== 0) {
-            this.card.isDraggable = true;
+            // Show posible placements
+            const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
+            const grid = RegroupChickenArmy.game.playerAreas.at(leader_id).grid;
+            const cells = Array.from(grid.gridDiv.children) as HTMLElement[];
+            MouseHitbox.getInstance().startSession(50, cells);
             this.enableRotationButtons();
         }
     }
@@ -173,7 +181,6 @@ export class CardRotationWindow extends ListenerElement {
         if (this.id == event.cardId) {
             this.card.hide();
             this.disableRotationButtons();
-            this.card.isDraggable = false;
             RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.marketArea.confirmCardPlacement);
             RegroupChickenArmy.game.addActionButton("cancelCardPlacement_btn", _('Cancel'), RegroupChickenArmy.game.marketArea.cancelCardPlacement);
         }

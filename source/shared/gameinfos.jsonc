@@ -20,6 +20,7 @@
   "publisher_website": "https://detestablegames.com/",
   "publisher_bgg_id": 37832,
   "bgg_id": 350637,
+  "enable_3d": false,
 
   // Players
   "players": [2, 3, 4],

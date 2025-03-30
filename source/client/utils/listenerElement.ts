@@ -35,9 +35,13 @@ export abstract class ListenerElement extends GameElement {
         for (const [eventType, listener] of Object.entries(this.listeners)) {
             if (listener.isCustomEvent) {
                 const boundCallback = listener.callback.bind(_this);
+                const boardEventType = eventType as keyof Game.BoardEventTypes;
                 // Store the subscription ID instead of the handle
-                this._listenersHandlers[eventType as keyof ListenerConfig] =
-                    EventBus.instance.subscribe(eventType as keyof Game.BoardEventTypes, boundCallback);
+                this._listenersHandlers[boardEventType] =
+                    EventBus.instance.subscribe(
+                        boardEventType, 
+                        boundCallback as BoardEventCallback<typeof boardEventType>
+                    );
             } else {
                 // Setup BGA notification listener (existing functionality)
                 const boundCallback = listener.callback.bind(_this);

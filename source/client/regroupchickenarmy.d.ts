@@ -36,5 +36,6 @@ declare namespace BGA {
 declare namespace Game {
 	interface BoardEventTypes {
 		"cardplaced": { grid_id: number, x: number, y: number, cardId: number, rotation: number };
+		"mouseHitboxCollision": { collisions: HTMLElement[] };
 	}
 }
