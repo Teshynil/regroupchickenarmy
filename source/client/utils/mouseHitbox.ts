@@ -1,11 +1,12 @@
 import { EventBus } from "./eventBus";
 
 export class MouseHitbox {
-    private static instance: MouseHitbox | null = null;
+    private static _instance: MouseHitbox | null = null;
     private hitboxElement: HTMLDivElement | null = null;
     private hitboxId: number = 0;
     private elementsToCollideWith: HTMLElement[] = [];
     private currentCollisions: HTMLElement[] = [];
+    private highlightCollisionables: boolean = false;
     private mouseMoveListener: (e: MouseEvent) => void;
     private hitboxSize: number = 0;
     private sessionActive: boolean = false;
@@ -14,11 +15,11 @@ export class MouseHitbox {
         this.mouseMoveListener = this.onMouseMove.bind(this);
     }
 
-    public static getInstance(): MouseHitbox {
-        if (!MouseHitbox.instance) {
-            MouseHitbox.instance = new MouseHitbox();
+    static get instance(): MouseHitbox {
+        if (!MouseHitbox._instance) {
+            MouseHitbox._instance = new MouseHitbox();
         }
-        return MouseHitbox.instance;
+        return MouseHitbox._instance;
     }
 
     /**
@@ -26,7 +27,7 @@ export class MouseHitbox {
      * @param hitboxSize Size of the hitbox in pixels
      * @param elementsToCollideWith Array of elements to check for collisions
      */
-    public startSession(id: number, hitboxSize: number, elementsToCollideWith: HTMLElement[]): void {
+    public startSession(id: number, hitboxSize: number, elementsToCollideWith: HTMLElement[], highlightCollisionables: boolean = false): void {
         if (this.sessionActive) {
             this.stopSession();
         }
@@ -35,6 +36,12 @@ export class MouseHitbox {
         this.hitboxId = id;
         this.hitboxSize = hitboxSize;
         this.elementsToCollideWith = elementsToCollideWith;
+        this.highlightCollisionables = highlightCollisionables;
+        if (highlightCollisionables) {
+            this.elementsToCollideWith.forEach(e => {
+                e.classList.add("highlight");
+            })
+        }
         this.currentCollisions = [];
 
         this.createHitboxElement();
@@ -50,6 +57,11 @@ export class MouseHitbox {
         document.removeEventListener('mousemove', this.mouseMoveListener);
         this.removeHitboxElement();
 
+        if (this.highlightCollisionables) {
+            this.elementsToCollideWith.forEach(e => {
+                e.classList.remove("highlight");
+            })
+        }
         this.sessionActive = false;
         this.elementsToCollideWith = [];
         this.currentCollisions = [];
@@ -61,7 +73,7 @@ export class MouseHitbox {
     private createHitboxElement(): void {
         this.hitboxElement = document.createElement('div');
         this.hitboxElement.id = 'mouseHitbox';
-        
+
         Object.assign(this.hitboxElement.style, {
             position: 'fixed',
             width: `${this.hitboxSize}px`,
@@ -110,7 +122,7 @@ export class MouseHitbox {
 
         this.elementsToCollideWith.forEach(element => {
             const elementRect = element.getBoundingClientRect();
-            
+
             if (
                 hitboxRect.left < elementRect.right &&
                 hitboxRect.right > elementRect.left &&
@@ -123,7 +135,7 @@ export class MouseHitbox {
 
         if (this.haveCollisionsChanged(newCollisions)) {
             this.currentCollisions = newCollisions;
-            
+
             EventBus.instance.emit('mouseHitboxCollision', {
                 id: this.hitboxId,
                 collisions: this.currentCollisions

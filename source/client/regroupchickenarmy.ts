@@ -89,21 +89,23 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     }
 
     // Render board cards from saved state
-    if (gamedatas.boards) {
-      for (const boardId in gamedatas.boards) {
-        const boardData = gamedatas.boards[boardId];
-        if (boardData.card_id) {
-          this.playerAreas.at(boardData.board_id).grid.addCardToGrid(
-            boardData.card_id,
-            boardData.x,
-            boardData.y,
-            boardData.rotation
-          );
-          this.playerAreas.at(boardData.board_id).grid.createCardOnGrid(
-            boardData.card_id,
-            boardData.x,
-            boardData.y
-          );
+    if (gamedatas.boards_moves) {
+      for (const boardId in gamedatas.boards_moves) {
+        const boardData = gamedatas.boards_moves[boardId];
+        for (const movementId in boardData) {
+          if (boardData[movementId].card_id) {
+            this.playerAreas.at(boardData[movementId].board_id).grid.addCardToGrid(
+              boardData[movementId].card_id,
+              boardData[movementId].x,
+              boardData[movementId].y,
+              boardData[movementId].rotation
+            );
+            this.playerAreas.at(boardData[movementId].board_id).grid.createCardOnGrid(
+              boardData[movementId].card_id,
+              boardData[movementId].x,
+              boardData[movementId].y
+            );
+          }
         }
       }
     }
@@ -114,12 +116,21 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       this.marketArea.cards[i].dataset["cardId"] = `${marketCard.card_id}`;
       i--;
     }
-    if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game to check the market status
+    if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game
+      const player = gamedatas.players[this.player_id] as Player;
       if (this.board.isActive) {
-        const player = gamedatas.players[this.player_id] as Player;
         if (player.marketCardPicked !== null) {
           this.marketArea.preSelectCard(-1, player.marketCardPicked);
         }
+      }
+      const resources = gamedatas["resources"];
+      for (const leaderId in resources) {
+        this.playerAreas.at(Number(leaderId)).panel.resourcePanel.doUpdateResources({
+          args: {
+            leader_id: Number(leaderId),
+            resources: resources[leaderId]
+          }
+        } as unknown as BGA.Notif<"resourcesUpdated">);
       }
     }
   }
@@ -270,7 +281,39 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override setupNotifications = () => {
     console.log("notifications subscriptions setup");
 
+    this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
   };
+
+  private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
+    console.log("Entering Notification Boards initialized");
+
+    await delay(3000);
+
+    // Process initial cards
+    const playerCards = notif.args.playersCards;
+    dojo.publish('addInitialCards', [{
+      args: {
+        playersCards: playerCards
+      },
+    }]);
+
+    // Process initial resources
+    const playerResources = notif.args.playersResources;
+    for (const leaderId in playerResources) {
+      const playerArea = this.playerAreas.find(area => area.grid.id === parseInt(leaderId));
+      if (playerArea) {
+        const resourceData = playerResources[leaderId];
+        // Trigger resource update notification manually
+        dojo.publish('resourcesUpdated', [{
+          args: {
+            player_id: resourceData.player_id,
+            leader_id: parseInt(leaderId),
+            resources: resourceData.resources
+          },
+        }]);
+      }
+    }
+  }
 
   /* Example:
  

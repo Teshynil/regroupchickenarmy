@@ -33,18 +33,26 @@ export abstract class ListenerElement extends GameElement {
     setupNotifications(): void {
         const _this = this;
         for (const [eventType, listener] of Object.entries(this.listeners)) {
+            // Check if the listener has a Handler already
+            if (this._listenersHandlers[eventType as keyof ListenerConfig]) {
+                continue;
+            }
             if (listener.isCustomEvent) {
                 const boundCallback = listener.callback.bind(_this);
                 const boardEventType = eventType as keyof Game.BoardEventTypes;
                 // Store the subscription ID instead of the handle
                 this._listenersHandlers[boardEventType] =
                     EventBus.instance.subscribe(
-                        boardEventType, 
+                        boardEventType,
                         boundCallback as BoardEventCallback<typeof boardEventType>
                     );
             } else {
                 // Setup BGA notification listener (existing functionality)
-                const boundCallback = listener.callback.bind(_this);
+                const callback = listener.callback as NotifCallback<keyof BGA.NotifTypes>;
+                const boundCallback = (notif: BGA.Notif<keyof BGA.NotifTypes>) => {
+                    console.log(`Entering Notification ${eventType}`);
+                    callback.call(this, notif);
+                };
                 this._listenersHandlers[eventType as keyof ListenerConfig] = RegroupChickenArmy.game.subscribeNotif(
                     eventType as keyof BGA.NotifTypes,
                     boundCallback as NotifCallback<keyof BGA.NotifTypes>
@@ -77,6 +85,7 @@ export abstract class ListenerElement extends GameElement {
     }
 
     public override destroy() {
+        console.log(`Destroying ${this.consoleId}`);
         this.unsubscribeAll();
         try {
             this.element.remove();

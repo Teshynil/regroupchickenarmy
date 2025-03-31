@@ -1,4 +1,6 @@
 import { GameElement } from "../utils/gameElement";
+import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
+import { RegroupChickenArmy } from "../regroupchickenarmy";
 
 export class PlayerPanel extends GameElement {
     PARENT_ID = `board`;
@@ -39,10 +41,16 @@ class LeaderPanel extends GameElement {
     }
 }
 
-class ResourcePanel extends GameElement {
+class ResourcePanel extends ListenerElement {
     PARENT_ID = `playerPanel_${this.id}`;
     ELEMENT_ID = `resourcePanel_${this.id}`;
     get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
+
+    get listeners(): ListenerConfig {
+        return {
+            "resourcesUpdated": { callback: this.doUpdateResources }
+        }
+    };
 
     htmlDefinition = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic" id="resourceContainer_${this.id}">
@@ -79,4 +87,18 @@ class ResourcePanel extends GameElement {
     get potionCount(): number { return Number(this.potionElement.innerText) };
     get coinCount(): number { return Number(this.coinElement.innerText) };
 
+    doUpdateResources(notif: BGA.Notif<"resourcesUpdated">): void {
+        // Only update if this notification is for our leader
+        if (notif.args.leader_id === this.id) {
+            const resources = notif.args.resources;
+            
+            // Update all resource counters
+            this.shieldElement.innerText = resources.shield.toString();
+            this.fighterElement.innerText = resources.fighter.toString();
+            this.barrierElement.innerText = resources.barrier.toString();
+            this.wizardElement.innerText = resources.wizard.toString();
+            this.potionElement.innerText = resources.potion.toString();
+            this.coinElement.innerText = resources.coin.toString();
+        }
+    }
 }

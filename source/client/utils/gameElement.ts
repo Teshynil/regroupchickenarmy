@@ -110,12 +110,13 @@ export abstract class GameElement {
     public beforeDestroy(): void { };
 
     public destroy() {
+        console.log(`Destroying ${this.consoleId}`);
         try {
             this.element.remove();
-        } catch (error) { };
+        } catch (error) { } finally { this._element = undefined; }
     }
 
-    private get consoleId() {
+    protected get consoleId() {
         return `${this.constructor.name}:${this.id}`
     }
 }

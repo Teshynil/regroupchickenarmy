@@ -11,17 +11,40 @@ declare namespace BGA {
 
 	/** Goto {@link Gamedatas} or hover name for info. */
 	interface Gamedatas extends Record<string, any> {
-		"boards": { [key: string]: { board_id: number, card_id: number, rotation: number, x: number, y: number } };
+		"boards_moves": { [key: string]: { [key: string]: { board_id: number, movement_id: number, card_id: number, rotation: number, x: number, y: number } } };
 		"market": { order: number, card_id: number }[];
+		"resources": { [leaderId: string]: { fighter: number, wizard: number, shield: number, barrier: number, potion: number, coin: number } };
 	}
 
 	/** Goto {@link NotifTypes} or hover name for info. */
 	interface NotifTypes {
 		"leaderSelected": { player_name: string, player_id: number, leader_id: number };
 		"marketUpdate": { cards: { order: number, card_id: number }[] };
-		"addInitialCards": { playersCards: { [key: string]: { position: number, player_id: number, card_id: number }; } };
+		"addInitialCards": { playersCards: { [leaderId: string]: { leader_id: number, player_id: number, card_id: number } } };
 		"addCardToGrid": { card_id: number, rotation: number, leader_id: number, x: number, y: number };
 		"deckCardPicked": { card_id: number, player_id: number, player_name: string, };
+		"resourcesUpdated": { player_id: number, leader_id: number, resources: { 
+			fighter: number, 
+			wizard: number, 
+			shield: number, 
+			barrier: number, 
+			potion: number, 
+			coin: number
+		} };
+		"boardsInitialized": { 
+			playersCards: { [leaderId: string]: { leader_id: number, player_id: number, card_id: number } },
+			playersResources: { [leaderId: string]: { 
+				player_id: number, 
+				resources: { 
+					fighter: number, 
+					wizard: number, 
+					shield: number, 
+					barrier: number, 
+					potion: number, 
+					coin: number 
+				} 
+			} }
+		};
 	}
 
 	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */

@@ -35,7 +35,7 @@
 		"relatedGameState": {
 			"transitions": {
 				"selectLeader": "leaderSelection",
-				"allSelectedLeader": "turnSetup"
+				"allSelectedLeader": "prepareBoards"
 			}
 		},
 		"possibleactions": {
@@ -49,6 +49,12 @@
 		"transitions": {
 			"selected": "leaderSelectionGame",
 			"notSelected": "leaderSelection"
+		}
+	},
+	"prepareBoards": {
+		"type": "game",
+		"transitions": {
+			"startGame": "turnSetup"
 		}
 	},
 	"turnSetup": {

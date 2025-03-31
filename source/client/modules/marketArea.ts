@@ -41,7 +41,8 @@ export class MarketArea extends ListenerElement {
     doUpdateMarket(notif: BGA.Notif<"marketUpdate">) {
         for (let key in notif.args.cards) {
             const card = notif.args.cards[key];
-            this.cards[key].dataset["cardId"] = `${card.card_id}`;
+            const card_key = 2 - Number(key);
+            this.cards[card_key].dataset["cardId"] = `${card.card_id}`;
         }
     }
 
@@ -72,7 +73,7 @@ export class MarketArea extends ListenerElement {
             const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
             const cardCost = 2 - marketCard_order;
             if (availableCoins < cardCost) {
-                RegroupChickenArmy.game.showMessage(_(`You can't afford this card`), "error");
+                RegroupChickenArmy.game.showMessage(_(`You don't have enough coins to buy this card`), "error");
                 return;
             }
             cardId = Number(card.dataset["cardId"]);
@@ -97,7 +98,23 @@ export class MarketArea extends ListenerElement {
         }
     }
     public async confirmCardPlacement() {
+        const card = document.getElementById("placedCard") as HTMLDivElement;
+        const card_id = Number(card.dataset["cardId"]);
+        const rotation = Number(card.style.getPropertyValue("--rotation"));
+        const pos_x = Number(card.dataset["x"]);
+        const pos_y = Number(card.dataset["y"]);
 
+        RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/putCard.html`, {
+            card_id: card_id,
+            rotation: rotation,
+            pos_x: pos_x,
+            pos_y: pos_y,
+        }, this, async function () {
+            this.cardRotationWindow.destroy();
+            this.cardRotationWindow = null;
+            RegroupChickenArmy.game.board.element.classList.remove("centralAreaExpanded");
+            RegroupChickenArmy.game.removeActionButtons();
+        });
     }
 
     public async cancelCardPlacement() {
@@ -125,7 +142,7 @@ export class CardRotationWindow extends ListenerElement {
 
     get listeners(): ListenerConfig {
         return {
-            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true }
+            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true },
         }
     };
 
@@ -163,7 +180,7 @@ export class CardRotationWindow extends ListenerElement {
             const grid = RegroupChickenArmy.game.playerAreas.at(leader_id).grid;
             const cells = Array.from(grid.gridDiv.querySelectorAll(".cell.active")) as HTMLElement[];
             const scale = grid.scrollmap.zoom;
-            MouseHitbox.getInstance().startSession(leader_id, 50 * scale * 0.95, cells);
+            MouseHitbox.instance.startSession(leader_id, 50 * scale * 0.95, cells, true);
             this.enableRotationButtons();
         }
     }
@@ -180,6 +197,7 @@ export class CardRotationWindow extends ListenerElement {
 
     async doCardPlaced(event: Game.BoardEventTypes["cardplaced"]) {
         if (this.id == event.cardId) {
+            MouseHitbox.instance.stopSession();
             this.card.hide();
             this.disableRotationButtons();
             RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.marketArea.confirmCardPlacement);

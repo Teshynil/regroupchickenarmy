@@ -2,6 +2,8 @@
 
 namespace Bga\Games\RegroupChickenArmy\States;
 
+use Bga\Games\RegroupChickenArmy\Components\Boards;
+use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Bga\Games\RegroupChickenArmy\Game;
 use BgaUserException;
 use BgaVisibleSystemException;
@@ -32,6 +34,10 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
         }
 
         $game->DbQuery("UPDATE player SET leader_id = $leaderId WHERE player_id = $playerId");
+        
+        // Initialize resources for the selected leader
+        Resources::initializeResources($game, $leaderId);
+        
         $game->notifyAllPlayers('leaderSelected', clienttranslate('${player_name} selected leader'), [
             'player_name' => $game->getActivePlayerName(),
             'player_id' => $playerId,
@@ -49,22 +55,12 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
         $transition = "selectLeader";
         if ($checkAllLeadersSelected == 0) {
             $transition = "allSelectedLeader";
-            //We could change this if variant rule is implemented
-            $player_initial_cards = $game->getCollectionFromDB("SELECT `leader_id`, `player_id`, 99 as card_id FROM `player`");
-
-            foreach ($player_initial_cards as $grid => $value) {
-                $card_id = $value["card_id"];
-                $game->DbQuery("INSERT INTO `boards` (`movement_id`, `board_id`, `card_id`, `rotation`, `x`, `y`) VALUES (NULL, $grid, $card_id, '0', '6','6')");
-            }
-            $game->notifyAllPlayers('addInitialCards', "", [
-                'playersCards' => $player_initial_cards,
-            ]);
         }
 
         $currentPlayerId = $game->getCurrentPlayerId();
         $game->giveExtraTime($currentPlayerId);
         $player_id = $game->activeNextPlayer();
-        $game->dump("nextPlayer", $player_id);
         $game->gamestate->nextState($transition);
     }
+
 }

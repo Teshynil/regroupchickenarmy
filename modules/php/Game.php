@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Bga\Games\RegroupChickenArmy;
 
 use Bga\Games\RegroupChickenArmy\Components\Market;
+use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Table;
 
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
@@ -93,7 +94,9 @@ class Game extends \Table
     public function __construct()
     {
         parent::__construct();
-        $this->initGameStateLabels([]);
+        $this->initGameStateLabels([
+            'round' => 10,
+        ]);
 
         /* example of notification decorator.
         // automatically complete notification args when needed
@@ -178,13 +181,15 @@ class Game extends \Table
         $result["players"] = $this->getCollectionFromDb(
             "SELECT `player_id` `id`, `player_score` `score`, `leader_id`, `marketCardPicked` FROM `player`"
         );
-        
+
         // Get board data with all placed cards
-        $result["boards"] = $this->getCollectionFromDb(
-            "SELECT `board_id`, `card_id`, `rotation`, `x`, `y` FROM `boards`"
+        $result["boards_moves"] = $this->getDoubleKeyCollectionFromDB(
+            "SELECT `board_id`, `movement_id` , `card_id`, `rotation`, `x`, `y` FROM `boards_moves`"
         );
-        
+
         $result["market"] = Market::getAllMarketCards($this);
+
+        $result["resources"] = Resources::getAllResources($this);
 
         return $result;
     }

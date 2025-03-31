@@ -42,4 +42,14 @@ class Market
             )
         );
     }
+    
+    public static function removeMarketCard(Game $game, int $cardId): void
+    {
+        $game::DbQuery(
+            sprintf(
+                "DELETE FROM `market` WHERE `card_id` = %s;",
+                $cardId
+            )
+        );
+    }
 }
