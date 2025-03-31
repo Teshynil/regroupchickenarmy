@@ -161,8 +161,9 @@ export class CardRotationWindow extends ListenerElement {
             // Show posible placements
             const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
             const grid = RegroupChickenArmy.game.playerAreas.at(leader_id).grid;
-            const cells = Array.from(grid.gridDiv.children) as HTMLElement[];
-            MouseHitbox.getInstance().startSession(50, cells);
+            const cells = Array.from(grid.gridDiv.querySelectorAll(".cell.active")) as HTMLElement[];
+            const scale = grid.scrollmap.zoom;
+            MouseHitbox.getInstance().startSession(leader_id, 50 * scale * 0.95, cells);
             this.enableRotationButtons();
         }
     }

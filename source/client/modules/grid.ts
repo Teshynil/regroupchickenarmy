@@ -16,7 +16,8 @@ export class Grid extends ListenerElement {
             "addCardToGrid": { callback: this.doAddCardToGrid },
             "addInitialCards": { callback: this.doAddInitialCard },
 
-            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true }
+            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true },
+            "mouseHitboxCollision": { callback: this.doMouseHitboxCollision, isCustomEvent: true }
         }
     };
 
@@ -53,7 +54,8 @@ export class Grid extends ListenerElement {
         this.scrollmap.startPosition = { x: 0, y: 0 };
         this.scrollmap.createCompletely($(this.element));
         this.scrollmap.zoomingOptions.bWheelZooming = false;
-        document.querySelectorAll(".scrollmap_button_wrapper:not(.reset), .scrollmap_icon_always_visible").forEach(e => e.remove());
+        this.scrollmap.bEnableScrolling = false;
+        document.querySelectorAll(".scrollmap_button_wrapper, .scrollmap_icon_always_visible").forEach(e => e.remove());
 
         this.scrollmap.scrollable_div.insertAdjacentHTML('beforeend', `
 			<div id="grid_${this.id}" class="grid">
@@ -73,6 +75,7 @@ export class Grid extends ListenerElement {
 
         }
         this.scrollmap.container_subdiv.style.opacity = "0";
+        this.scrollmap.surface_div.style.cursor = "default";
         this.scrollmap.container_subdiv.style.transition = "opacity 0.5s ease-in-out";
         setTimeout(() => {
             this.scrollmap.container_subdiv.style.opacity = "1";
@@ -157,12 +160,19 @@ export class Grid extends ListenerElement {
         this.grid[posY + 1][posX] = slots[2];
         this.grid[posY + 1][posX + 1] = slots[3];
 
-        for (let y = 0; y < 2; y++) {
-            for (let x = 0; x < 2; x++) {
+        for (let y = -1; y <= 2; y++) {
+            for (let x = -1; x <= 2; x++) {
                 const _x = posX + x;
                 const _y = posY + y;
+
+                if (_x < 0 || _y < 0 || _x >= this.grid[0].length || _y >= this.grid.length) {
+                    continue;
+                }
+
                 const cell = document.getElementById(`player_${this.id}_cell_${_y}_${_x}`) as HTMLDivElement;
-                cell.classList.add("active");
+                if (cell) {
+                    cell.classList.add("active");
+                }
             }
         }
     }
@@ -219,5 +229,36 @@ export class Grid extends ListenerElement {
             }
         }
         return false;
+    }
+
+    async doMouseHitboxCollision(event: Game.BoardEventTypes["mouseHitboxCollision"]) {
+        if (event.id != this.id) return;
+        if (event.collisions.length == 4) {
+            const cardId = RegroupChickenArmy.game.marketArea.cardRotationWindow.card.cardId;
+            const x = Number(event.collisions[0].dataset["x"]);
+            const y = Number(event.collisions[0].dataset["y"]);
+            this.createTemporalCardOnGrid(cardId, x, y);
+        } else {
+            document.getElementById("temporalCard")?.remove();
+        }
+    }
+
+    createTemporalCardOnGrid(cardId: number, posX: number, posY: number) {
+        document.getElementById("temporalCard")?.remove();
+        const rotation = RegroupChickenArmy.game.marketArea.cardRotationWindow.card.rotation;
+        this.gridDiv.insertAdjacentHTML(
+            this.insertPosition,
+            `<div class="card" id="temporalCard" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}; z-index:800;"></div>`);
+        this.resizeGrid();
+        const temporalCard = document.getElementById("temporalCard") as HTMLDivElement;
+        this.addEventToElement(temporalCard, "click", () => this.selectLocationForCardPlacement);
+    }
+
+    selectLocationForCardPlacement() {
+        const temporalCard = document.getElementById("temporalCard") as HTMLDivElement;
+        const x = Number(temporalCard.dataset["x"]);
+        const y = Number(temporalCard.dataset["y"]);
+        const cardId = Number(temporalCard.dataset["cardId"]);
+        
     }
 }

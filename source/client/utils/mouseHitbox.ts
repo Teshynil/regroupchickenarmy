@@ -3,6 +3,7 @@ import { EventBus } from "./eventBus";
 export class MouseHitbox {
     private static instance: MouseHitbox | null = null;
     private hitboxElement: HTMLDivElement | null = null;
+    private hitboxId: number = 0;
     private elementsToCollideWith: HTMLElement[] = [];
     private currentCollisions: HTMLElement[] = [];
     private mouseMoveListener: (e: MouseEvent) => void;
@@ -25,12 +26,13 @@ export class MouseHitbox {
      * @param hitboxSize Size of the hitbox in pixels
      * @param elementsToCollideWith Array of elements to check for collisions
      */
-    public startSession(hitboxSize: number, elementsToCollideWith: HTMLElement[]): void {
+    public startSession(id: number, hitboxSize: number, elementsToCollideWith: HTMLElement[]): void {
         if (this.sessionActive) {
             this.stopSession();
         }
 
         this.sessionActive = true;
+        this.hitboxId = id;
         this.hitboxSize = hitboxSize;
         this.elementsToCollideWith = elementsToCollideWith;
         this.currentCollisions = [];
@@ -61,11 +63,12 @@ export class MouseHitbox {
         this.hitboxElement.id = 'mouseHitbox';
         
         Object.assign(this.hitboxElement.style, {
-            position: 'absolute',
+            position: 'fixed',
             width: `${this.hitboxSize}px`,
             height: `${this.hitboxSize}px`,
             pointerEvents: 'none',
-            zIndex: '9999',
+            zIndex: '900',
+            opacity: '0',
             transform: 'translate(-50%, -50%)',
             border: '1px dashed rgba(255, 0, 0, 0.5)',
             backgroundColor: 'rgba(255, 0, 0, 0.1)'
@@ -105,11 +108,6 @@ export class MouseHitbox {
         const hitboxRect = this.hitboxElement.getBoundingClientRect();
         const newCollisions: HTMLElement[] = [];
 
-        // Remove highlight from all elements first
-        this.elementsToCollideWith.forEach(element => {
-            element.classList.remove('highlight');
-        });
-
         this.elementsToCollideWith.forEach(element => {
             const elementRect = element.getBoundingClientRect();
             
@@ -120,7 +118,6 @@ export class MouseHitbox {
                 hitboxRect.bottom > elementRect.top
             ) {
                 newCollisions.push(element);
-                element.classList.add('highlight');
             }
         });
 
@@ -128,6 +125,7 @@ export class MouseHitbox {
             this.currentCollisions = newCollisions;
             
             EventBus.instance.emit('mouseHitboxCollision', {
+                id: this.hitboxId,
                 collisions: this.currentCollisions
             });
         }
