@@ -9,7 +9,7 @@ class Players
     public static function getRemainingPlayers(Game $game)
     {
         return $game->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score`, `leader_id` FROM `player` WHERE `player_score` > 0"
+            "SELECT `player_id` `id`, `player_score` `score`, `leader_id` FROM `player` WHERE `leader_id` IS NOT NULL"
         );
     }
 
