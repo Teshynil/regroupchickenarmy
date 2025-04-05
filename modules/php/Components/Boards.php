@@ -26,7 +26,7 @@ class Boards
         }
 
         // Add board move record
-        $game->DbQuery("INSERT INTO `boards_moves` (`board_id`, `card_id`, `rotation`, `x`, `y`) 
+        $game->DbQuery("INSERT INTO `boards_moves` (`board_id`, `card_id`, `rotation`, `x`, `y`)
                         VALUES ($boardId, $cardId, $rotation, $posX, $posY)");
 
         // Update board grid
@@ -177,3 +177,4 @@ class Boards
         return $game->getCollectionFromDb($sql);
     }
 }
+

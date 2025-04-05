@@ -41,3 +41,4 @@ class TurnSetupStateHandler implements StateHandlerInterface
         $game->gamestate->nextState('startRound');
     }
 }
+

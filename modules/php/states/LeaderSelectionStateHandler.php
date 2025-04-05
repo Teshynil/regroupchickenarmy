@@ -34,10 +34,10 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
         }
 
         $game->DbQuery("UPDATE player SET leader_id = $leaderId WHERE player_id = $playerId");
-        
+
         // Initialize resources for the selected leader
         Resources::initializeResources($game, $leaderId);
-        
+
         $game->notifyAllPlayers('leaderSelected', clienttranslate('${player_name} selected leader'), [
             'player_name' => $game->getActivePlayerName(),
             'player_id' => $playerId,
@@ -64,3 +64,4 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
     }
 
 }
+
