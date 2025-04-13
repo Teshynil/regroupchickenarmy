@@ -29,6 +29,7 @@ import { MarketArea } from "./modules/marketArea";
 import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
 import { Cards } from "./modules/cards";
+import { logger } from "./utils/logger";
 
 registerExtensions();
 
@@ -44,13 +45,15 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
     super();
-    console.log("RegroupChickenArmy constructor");
+    // Initialize the logger with a custom prefix
+    logger.initialize('RCA');
+    logger.info("RegroupChickenArmy constructor");
     RegroupChickenArmy.game = this;
   }
 
   /** See {@link  BGA.Gamegui#setup} for more information. */
   override setup(gamedatas: BGA.Gamedatas): void {
-    console.log("Starting game setup");
+    logger.info("Starting game setup");
     // Setting up player boards
     this.board.render();
 
@@ -73,7 +76,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
 
-    console.log("Ending game setup");
+    logger.info("Ending game setup");
   }
 
   renderGui(gamedatas: BGA.Gamedatas) {
@@ -155,9 +158,9 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   /** See {@link BGA.Gamegui#onEnteringState} for more information. */
   override async onEnteringState(
-    ...[stateName, state]: BGA.GameStateTuple<["name", "state"]>
+    ...[stateName, _state]: BGA.GameStateTuple<["name", "state"]>
   ): Promise<void> {
-    console.log("Entering state: " + stateName);
+    logger.info("Entering state: " + stateName);
 
 
     this.board.isActive = this.isCurrentPlayerActive();
@@ -194,7 +197,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   /** See {@link BGA.Gamegui#onLeavingState} for more information. */
   override onLeavingState(stateName: BGA.ActiveGameState["name"]): void {
-    console.log("Leaving state: " + stateName);
+    logger.info("Leaving state: " + stateName);
 
     switch (stateName) {
       case "leaderSelection":
@@ -206,7 +209,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<["name", "args"]>
   ): void {
-    console.log("onUpdateActionButtons: " + stateName, args);
+    logger.debug("onUpdateActionButtons: " + stateName, args);
 
     this.board.isActive = this.isCurrentPlayerActive();
 
@@ -230,28 +233,28 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   /*
     Here, you are defining methods to handle player's action (ex: results of mouse click on game objects).
-  	
+
     Most of the time, these methods:
     - check the action is possible at this game state.
     - make a call to the game server
   */
 
   /* Example:
- 
+
   onButtonClicked( evt: Event )
   {
     console.log( 'onButtonClicked' );
- 
+
     // Preventing default browser reaction
     evt.preventDefault();
- 
+
     // Builtin example...
     if(this.checkAction( 'myAction' ))
     {
       this.ajaxcall(
         `/${this.game_name!}/${this.game_name!}/myAction.html`,
         {
-          lock: true, 
+          lock: true,
           myArgument1: arg1,
           myArgument2: arg2,
         },
@@ -265,10 +268,10 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         },
       );
     }
- 
+
     // Builtin example with new BGA wrapper...
     this.bgaPerformAction( 'myAction', { myArgument1: arg1, myArgument2: arg2 } );
- 
+
     //	With CommonMixin from 'cookbook/common'...
     this.ajaxAction(
       'myAction',
@@ -279,7 +282,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       }
     );
   }
- 
+
   */
 
   ///////////////////////////////////////////////////
@@ -287,13 +290,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   /** See {@link BGA.Gamegui#setupNotifications} for more information. */
   override setupNotifications = () => {
-    console.log("notifications subscriptions setup");
+    logger.info("notifications subscriptions setup");
 
     this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
   };
 
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
-    console.log("Entering Notification Boards initialized");
+    logger.info("Entering Notification Boards initialized");
 
     await delay(3000);
 
@@ -324,17 +327,17 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   }
 
   /* Example:
- 
+
   ntf_any( notif: BGA.Notif )
   {
     console.log( 'ntf_any', notif );
     notif.args!['arg_0'];
   }
- 
+
   ntf_actionTaken( notif: BGA.Notif<'actionTaken'> ) {
     console.log( 'ntf_actionTaken', notif );
   }
- 
+
   ntf_cardPlayed( notif: BGA.Notif<'cardPlayed_0' | 'cardPlayed_1'> )
   {
     console.log( 'ntf_cardPlayed', notif );
@@ -347,7 +350,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         break;
     }
   }
- 
+
   */
 }
 

@@ -1,6 +1,7 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "./gameElement";
 import { EventBus } from "./eventBus";
+import { logger } from "./logger";
 
 export type NotifCallback<T extends keyof BGA.NotifTypes> = (notif: BGA.Notif<T>) => void;
 export type BoardEventCallback<T extends keyof Game.BoardEventTypes> = (event: Game.BoardEventTypes[T]) => void;
@@ -50,7 +51,7 @@ export abstract class ListenerElement extends GameElement {
                 // Setup BGA notification listener (existing functionality)
                 const callback = listener.callback as NotifCallback<keyof BGA.NotifTypes>;
                 const boundCallback = (notif: BGA.Notif<keyof BGA.NotifTypes>) => {
-                    console.log(`Entering Notification ${eventType}`);
+                    logger.info(`Entering Notification ${eventType}`);
                     callback.call(this, notif);
                 };
                 this._listenersHandlers[eventType as keyof ListenerConfig] = RegroupChickenArmy.game.subscribeNotif(
