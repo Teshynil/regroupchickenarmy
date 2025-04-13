@@ -160,7 +160,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override async onEnteringState(
     ...[stateName, _state]: BGA.GameStateTuple<["name", "state"]>
   ): Promise<void> {
-    logger.info("Entering state: " + stateName);
+    logger.debug("Entering state: " + stateName);
 
 
     this.board.isActive = this.isCurrentPlayerActive();

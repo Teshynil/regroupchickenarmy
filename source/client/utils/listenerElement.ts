@@ -86,7 +86,7 @@ export abstract class ListenerElement extends GameElement {
     }
 
     public override destroy() {
-        console.log(`Destroying ${this.consoleId}`);
+        logger.debug(`Destroying ${this.consoleId}`);
         this.unsubscribeAll();
         try {
             this.element.remove();
