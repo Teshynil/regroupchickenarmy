@@ -172,6 +172,7 @@ class Game extends \Table
      */
     protected function getAllDatas(): array
     {
+        $this->trace("It gets to getAllDatas?");
         $result = [];
 
         // WARNING: We must only return information visible by the current player.

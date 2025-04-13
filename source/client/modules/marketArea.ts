@@ -19,9 +19,6 @@ export class MarketArea extends ListenerElement {
     override htmlDefinition: string = `
     <div id="${this.ELEMENT_ID}">
         <div id="deck" class="deck card" data-card-id="0"></div>
-        <div id="market_card_0" class="card" data-card-id="0"></div>
-        <div id="market_card_1" class="card" data-card-id="0"></div>
-        <div id="market_card_2" class="card" data-card-id="0"></div>
         <div id="market_cost_0"></div>
         <div id="market_cost_1"></div>
     </div>`;
@@ -32,13 +29,26 @@ export class MarketArea extends ListenerElement {
     cardRotationWindow: CardRotationWindow = null;
 
     override afterRender() {
+        this.deck = document.getElementById("deck") as HTMLDivElement;
+        this.renderCards();
+    }
+
+    renderCards() {
+        const cardsHtml = `
+        <div id="market_card_0" class="card" data-card-id="0"></div>
+        <div id="market_card_1" class="card" data-card-id="0"></div>
+        <div id="market_card_2" class="card" data-card-id="0"></div>`;
+        this.cards.forEach(c => c?.remove());
+        this.element.insertAdjacentHTML("beforeend", cardsHtml);
         this.cards[0] = document.getElementById("market_card_0") as HTMLDivElement;
         this.cards[1] = document.getElementById("market_card_1") as HTMLDivElement;
         this.cards[2] = document.getElementById("market_card_2") as HTMLDivElement;
-        this.deck = document.getElementById("deck") as HTMLDivElement;
+        this.addEventListeners();
     }
 
-    doUpdateMarket(notif: BGA.Notif<"marketUpdate">) {
+    async doUpdateMarket(notif: BGA.Notif<"marketUpdate">) {
+        await delay(1100);
+        this.renderCards();
         for (let key in notif.args.cards) {
             const card = notif.args.cards[key];
             const card_key = 2 - Number(key);
@@ -110,10 +120,19 @@ export class MarketArea extends ListenerElement {
             pos_x: pos_x,
             pos_y: pos_y,
         }, this, async function () {
-            this.cardRotationWindow.destroy();
+            const marketCard = RegroupChickenArmy.game.marketArea.cards.find(c =>
+                Number(c.dataset["cardId"]) === card_id);
+            if (marketCard) {
+                marketCard.remove();
+            }
+            this.cardRotationWindow?.destroy();
             this.cardRotationWindow = null;
             RegroupChickenArmy.game.board.element.classList.remove("centralAreaExpanded");
             RegroupChickenArmy.game.removeActionButtons();
+            card.remove();
+            const grid = RegroupChickenArmy.game.playerAreas.at(RegroupChickenArmy.game.getLeaderIdFromPlayerId()).grid;
+            grid.addCardToGrid(card_id, pos_x, pos_y, rotation);
+            grid.createCardOnGrid(card_id, pos_x, pos_y, rotation);
         });
     }
 
@@ -142,7 +161,7 @@ export class CardRotationWindow extends ListenerElement {
 
     get listeners(): ListenerConfig {
         return {
-            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true },
+            "cardPrePlaced": { callback: this.doCardPrePlaced, isCustomEvent: true },
         }
     };
 
@@ -195,7 +214,7 @@ export class CardRotationWindow extends ListenerElement {
         this.cardRotation_cw.style.display = "block";
     }
 
-    async doCardPlaced(event: Game.BoardEventTypes["cardplaced"]) {
+    async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]) {
         if (this.id == event.cardId) {
             MouseHitbox.instance.stopSession();
             this.card.hide();

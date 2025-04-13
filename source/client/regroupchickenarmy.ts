@@ -28,6 +28,7 @@ import { PlayerArea } from "./modules/playerArea";
 import { MarketArea } from "./modules/marketArea";
 import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
+import { Cards } from "./modules/cards";
 
 registerExtensions();
 
@@ -62,6 +63,12 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
     this.board.isActive = this.isCurrentPlayerActive();
 
+    const to_preload = [];
+    for (const card_id in Cards) {
+      to_preload.push(`Cards/Card_${card_id}.webp`);
+    }
+
+    this.ensureSpecificGameImageLoading(to_preload);
     this.renderGui(gamedatas);
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
@@ -103,7 +110,8 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
             this.playerAreas.at(boardData[movementId].board_id).grid.createCardOnGrid(
               boardData[movementId].card_id,
               boardData[movementId].x,
-              boardData[movementId].y
+              boardData[movementId].y,
+              boardData[movementId].rotation
             );
           }
         }

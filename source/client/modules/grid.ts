@@ -16,8 +16,9 @@ export class Grid extends ListenerElement {
         return {
             "addCardToGrid": { callback: this.doAddCardToGrid },
             "addInitialCards": { callback: this.doAddInitialCard },
+            "cardPlaced": { callback: this.doCardPlaced },
 
-            "cardplaced": { callback: this.doCardPlaced, isCustomEvent: true },
+            "cardPrePlaced": { callback: this.doCardPrePlaced, isCustomEvent: true },
             "mouseHitboxCollision": { callback: this.doMouseHitboxCollision, isCustomEvent: true }
         }
     };
@@ -77,7 +78,7 @@ export class Grid extends ListenerElement {
         this.scrollmap.container_subdiv.style.opacity = "0";
         this.scrollmap.surface_div.style.cursor = "default";
         this.scrollmap.container_subdiv.style.transition = "opacity 0.5s ease-in-out";
-        this.activateCellsAroundPosition(6,6);
+        this.activateCellsAroundPosition(6, 6);
         setTimeout(() => {
             this.scrollmap.container_subdiv.style.opacity = "1";
             this.resizeGrid();
@@ -198,13 +199,13 @@ export class Grid extends ListenerElement {
         const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);
         card.render();
         const element = card.element;
-        const animation = RegroupChickenArmy.game.slideToObject(element, `player_${this.id}_cell_${6}_${6}`, 1000, 600);
+        const animation = RegroupChickenArmy.game.slideToObject(element, `player_${this.id}_cell_${6}_${6}`, 1000, 0);
         await animation.playAsync();
         element.remove();
         this.createCardOnGrid(card_id, 6, 6);
     }
 
-    async doCardPlaced(event: Game.BoardEventTypes["cardplaced"]) {
+    async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]) {
         if (this.id === event.grid_id) {
             const data = event;
             const card: Card = new Card(data.cardId, this.gridDiv.id, `placedCard`, Cards[data.cardId as keyof Cards]);
@@ -218,10 +219,46 @@ export class Grid extends ListenerElement {
         }
     }
 
-    createCardOnGrid(cardId: number, posX: number, posY: number) {
+    async doCardPlaced(notif: BGA.Notif<"cardPlaced">) {
+        if (this.id === notif.args.board_id) {
+            const cardId = notif.args.card_id;
+            const marketArea = RegroupChickenArmy.game.marketArea;
+
+            let sourceElement: string;
+            if (notif.args.isDeckCard) {
+                sourceElement = "deck";
+            } else {
+                // Check if card is in the market
+                const marketCard = marketArea.cards.find(c =>
+                    Number(c.dataset["cardId"]) === cardId);
+
+                if (marketCard) {
+                    sourceElement = marketCard.id;
+                } else {
+                    // Card is assumed to be already placed
+                    return;
+                }
+            }
+
+            const posX = notif.args.x;
+            const posY = notif.args.y;
+            const definition = `<div id="temporalCard" class="card" data-card-id="${cardId}" style="--rotation:${notif.args.rotation}"></div>`
+            const animation = RegroupChickenArmy.game.slideTemporaryObject(definition, marketArea.element.id, sourceElement, `player_${this.id}_cell_${posY}_${posX}`, 1000, 600);
+            if (sourceElement !== "deck") {
+                const element = document.getElementById(sourceElement);
+                element?.remove();
+            }
+            await animation.playAsync();
+
+            this.addCardToGrid(cardId, posX, posY, notif.args.rotation);
+            this.createCardOnGrid(cardId, posX, posY, notif.args.rotation);
+        }
+    }
+
+    createCardOnGrid(cardId: number, posX: number, posY: number, rotation: number = 0) {
         this.cardsPlayed++;
         const zIndex = this.cardsPlayed;
-        this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div class="card" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="z-index:${zIndex};"></div>`);
+        this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div class="card" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="z-index:${zIndex};--rotation:${rotation}"></div>`);
         this.resizeGrid();
     }
 
@@ -255,7 +292,7 @@ export class Grid extends ListenerElement {
             if (isAllEmptySlots) {
                 document.getElementById("temporalCard")?.remove();
             }
-        }else{
+        } else {
             document.getElementById("temporalCard")?.remove();
         }
     }
@@ -279,7 +316,7 @@ export class Grid extends ListenerElement {
         const cardId = Number(temporalCard.dataset["cardId"]);
         const rotation = Number(temporalCard.style.getPropertyValue("--rotation"));
         temporalCard.remove();
-        EventBus.instance.emit("cardplaced",
+        EventBus.instance.emit("cardPrePlaced",
             { grid_id: this.id, x, y, cardId, rotation: rotation }
         );
     }

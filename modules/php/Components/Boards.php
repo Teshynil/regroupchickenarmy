@@ -18,8 +18,9 @@ class Boards
         $game->DbQuery("INSERT INTO `boards` (`board_id`, `grid`) VALUES ($boardId, '$gridJson')");
     }
 
-    public static function putCardOnBoard(Game $game, int $boardId, int $cardId, int $rotation, int $posX, int $posY, bool $notify = true): void
+    public static function putCardOnBoard(Game $game, int $boardId, int $cardId, int $rotation, int $posX, int $posY): void
     {
+        $rotation = (($rotation % 4) + 4) % 4;
         // Check if position is valid
         if (!self::isValidPlacement($game, $boardId, $posX, $posY)) {
             throw new BgaUserException(clienttranslate("Invalid position for card placement"));
@@ -31,19 +32,6 @@ class Boards
 
         // Update board grid
         self::updateBoardGrid($game, $boardId, $cardId, $rotation, $posX, $posY);
-
-        // Notify players
-        if ($notify) {
-            $game->notifyAllPlayers('cardPlaced', clienttranslate('${player_name} placed a card'), [
-                'player_name' => $game->getActivePlayerName(),
-                'player_id' => $game->getActivePlayerId(),
-                'board_id' => $boardId,
-                'card_id' => $cardId,
-                'rotation' => $rotation,
-                'x' => $posX,
-                'y' => $posY
-            ]);
-        }
     }
 
     private static function isValidPlacement(Game $game, int $boardId, int $posX, int $posY): bool
@@ -154,11 +142,12 @@ class Boards
 
     public static function initializeAllBoards(Game $game): void
     {
+        $game->trace("Initializing all player boards");
         $players = Players::getRemainingPlayers($game);
 
         foreach ($players as $playerId => $player) {
             $leaderId = $player['leader_id'];
-            if ($leaderId) {
+            if ($leaderId != null && $leaderId != "") {
                 self::initializeBoard($game, $leaderId);
             }
         }
@@ -177,4 +166,3 @@ class Boards
         return $game->getCollectionFromDb($sql);
     }
 }
-

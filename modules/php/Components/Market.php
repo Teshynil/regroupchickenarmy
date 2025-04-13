@@ -21,7 +21,7 @@ class Market
     {
         $game->debug("Retrieving market card at position: $position");
 
-        return $game::getUniqueValueFromDB(
+        return $game->getUniqueValueFromDB(
             sprintf(
                 "SELECT `card_id` FROM `market` ORDER BY `order` ASC LIMIT 1 OFFSET %s;",
                 $position
@@ -45,7 +45,7 @@ class Market
         $remainingPlayers = count(Players::getRemainingPlayers($game));
         $game->debug("Need cards for $remainingPlayers remaining players");
 
-        return $game::getUniqueValueFromDB(
+        return $game->getUniqueValueFromDB(
             sprintf(
                 "SELECT COUNT(*) >= %s AS has_enough_cards FROM `market`;",
                 $remainingPlayers

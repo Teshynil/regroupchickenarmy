@@ -22,28 +22,42 @@ declare namespace BGA {
 		"marketUpdate": { cards: { order: number, card_id: number }[] };
 		"addInitialCards": { playersCards: { [leaderId: string]: { leader_id: number, player_id: number, card_id: number } } };
 		"addCardToGrid": { card_id: number, rotation: number, leader_id: number, x: number, y: number };
+		"cardPlaced": {
+			player_name: string,
+			player_id: number,
+			board_id: number,
+			card_id: number,
+			rotation: number,
+			x: number,
+			y: number,
+			isDeckCard: boolean
+		};
 		"deckCardPicked": { card_id: number, player_id: number, player_name: string, };
-		"resourcesUpdated": { player_id: number, leader_id: number, resources: { 
-			fighter: number, 
-			wizard: number, 
-			shield: number, 
-			barrier: number, 
-			potion: number, 
-			coin: number
-		} };
-		"boardsInitialized": { 
+		"resourcesUpdated": {
+			player_id: number, leader_id: number, resources: {
+				fighter: number,
+				wizard: number,
+				shield: number,
+				barrier: number,
+				potion: number,
+				coin: number
+			}
+		};
+		"boardsInitialized": {
 			playersCards: { [leaderId: string]: { leader_id: number, player_id: number, card_id: number } },
-			playersResources: { [leaderId: string]: { 
-				player_id: number, 
-				resources: { 
-					fighter: number, 
-					wizard: number, 
-					shield: number, 
-					barrier: number, 
-					potion: number, 
-					coin: number 
-				} 
-			} }
+			playersResources: {
+				[leaderId: string]: {
+					player_id: number,
+					resources: {
+						fighter: number,
+						wizard: number,
+						shield: number,
+						barrier: number,
+						potion: number,
+						coin: number
+					}
+				}
+			}
 		};
 	}
 
@@ -58,7 +72,7 @@ declare namespace BGA {
 /** Custom DOM events used in the game */
 declare namespace Game {
 	interface BoardEventTypes {
-		"cardplaced": { grid_id: number, x: number, y: number, cardId: number, rotation: number };
+		"cardPrePlaced": { grid_id: number, x: number, y: number, cardId: number, rotation: number };
 		"mouseHitboxCollision": { id: number, collisions: HTMLElement[] };
 	}
 }

@@ -40,7 +40,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         // Check if player is using a card from the deck
         $deckCardId = $game->getUniqueValueFromDB("SELECT marketCardPicked FROM player WHERE player_id = $playerId");
         if ($deckCardId !== null) {
-            $game->debug("Player has deck card ID: $deckCardId");
+            $game->debug("Player has deck card picked ID: $deckCardId");
             // Player is using a deck card
             if ($cardId != $deckCardId) {
                 $game->trace("Player trying to use wrong card, expected deck card ID: $deckCardId");
@@ -51,6 +51,18 @@ class PlayerTurnStateHandler implements StateHandlerInterface
             // Place the card on the player's board
             $game->debug("Placing deck card on board");
             Boards::putCardOnBoard($game, $leaderId, $cardId, $rotation, $posX, $posY);
+
+            $game->trace("Notifying players about card placement");
+            $game->notifyAllPlayers('cardPlaced', clienttranslate('${player_name} placed a card'), [
+                'player_name' => $game->getActivePlayerName(),
+                'player_id' => $game->getActivePlayerId(),
+                'board_id' => $leaderId,
+                'card_id' => $cardId,
+                'rotation' => $rotation,
+                'x' => $posX,
+                'y' => $posY,
+                'isDeckCard' => true
+            ]);
 
             // Clear the picked card
             $game->debug("Clearing picked card from player record");
@@ -104,6 +116,18 @@ class PlayerTurnStateHandler implements StateHandlerInterface
 
         $game->debug("Removing card from market");
         Market::removeMarketCard($game, $cardId);
+
+        $game->trace("Notifying players about card placement");
+        $game->notifyAllPlayers('cardPlaced', clienttranslate('${player_name} placed a card'), [
+            'player_name' => $game->getActivePlayerName(),
+            'player_id' => $game->getActivePlayerId(),
+            'board_id' => $leaderId,
+            'card_id' => $cardId,
+            'rotation' => $rotation,
+            'x' => $posX,
+            'y' => $posY,
+            'isDeckCard' => false
+        ]);
 
         // Update resources based on the new card
         $game->debug("Updating resources based on new card placement");
