@@ -1,5 +1,5 @@
 import { Animation } from "./animation";
-import { logger } from "../logger";
+import { Logger } from "../logger";
 import { SlideToObjectBuilder } from "./builders/slideToObjectBuilder";
 import { SlideToObjectPosBuilder } from "./builders/slideToObjectPosBuilder";
 import { SlideTemporaryObjectBuilder } from "./builders/slideTemporaryObject";
@@ -49,7 +49,7 @@ export class Animator {
      * @param animation The Animation object to enqueue
      */
     public enqueue(animation: Animation): Promise<void> {
-        logger.debug(`Enqueuing animation: ${animation.id}`);
+        Logger.debug(`Enqueuing animation: ${animation.id}`);
         
         return new Promise((resolve) => {
             // If this animation depends on another animation
@@ -58,11 +58,11 @@ export class Animator {
                 const dependencyQueued = this.animationQueue.some(item => item.animation.id === animation.waitFor);
                 
                 if (dependencyRunning || dependencyQueued) {
-                    logger.debug(`Animation ${animation.id} waiting for ${animation.waitFor}`);
+                    Logger.debug(`Animation ${animation.id} waiting for ${animation.waitFor}`);
                     
                     // Set a timeout in case the dependency takes too long
                     const timeoutId = setTimeout(() => {
-                        logger.warn(`Timeout waiting for animation ${animation.waitFor}, proceeding with ${animation.id}`);
+                        Logger.warn(`Timeout waiting for animation ${animation.waitFor}, proceeding with ${animation.id}`);
                         this.waitingForDependencies.delete(animation.id);
                         this.animationQueue.push({ animation, resolve });
                         this.processQueue();
@@ -78,7 +78,7 @@ export class Animator {
                 }
                 
                 // If dependency doesn't exist, proceed normally
-                logger.debug(`Dependency ${animation.waitFor} not found for ${animation.id}, proceeding`);
+                Logger.debug(`Dependency ${animation.waitFor} not found for ${animation.id}, proceeding`);
             }
             
             // Normal queue processing
@@ -108,7 +108,7 @@ export class Animator {
         this.isProcessingQueue = true;
         const { animation, resolve } = this.animationQueue.shift()!;
         
-        logger.debug(`Playing animation: ${animation.id}`);
+        Logger.debug(`Playing animation: ${animation.id}`);
         
         // Mark this animation as running
         animation.isRunning = true;
@@ -116,7 +116,7 @@ export class Animator {
 
         animation.dojoAnimation.play();
         dojo.connect(animation.dojoAnimation, "onEnd", () => {
-            logger.debug(`Animation completed: ${animation.id}`);
+            Logger.debug(`Animation completed: ${animation.id}`);
             
             // Mark as completed and remove from running
             animation.isCompleted = true;
@@ -143,7 +143,7 @@ export class Animator {
             const waitingId = entry[0];
             const { animation, resolve, timeoutId } = entry[1];
             if (animation.waitFor === completedAnimationId) {
-                logger.debug(`Dependency ${completedAnimationId} completed, queueing ${waitingId}`);
+                Logger.debug(`Dependency ${completedAnimationId} completed, queueing ${waitingId}`);
                 
                 // Clear the timeout
                 clearTimeout(timeoutId);
@@ -172,5 +172,25 @@ export class Animator {
 
     public static get slideTemporaryObject(): SlideTemporaryObjectBuilder {
         return SlideTemporaryObjectBuilder.builder();
+    }
+
+    /**
+     * Plays the animation through the animation control system
+     * Returns a promise that resolves when the animation completes
+     */
+    public static play(animation: Animation): Promise<void> {
+        // If beforeStart is defined, call it before enqueueing
+        if (animation.beforeStart) {
+            animation.beforeStart();
+        }
+
+        // Connect afterEnd to the animation's onEnd event
+        if (animation.afterEnd) {
+            dojo.connect(animation.dojoAnimation, "onEnd", () => {
+                animation.afterEnd();
+            });
+        }
+
+        return Animator.instance.enqueue(animation);
     }
 }

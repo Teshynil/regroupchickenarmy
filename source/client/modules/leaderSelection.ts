@@ -46,13 +46,13 @@ export class LeaderSelection extends ListenerElement {
         const element = this.leaders[leader_id].element;
         RegroupChickenArmy.game.leaders_id[notif.args.player_id] = Number(leader_id);
         const animation = Animator.slideToObject
-            .id(`leaderImg_${leader_id}`)
+            .id(`MoveLeaderToStartPosition_${leader_id}`)
             .element(element)
             .target(`leaderImg_${leader_id}`)
-            .duration(1000)
-            .delay(600)
+            .duration(800)
+            .delay(0)
             .build();
-        await animation.play();
+        await Animator.play(animation);
         element.remove();
         this.leaders[leader_id] = null;
         RegroupChickenArmy.game.playerAreas.at(leader_id).render(true);

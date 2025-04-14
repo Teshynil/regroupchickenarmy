@@ -3,6 +3,7 @@
 namespace Bga\Games\RegroupChickenArmy\States;
 
 use Bga\Games\RegroupChickenArmy\Components\Boards;
+use Bga\Games\RegroupChickenArmy\Components\Players;
 use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Bga\Games\RegroupChickenArmy\Game;
 use BgaUserException;
@@ -26,6 +27,16 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
     {
         // Initialize all player boards
         Boards::initializeAllBoards($game);
+
+        // Initialize the first player
+        $firstPlayerId = Players::initializeFirstPlayer($game);
+        $firstPlayerName = $game->getPlayerNameById($firstPlayerId);
+        
+        // Notify all players about the first player
+        $game->notifyAllPlayers('firstPlayerSelected', clienttranslate('${player_name} is the first player for this round'), [
+            'player_name' => $firstPlayerName,
+            'player_id' => $firstPlayerId
+        ]);
 
         // Add initial cards to each player's board and collect data for notification
         $player_initial_cards = $game->getCollectionFromDB("SELECT `leader_id`, `player_id`, 99 as card_id FROM `player`");
@@ -59,9 +70,11 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
 
         $game->setGameStateValue('round', 1);
         // Move to the next state
+        Players::activateFirstPlayer($game);
         $game->gamestate->nextState('startGame');
     }
 }
+
 
 
 

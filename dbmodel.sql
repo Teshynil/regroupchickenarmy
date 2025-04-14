@@ -103,10 +103,13 @@ CREATE TABLE IF NOT EXISTS `resources` (
     `barrier` int UNSIGNED NOT NULL,
     `potion` int UNSIGNED NOT NULL,
     `coin` int UNSIGNED NOT NULL,
+    `health` int UNSIGNED NOT NULL,
     PRIMARY KEY (`leader_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
 -- Add leader position and picked card to player
 ALTER TABLE `player`
     ADD `leader_id` INT UNSIGNED DEFAULT NULL,
+    ADD `is_first` INT UNSIGNED DEFAULT NULL,
+    ADD `has_attacked` INT UNSIGNED DEFAULT NULL,
     ADD `marketCardPicked` INT UNSIGNED DEFAULT NULL;

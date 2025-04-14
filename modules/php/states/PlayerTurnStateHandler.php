@@ -218,6 +218,8 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         // Otherwise, go to next player
         if ($allPlayersReachedTarget) {
             $game->trace("All players have reached target card count, moving to attack phase");
+            $nextPlayerId = $game->activeNextPlayer();
+            $game->debug("Activating next player ID: $nextPlayerId");
             $game->gamestate->nextState('startAtkPhase');
         } else {
             $game->trace("Not all players have reached target card count, moving to next player");

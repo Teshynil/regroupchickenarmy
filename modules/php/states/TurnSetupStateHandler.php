@@ -3,6 +3,7 @@
 namespace Bga\Games\RegroupChickenArmy\States;
 
 use Bga\Games\RegroupChickenArmy\Components\Market;
+use Bga\Games\RegroupChickenArmy\Components\Players;
 use Bga\Games\RegroupChickenArmy\Game;
 use BgaUserException;
 use BgaVisibleSystemException;
@@ -23,6 +24,24 @@ class TurnSetupStateHandler implements StateHandlerInterface
 
     public static function executeGameState(Game $game): void
     {
+        // Get current round number
+        $currentRound = $game->getGameStateValue('round');
+        
+        // If this is not the first round, rotate the first player
+        if ($currentRound > 1) {
+            $newFirstPlayerId = Players::rotateFirstPlayer($game);
+            
+            // Notify all players about the new first player
+            $newFirstPlayerName = $game->getPlayerNameById($newFirstPlayerId);
+            $game->notifyAllPlayers('firstPlayerSelected', clienttranslate('${player_name} is the first player for for this round'), [
+                'player_name' => $newFirstPlayerName,
+                'player_id' => $newFirstPlayerId
+            ]);
+        }
+        
+        // Activate the first player for this round
+        Players::activateFirstPlayer($game);
+        
         $hasEnoughCards = Market::hasEnoughCards($game);
 
         if (!$hasEnoughCards) {
@@ -38,7 +57,12 @@ class TurnSetupStateHandler implements StateHandlerInterface
             "cards" => $marketCards
         ]);
 
+        $game->DbQuery("UPDATE player SET has_attacked = 0");
+
         $game->gamestate->nextState('startRound');
     }
 }
+
+
+
 

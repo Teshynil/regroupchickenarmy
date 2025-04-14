@@ -21,8 +21,6 @@ import CommonMixer = require("cookbook/common");
 import "ebg/counter";
 import "./modules/thirdparty/scrollmapWithZoom";
 
-import { registerExtensions } from "./utils/extensions";
-import { Animator } from "./utils/animations/animator";
 import { delay } from "./utils/gameUtils";
 import { Board } from "./modules/board";
 import { PlayerArea } from "./modules/playerArea";
@@ -30,9 +28,8 @@ import { MarketArea } from "./modules/marketArea";
 import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
 import { Cards } from "./modules/cards";
-import { logger } from "./utils/logger";
+import { Logger } from "./utils/logger";
 
-registerExtensions();
 
 /** See {@link BGA.Gamegui} for more information. */
 export class RegroupChickenArmy extends CommonMixer(Gamegui) {
@@ -46,15 +43,15 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   /** See {@link BGA.Gamegui} for more information. */
   constructor() {
     super();
-    // Initialize the logger with a custom prefix
-    logger.initialize('RCA');
-    logger.info("RegroupChickenArmy constructor");
+    // Initialize the Logger with a custom prefix
+    Logger.initialize('RCA');
+    Logger.info("RegroupChickenArmy constructor");
     RegroupChickenArmy.game = this;
   }
 
   /** See {@link  BGA.Gamegui#setup} for more information. */
   override setup(gamedatas: BGA.Gamedatas): void {
-    logger.info("Starting game setup");
+    Logger.info("Starting game setup");
     // Setting up player boards
     this.board.render();
 
@@ -77,7 +74,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
 
-    logger.info("Ending game setup");
+    Logger.info("Ending game setup");
   }
 
   renderGui(gamedatas: BGA.Gamedatas) {
@@ -119,6 +116,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
             );
           }
         }
+        this.playerAreas.at(Number(boardId)).grid.resizeGrid();
       }
     }
 
@@ -161,11 +159,10 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override async onEnteringState(
     ...[stateName, _state]: BGA.GameStateTuple<["name", "state"]>
   ): Promise<void> {
-    logger.debug("Entering state: " + stateName);
-
+    Logger.debug("Entering state: " + stateName);
 
     this.board.isActive = this.isCurrentPlayerActive();
-    await this.board.waitAnimations();
+    this.board.waitAnimations();
     switch (stateName) {
       case "leaderSelection":
         this.marketArea.hide();
@@ -173,17 +170,34 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         break;
       case "leaderSelectionGame":
         break;
+      case "prepareBoards":
+        break;
       case "turnSetup":
         break;
       case "playerTurn":
-        await delay(2000); // Delay to avoid hiding the leader cards while still animating
-        this.leaderSelection.destroy();
-        this.marketArea.show();
         //TODO: this.marketArea.animateDealCards();
         break;
       case "playerTurnGame":
         break;
       case "atkPhase":
+        if (this.isCurrentPlayerActive()) {
+          Logger.info("Current player is active, automatically sending attack action");
+          this.ajaxcall(
+            `/${this.game_name}/${this.game_name}/attack.html`,
+            {},
+            this,
+            () => {
+              // Success callback
+              Logger.info("Attack action sent successfully");
+            },
+            (error) => {
+              // Error callback
+              Logger.error("Attack action failed", error);
+            }
+          );
+        } else {
+          Logger.info("Current player is not active, waiting for active player to attack");
+        }
         break;
       case "atkPhaseGame":
         break;
@@ -198,7 +212,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   /** See {@link BGA.Gamegui#onLeavingState} for more information. */
   override onLeavingState(stateName: BGA.ActiveGameState["name"]): void {
-    logger.info("Leaving state: " + stateName);
+    Logger.info("Leaving state: " + stateName);
 
     switch (stateName) {
       case "leaderSelection":
@@ -210,7 +224,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<["name", "args"]>
   ): void {
-    logger.debug("onUpdateActionButtons: " + stateName, args);
+    Logger.debug("onUpdateActionButtons: " + stateName, args);
 
     this.board.isActive = this.isCurrentPlayerActive();
 
@@ -232,75 +246,22 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   ///////////////////////////////////////////////////
   //// Player's action
 
-  /*
-    Here, you are defining methods to handle player's action (ex: results of mouse click on game objects).
-
-    Most of the time, these methods:
-    - check the action is possible at this game state.
-    - make a call to the game server
-  */
-
-  /* Example:
-
-  onButtonClicked( evt: Event )
-  {
-    console.log( 'onButtonClicked' );
-
-    // Preventing default browser reaction
-    evt.preventDefault();
-
-    // Builtin example...
-    if(this.checkAction( 'myAction' ))
-    {
-      this.ajaxcall(
-        `/${this.game_name!}/${this.game_name!}/myAction.html`,
-        {
-          lock: true,
-          myArgument1: arg1,
-          myArgument2: arg2,
-        },
-        this,
-        function( server_response: unknown ) {
-          // Callback only on success (no error)
-          // (for player actions, this is almost always empty)
-        }, function(error: boolean, errorMessage?: string, errorCode?: number) {
-          // What to do after the server call in anyway (success or failure)
-          // (usually catch unexpected server errors)
-        },
-      );
-    }
-
-    // Builtin example with new BGA wrapper...
-    this.bgaPerformAction( 'myAction', { myArgument1: arg1, myArgument2: arg2 } );
-
-    //	With CommonMixin from 'cookbook/common'...
-    this.ajaxAction(
-      'myAction',
-      { myArgument1: arg1, myArgument2: arg2 },
-      function(error: boolean, errorMessage?: string, errorCode?: number) {
-        // What to do after the server call in anyway (success or failure)
-        // (usually catch unexpected server errors)
-      }
-    );
-  }
-
-  */
-
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
 
   /** See {@link BGA.Gamegui#setupNotifications} for more information. */
   override setupNotifications = () => {
-    logger.info("notifications subscriptions setup");
+    Logger.info("notifications subscriptions setup");
 
     this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
+    this.notifqueue.setSynchronous('boardsInitialized', 2000);
   };
 
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
-    logger.info("Entering Notification Boards initialized");
-
-    await delay(3000);
-
+    Logger.info("Entering Notification Boards initialized");
+    await delay(1000);
+    this.leaderSelection.destroy();
+    this.marketArea.show();
     // Process initial cards
     const playerCards = notif.args.playersCards;
     dojo.publish('addInitialCards', [{

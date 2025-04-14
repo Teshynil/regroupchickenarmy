@@ -11,72 +11,54 @@ export enum LogLevel {
 }
 
 export class Logger {
-    private static _instance: Logger | null = null;
-    private startTime: number | null = null;
-    private prefix: string = '';
-    private initialized: boolean = false;
+    private static startTime: number | null = null;
+    private static prefix: string = '';
+    private static initialized: boolean = false;
 
     // Color codes for different log levels
-    private readonly colors = {
+    private static readonly colors = {
         [LogLevel.INFO]: '#3498db',    // Blue
         [LogLevel.DEBUG]: '#2ecc71',   // Green
         [LogLevel.WARNING]: '#f39c12', // Orange
         [LogLevel.ERROR]: '#e74c3c'    // Red
     };
 
-    private constructor() {}
-
-    /**
-     * Get the singleton instance of the Logger
-     */
-    public static get instance(): Logger {
-        if (!Logger._instance) {
-            Logger._instance = new Logger();
-        }
-        return Logger._instance;
-    }
-
     /**
      * Initialize the logger with a prefix and start the timer
      * @param prefix The prefix to use for all log messages
      */
-    public initialize(prefix: string = 'RCA'): void {
-        this.prefix = prefix;
-        this.startTime = Date.now();
-        this.initialized = true;
+    public static initialize(prefix: string = 'RCA'): void {
+        Logger.prefix = prefix;
+        Logger.startTime = Date.now();
+        Logger.initialized = true;
         console.log('Logger initialized');
     }
 
     /**
      * Get the elapsed time since logger initialization
      */
-    private getElapsedTime(): number {
-        if (this.startTime === null) return 0;
-        return Date.now() - this.startTime;
+    private static getElapsedTime(): number {
+        if (Logger.startTime === null) return 0;
+        return Date.now() - Logger.startTime;
     }
 
     /**
      * Format the elapsed time as a string (milliseconds)
      */
-    private formatElapsedTime(): string {
-        const elapsed = this.getElapsedTime();
+    private static formatElapsedTime(): string {
+        const elapsed = Logger.getElapsedTime();
         return `${elapsed}ms`;
     }
 
     /**
      * Check if we're in a development environment
      */
-    private isDevelopmentEnvironment(): boolean {
-        try {
-            // @ts-ignore
-            const dataLayer = window.dataLayer;
-            if (!dataLayer || !Array.isArray(dataLayer)) return false;
-
-            const envEntry = dataLayer.find(e => e && e['user_environment']);
-            return envEntry && envEntry.user_environment === 'dev';
-        } catch (e) {
-            return false;
+    private static isDevelopmentEnvironment(): boolean {
+        if (window.location.host == 'studio.boardgamearena.com' || window.location.hash.indexOf('debug') > -1) {
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -85,21 +67,21 @@ export class Logger {
      * @param message The message to log
      * @param args Additional arguments to log
      */
-    private log(level: LogLevel, message: string, ...args: any[]): void {
+    private static log(level: LogLevel, message: string, ...args: any[]): void {
         // Skip debug messages in production
-        if (level === LogLevel.DEBUG && !this.isDevelopmentEnvironment()) {
+        if (level === LogLevel.DEBUG && !Logger.isDevelopmentEnvironment()) {
             return;
         }
 
         // If not initialized, fall back to regular console.log
-        if (!this.initialized) {
+        if (!Logger.initialized) {
             console.log(message, ...args);
             return;
         }
 
         // Only show time in development environment
         let formattedMessage: string;
-        if (this.isDevelopmentEnvironment()) {
+        if (Logger.isDevelopmentEnvironment()) {
             const timeString = this.formatElapsedTime();
             formattedMessage = `[${timeString}] [${this.prefix}] [${level}]: ${message}`;
         } else {
@@ -107,7 +89,7 @@ export class Logger {
         }
 
         // Apply color based on log level
-        const color = this.colors[level];
+        const color = Logger.colors[level];
 
         // Log with color styling
         console.log(`%c${formattedMessage}`, `color: ${color}; font-weight: bold`, ...args);
@@ -118,8 +100,8 @@ export class Logger {
      * @param message The message to log
      * @param args Additional arguments to log
      */
-    public info(message: string, ...args: any[]): void {
-        this.log(LogLevel.INFO, message, ...args);
+    public static info(message: string, ...args: any[]): void {
+        Logger.log(LogLevel.INFO, message, ...args);
     }
 
     /**
@@ -127,8 +109,8 @@ export class Logger {
      * @param message The message to log
      * @param args Additional arguments to log
      */
-    public debug(message: string, ...args: any[]): void {
-        this.log(LogLevel.DEBUG, message, ...args);
+    public static debug(message: string, ...args: any[]): void {
+        Logger.log(LogLevel.DEBUG, message, ...args);
     }
 
     /**
@@ -136,8 +118,8 @@ export class Logger {
      * @param message The message to log
      * @param args Additional arguments to log
      */
-    public warn(message: string, ...args: any[]): void {
-        this.log(LogLevel.WARNING, message, ...args);
+    public static warn(message: string, ...args: any[]): void {
+        Logger.log(LogLevel.WARNING, message, ...args);
     }
 
     /**
@@ -145,10 +127,7 @@ export class Logger {
      * @param message The message to log
      * @param args Additional arguments to log
      */
-    public error(message: string, ...args: any[]): void {
-        this.log(LogLevel.ERROR, message, ...args);
+    public static error(message: string, ...args: any[]): void {
+        Logger.log(LogLevel.ERROR, message, ...args);
     }
 }
-
-// Export a default instance for easy access
-export const logger = Logger.instance;

@@ -3,6 +3,8 @@
 namespace Bga\Games\RegroupChickenArmy\States;
 
 use Bga\Games\RegroupChickenArmy\Game;
+use Bga\Games\RegroupChickenArmy\Components\Resources;
+use Bga\Games\RegroupChickenArmy\Components\Players;
 use BgaUserException;
 use BgaVisibleSystemException;
 
@@ -25,13 +27,99 @@ class AtkPhaseStateHandler implements StateHandlerInterface
     private static function attack(Game $game): void
     {
         $game->trace("Player executing attack action");
-        // Add your action logic here
+
+        $attackerId = (int) $game->getCurrentPlayerId();
+        $attackerLeaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM player WHERE player_id = $attackerId");
+        $attackerName = $game->getActivePlayerName();
+
+        // Get attacker's resources (attack values)
+        $attackerResources = Resources::getResources($game, $attackerLeaderId);
+        $physicalAttack = $attackerResources['fighter'];
+        $magicalAttack = $attackerResources['wizard'];
+
+        $game->debug("Attacker ID: $attackerId (Leader: $attackerLeaderId) with physical attack: $physicalAttack, magical attack: $magicalAttack");
+
+        // Get all other players
+        $otherPlayers = $game->getCollectionFromDB(
+            "SELECT player_id, leader_id, player_name FROM player WHERE player_id <> $attackerId AND player_eliminated = 0"
+        );
+
+        $attackResults = [];
+
+        // Calculate and apply damage to each player
+        foreach ($otherPlayers as $playerId => $playerData) {
+            $defenderId = (int) $playerId;
+            $defenderLeaderId = (int) $playerData['leader_id'];
+            $defenderName = $playerData['player_name'];
+
+            // Get defender's resources (defense values)
+            $defenderResources = Resources::getResources($game, $defenderLeaderId);
+            $physicalDefense = $defenderResources['shield'];
+            $magicalDefense = $defenderResources['barrier'];
+
+            $game->debug("Defender ID: $defenderId (Leader: $defenderLeaderId) with physical defense: $physicalDefense, magical defense: $magicalDefense");
+
+            // Calculate damage
+            $physicalDamage = max(0, $physicalAttack - $physicalDefense);
+            $magicalDamage = max(0, $magicalAttack - $magicalDefense);
+            $totalDamage = $physicalDamage + $magicalDamage;
+
+            $game->debug("Calculated damage - Physical: $physicalDamage, Magical: $magicalDamage, Total: $totalDamage");
+
+            // Apply damage to defender's health
+            $currentHealth = $defenderResources['health'];
+            $newHealth = max(0, $currentHealth - $totalDamage);
+
+            $game->debug("Defender health: $currentHealth -> $newHealth");
+
+            // Update health in database
+            $game->DbQuery("UPDATE resources SET health = $newHealth WHERE leader_id = $defenderLeaderId");
+
+            // Record attack result for notification
+            $attackResults[$defenderId] = [
+                'defender_id' => $defenderId,
+                'defender_name' => $defenderName,
+                'physical_damage' => $physicalDamage,
+                'magical_damage' => $magicalDamage,
+                'total_damage' => $totalDamage,
+                'new_health' => $newHealth
+            ];
+        }
+
+        // Notify all players about the attack results
+        $game->notifyAllPlayers('attackExecuted', clienttranslate('${player_name} attacks all other players'), [
+            'player_name' => $attackerName,
+            'player_id' => $attackerId,
+            'attack_results' => $attackResults
+        ]);
+
+        // Mark attacker as having attacked
+        $game->DbQuery("UPDATE player SET has_attacked = 1 WHERE player_id = $attackerId");
+
+        $game->trace("Attack complete, ending turn");
+
+        $game->gamestate->nextState("turnEnded");
     }
 
     public static function executeGameState(Game $game): void
     {
         $game->trace("Executing AtkPhase state");
-        // Add your state logic here
+
+        // Check if all players have attacked
+        $currentPlayerId = $game->getCurrentPlayerId();
+        $game->giveExtraTime($currentPlayerId);
+
+        $arePlayersThatHaveNotAttacked = $game->getUniqueValueFromDB(
+            "SELECT COUNT(*) FROM player WHERE has_attacked = 0"
+        );
+
+        if ($arePlayersThatHaveNotAttacked == 0) {
+            $game->trace("All players have attacked, moving to healing phase");
+            $game->gamestate->nextState("atkPhaseEnded");
+        } else {
+            $game->trace("Moving to next player for attack phase");
+            $game->activeNextPlayer();
+            $game->gamestate->nextState("nextPlayer");
+        }
     }
 }
-

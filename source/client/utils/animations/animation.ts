@@ -1,6 +1,3 @@
-import { Animator } from "./animator";
-import { logger } from "../logger";
-
 export type ElementOrId = string | HTMLElement;
 
 export class Animation {
@@ -33,29 +30,5 @@ export class Animation {
         this.dojoAnimation = animation;
         this.waitFor = waitFor;
         this.waitForDuration = waitForDuration;
-    }
-
-    /**
-     * Plays the animation through the animation control system
-     * Returns a promise that resolves when the animation completes
-     */
-    public play(): Promise<void> {
-        // If beforeStart is defined, call it before enqueueing
-        if (this.beforeStart) {
-            this.beforeStart();
-        }
-
-        // Connect afterEnd to the animation's onEnd event
-        if (this.afterEnd) {
-            dojo.connect(this.dojoAnimation, "onEnd", () => {
-                this.afterEnd();
-            });
-        }
-
-        return Animator.instance.enqueue(this);
-    }
-
-    public logDebugData() {
-        logger.debug(`[ANIMATION]: ${JSON.stringify(this.debugData, null, 2)}`);
     }
 }

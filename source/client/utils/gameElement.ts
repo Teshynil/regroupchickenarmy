@@ -1,5 +1,5 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { logger } from "./logger";
+import { Logger } from "./logger";
 
 export abstract class GameElement {
     abstract get PARENT_ID(): string;
@@ -49,7 +49,7 @@ export abstract class GameElement {
         this.beforeRender(force);
 
         if (this.elementSafe && !force) {
-            logger.debug(`Element ${this.consoleId} was already on the board`);
+            Logger.debug(`Element ${this.consoleId} was already on the board`);
             return this;
         }
         if (force) {
@@ -111,9 +111,9 @@ export abstract class GameElement {
     public beforeDestroy(): void { };
 
     public destroy() {
-        logger.debug(`Destroying ${this.consoleId}`);
         try {
             this.element.remove();
+            Logger.debug(`Destroying ${this.consoleId}`);
         } catch (error) { } finally { this._element = undefined; }
     }
 

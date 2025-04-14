@@ -54,22 +54,22 @@ class ResourcePanel extends ListenerElement {
 
     htmlDefinition = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic" id="resourceContainer_${this.id}">
-                    <span id="defPhy_${this.id}" class="resourceCounter">3</span>
+                    <span id="defPhy_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="resource Attack_Physic" id="resourceContainer_${this.id}">
-                    <span id="atkPhy_${this.id}" class="resourceCounter">5</span>
+                    <span id="atkPhy_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="resource Defense_Magic" id="resourceContainer_${this.id}">
-                    <span id="defMag_${this.id}" class="resourceCounter">7</span>
+                    <span id="defMag_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="resource Attack_Magic" id="resourceContainer_${this.id}">
-                    <span id="atkMag_${this.id}" class="resourceCounter">9</span>
+                    <span id="atkMag_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="resource Potion" id="resourceContainer_${this.id}">
-                    <span id="potion_${this.id}" class="resourceCounter">7</span>
+                    <span id="potion_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="resource Coin" id="resourceContainer_${this.id}">
-                    <span id="coins_${this.id}" class="resourceCounter">5</span>
+                    <span id="coins_${this.id}" class="resourceCounter">0</span>
                 </div>
 			</div>`;
 

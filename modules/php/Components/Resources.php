@@ -14,14 +14,16 @@ class Resources
     const DEFAULT_BARRIER = 0;
     const DEFAULT_POTION = 0;
     const DEFAULT_COIN = 0;
+    const DEFAULT_HEALTH = 30;
 
     /**
      * Initialize resources for a player's leader
      */
     public static function initializeResources(Game $game, int $leaderId): void
     {
-        $game->DbQuery("INSERT INTO `resources`
-            (`leader_id`, `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`)
+        $game->DbQuery(
+            "INSERT INTO `resources`
+            (`leader_id`, `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`, `health`)
             VALUES (
                 $leaderId,
                 " . self::DEFAULT_FIGHTER . ",
@@ -29,7 +31,8 @@ class Resources
                 " . self::DEFAULT_SHIELD . ",
                 " . self::DEFAULT_BARRIER . ",
                 " . self::DEFAULT_POTION . ",
-                " . self::DEFAULT_COIN . "
+                " . self::DEFAULT_COIN . ",
+                " . self::DEFAULT_HEALTH . "
             )"
         );
 
@@ -63,7 +66,7 @@ class Resources
     public static function getResources(Game $game, int $leaderId): array
     {
         return $game->getObjectFromDB(
-            "SELECT `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`
+            "SELECT `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`, `health`
              FROM `resources` WHERE `leader_id` = $leaderId"
         );
     }
@@ -74,7 +77,7 @@ class Resources
     public static function getAllResources(Game $game): array
     {
         return $game->getCollectionFromDb(
-            "SELECT `leader_id`, `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`
+            "SELECT `leader_id`, `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`, `health`
              FROM `resources`"
         );
     }
@@ -253,8 +256,17 @@ class Resources
             ]);
         }
     }
+
+    public static function updateHealthToScoreToAllPlayers(Game $game): void
+    {
+        // Get all players with assigned leaders
+        $players = Players::getRemainingPlayers($game);
+
+        // Update each player's score based on their health resource
+        foreach ($players as $playerId => $player) {
+            $leaderId = $player['leader_id'];
+            $health = $game->getUniqueValueFromDB("SELECT health FROM resources WHERE leader_id = $leaderId");
+            $game->DbQuery("UPDATE player SET player_score = $health WHERE player_id = $playerId");
+        }
+    }
 }
-
-
-
-

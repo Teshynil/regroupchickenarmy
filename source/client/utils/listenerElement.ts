@@ -1,7 +1,7 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "./gameElement";
 import { EventBus } from "./eventBus";
-import { logger } from "./logger";
+import { Logger } from "./logger";
 
 export type NotifCallback<T extends keyof BGA.NotifTypes> = (notif: BGA.Notif<T>) => void;
 export type BoardEventCallback<T extends keyof Game.BoardEventTypes> = (event: Game.BoardEventTypes[T]) => void;
@@ -51,13 +51,14 @@ export abstract class ListenerElement extends GameElement {
                 // Setup BGA notification listener (existing functionality)
                 const callback = listener.callback as NotifCallback<keyof BGA.NotifTypes>;
                 const boundCallback = (notif: BGA.Notif<keyof BGA.NotifTypes>) => {
-                    logger.info(`Entering Notification ${eventType}`);
+                    Logger.info(`Entering Notification ${eventType} on ${this.consoleId}`);
                     callback.call(this, notif);
                 };
                 this._listenersHandlers[eventType as keyof ListenerConfig] = RegroupChickenArmy.game.subscribeNotif(
                     eventType as keyof BGA.NotifTypes,
                     boundCallback as NotifCallback<keyof BGA.NotifTypes>
                 );
+                gameui.notifqueue.setSynchronous(eventType as keyof BGA.NotifTypes, 500);
             }
         }
     }
@@ -86,10 +87,10 @@ export abstract class ListenerElement extends GameElement {
     }
 
     public override destroy() {
-        logger.debug(`Destroying ${this.consoleId}`);
-        this.unsubscribeAll();
         try {
             this.element.remove();
+            Logger.debug(`Destroying ${this.consoleId}`);
+            this.unsubscribeAll();
         } catch (error) { };
     }
 }

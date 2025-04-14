@@ -47,7 +47,6 @@ export class MarketArea extends ListenerElement {
     }
 
     async doUpdateMarket(notif: BGA.Notif<"marketUpdate">) {
-        await delay(1100);
         this.renderCards();
         for (let key in notif.args.cards) {
             const card = notif.args.cards[key];
@@ -133,6 +132,7 @@ export class MarketArea extends ListenerElement {
             const grid = RegroupChickenArmy.game.playerAreas.at(RegroupChickenArmy.game.getLeaderIdFromPlayerId()).grid;
             grid.addCardToGrid(card_id, pos_x, pos_y, rotation);
             grid.createCardOnGrid(card_id, pos_x, pos_y, rotation);
+            grid.resizeGrid();
         });
     }
 
