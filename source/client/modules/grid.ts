@@ -6,6 +6,7 @@ import { Cards, Card } from "./cards";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { delay } from "../utils/gameUtils";
 import { EventBus } from "../utils/eventBus";
+import { Animator } from "../utils/animations/animator";
 
 export class Grid extends ListenerElement {
 
@@ -199,8 +200,16 @@ export class Grid extends ListenerElement {
         const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);
         card.render();
         const element = card.element;
-        const animation = RegroupChickenArmy.game.slideToObject(element, `player_${this.id}_cell_${6}_${6}`, 1000, 0);
-        await animation.playAsync();
+        // (element, `player_${this.id}_cell_${6}_${6}`, 1000, 0);
+        const animation = Animator.slideToObject
+            .id(`InitialCard_${this.id}`)
+            .element(element)
+            .target(`player_${this.id}_cell_${6}_${6}`)
+            .duration(1000)
+            .delay(0)
+            .build();
+
+        await animation.play();
         element.remove();
         this.createCardOnGrid(card_id, 6, 6);
     }
@@ -243,12 +252,20 @@ export class Grid extends ListenerElement {
             const posX = notif.args.x;
             const posY = notif.args.y;
             const definition = `<div id="temporalCard" class="card" data-card-id="${cardId}" style="--rotation:${notif.args.rotation}"></div>`
-            const animation = RegroupChickenArmy.game.slideTemporaryObject(definition, marketArea.element.id, sourceElement, `player_${this.id}_cell_${posY}_${posX}`, 1000, 600);
+            const animation = Animator.slideTemporaryObject
+                .id("temporalCard")
+                .definition(definition)
+                .parent(marketArea.element.id)
+                .from(sourceElement)
+                .target(`player_${this.id}_cell_${posY}_${posX}`)
+                .duration(1000)
+                .delay(600)
+                .build();
             if (sourceElement !== "deck") {
                 const element = document.getElementById(sourceElement);
                 element?.remove();
             }
-            await animation.playAsync();
+            await animation.play();
 
             this.addCardToGrid(cardId, posX, posY, notif.args.rotation);
             this.createCardOnGrid(cardId, posX, posY, notif.args.rotation);

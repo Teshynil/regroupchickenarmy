@@ -22,6 +22,7 @@ import "ebg/counter";
 import "./modules/thirdparty/scrollmapWithZoom";
 
 import { registerExtensions } from "./utils/extensions";
+import { Animator } from "./utils/animations/animator";
 import { delay } from "./utils/gameUtils";
 import { Board } from "./modules/board";
 import { PlayerArea } from "./modules/playerArea";

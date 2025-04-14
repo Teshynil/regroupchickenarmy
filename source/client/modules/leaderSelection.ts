@@ -1,7 +1,8 @@
-import { anim } from "dojo";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
 import { GameElement } from "../utils/gameElement";
+import { Animator } from "../utils/animations/animator";
+
 export class LeaderSelection extends ListenerElement {
 
     PARENT_ID = "centralArea";
@@ -44,8 +45,14 @@ export class LeaderSelection extends ListenerElement {
         const leader_id = notif.args.leader_id;
         const element = this.leaders[leader_id].element;
         RegroupChickenArmy.game.leaders_id[notif.args.player_id] = Number(leader_id);
-        const animation = RegroupChickenArmy.game.slideToObject(element, `leaderImg_${leader_id}`, 1000, 600);
-        await animation.playAsync();
+        const animation = Animator.slideToObject
+            .id(`leaderImg_${leader_id}`)
+            .element(element)
+            .target(`leaderImg_${leader_id}`)
+            .duration(1000)
+            .delay(600)
+            .build();
+        await animation.play();
         element.remove();
         this.leaders[leader_id] = null;
         RegroupChickenArmy.game.playerAreas.at(leader_id).render(true);

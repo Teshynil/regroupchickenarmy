@@ -101,9 +101,9 @@ export class Logger {
         let formattedMessage: string;
         if (this.isDevelopmentEnvironment()) {
             const timeString = this.formatElapsedTime();
-            formattedMessage = `[${timeString}] [${this.prefix}] [${level}] - ${message}`;
+            formattedMessage = `[${timeString}] [${this.prefix}] [${level}]: ${message}`;
         } else {
-            formattedMessage = `[${this.prefix}] [${level}] - ${message}`;
+            formattedMessage = `[${this.prefix}] [${level}]: ${message}`;
         }
 
         // Apply color based on log level

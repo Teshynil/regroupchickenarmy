@@ -1,5 +1,5 @@
+import { Animator } from "../utils/animations/animator";
 import { GameElement } from "../utils/gameElement";
-import { AnimationControl } from "../utils/animationControl";
 
 export class Board extends GameElement {
     PARENT_ID = `game_play_area`;
@@ -7,8 +7,6 @@ export class Board extends GameElement {
     htmlDefinition = `<div id="${this.ELEMENT_ID}"><div id="centralArea"></div></div>`;
 
     backgrounds: PlayerBackground[] = [new PlayerBackground(0), new PlayerBackground(1), new PlayerBackground(2), new PlayerBackground(3)];
-
-    public animationControl = new AnimationControl();
 
     public override afterRender(force: boolean): void {
         this.backgrounds.forEach(background => {
@@ -34,7 +32,7 @@ export class Board extends GameElement {
 
         return new Promise((resolve) => {
             const checkAnimation = () => {
-                if (this.animationControl.isQueueEmpty || Date.now() - startTime >= timeout) {
+                if (Animator.instance.isQueueEmpty || Date.now() - startTime >= timeout) {
                     resolve();
                 } else {
                     setTimeout(checkAnimation, 500); // Check every 100ms
