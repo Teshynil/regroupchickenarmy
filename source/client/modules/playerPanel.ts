@@ -1,11 +1,12 @@
 import { GameElement } from "../utils/gameElement";
-import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
+import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig } from "../utils/definitions";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 
 export class PlayerPanel extends GameElement {
     PARENT_ID = `board`;
     ELEMENT_ID = `playerPanel_${this.id}`;
-    htmlDefinition: string = `<div id="playerPanel_${this.id}" class="playerPanel"></div>`;
+    HTML_DEFINITION: string = `<div id="playerPanel_${this.id}" class="playerPanel"></div>`;
 
     leaderPanel: LeaderPanel;
     resourcePanel: ResourcePanel;
@@ -15,7 +16,7 @@ export class PlayerPanel extends GameElement {
         this.resourcePanel = new ResourcePanel(this.id);
     }
 
-    override afterRender() {
+    override afterRenderThis() {
         this.leaderPanel.render();
         this.resourcePanel.render();
     }
@@ -27,7 +28,7 @@ class LeaderPanel extends GameElement {
 
     get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
 
-    htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
                 <div id="healthMarker_${this.id}" class="healthMarker">30</div>
                     <div id="leaderImg_${this.id}" class="leaderImg leader_${this.id}">
                 </div>
@@ -52,7 +53,7 @@ class ResourcePanel extends ListenerElement {
         }
     };
 
-    htmlDefinition = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
+    HTML_DEFINITION = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic" id="resourceContainer_${this.id}">
                     <span id="defPhy_${this.id}" class="resourceCounter">0</span>
                 </div>

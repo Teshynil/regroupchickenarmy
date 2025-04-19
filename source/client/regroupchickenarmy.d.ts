@@ -59,6 +59,7 @@ declare namespace BGA {
 				}
 			}
 		};
+		"firstPlayerSelected": { player_name: string, player_id: number };
 	}
 
 	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */

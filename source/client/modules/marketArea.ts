@@ -2,7 +2,8 @@ import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "../utils/gameElement";
 import { MouseHitbox } from "../utils/mouseHitbox";
 import { delay } from "../utils/gameUtils";
-import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
+import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig } from "../utils/definitions";
 import { Cards, Card } from "./cards";
 
 export class MarketArea extends ListenerElement {
@@ -16,7 +17,7 @@ export class MarketArea extends ListenerElement {
         }
     };
 
-    override htmlDefinition: string = `
+    override HTML_DEFINITION: string = `
     <div id="${this.ELEMENT_ID}">
         <div id="deck" class="deck card" data-card-id="0"></div>
         <div id="market_cost_0"></div>
@@ -28,7 +29,7 @@ export class MarketArea extends ListenerElement {
 
     cardRotationWindow: CardRotationWindow = null;
 
-    override afterRender() {
+    override afterRenderThis() {
         this.deck = document.getElementById("deck") as HTMLDivElement;
         this.renderCards();
     }
@@ -95,7 +96,7 @@ export class MarketArea extends ListenerElement {
             }
         }
         // At this point the card is buyable or is the deck
-        RegroupChickenArmy.game.board.element.classList.add("centralAreaExpanded");
+        RegroupChickenArmy.game.board.centralArea.expand();
         this.cardRotationWindow = new CardRotationWindow(cardId);
         this.cardRotationWindow.render();
     }
@@ -119,14 +120,14 @@ export class MarketArea extends ListenerElement {
             pos_x: pos_x,
             pos_y: pos_y,
         }, this, async function () {
-            const marketCard = RegroupChickenArmy.game.marketArea.cards.find(c =>
+            const marketCard = RegroupChickenArmy.game.board.centralArea.marketArea.cards.find(c =>
                 Number(c.dataset["cardId"]) === card_id);
             if (marketCard) {
                 marketCard.remove();
             }
             this.cardRotationWindow?.destroy();
             this.cardRotationWindow = null;
-            RegroupChickenArmy.game.board.element.classList.remove("centralAreaExpanded");
+            RegroupChickenArmy.game.board.centralArea.collapse();
             RegroupChickenArmy.game.removeActionButtons();
             card.remove();
             const grid = RegroupChickenArmy.game.playerAreas.at(RegroupChickenArmy.game.getLeaderIdFromPlayerId()).grid;
@@ -143,16 +144,16 @@ export class MarketArea extends ListenerElement {
             card_id = Number(element.dataset["cardId"] ?? 0);
             element.remove();
         }
-        RegroupChickenArmy.game.marketArea.cardRotationWindow?.destroy();
-        RegroupChickenArmy.game.marketArea.cardRotationWindow = null;
-        RegroupChickenArmy.game.marketArea.cards.forEach(c => {
+        RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow?.destroy();
+        RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow = null;
+        RegroupChickenArmy.game.board.centralArea.marketArea.cards.forEach(c => {
             c.style.opacity = '1';
         })
-        RegroupChickenArmy.game.board.element.classList.remove("centralAreaExpanded");
+        RegroupChickenArmy.game.board.centralArea.collapse();
         RegroupChickenArmy.game.removeActionButtons();
 
-        if (RegroupChickenArmy.game.marketArea.element.classList.contains("deckCardPicked") && card_id != undefined) {
-            RegroupChickenArmy.game.marketArea.preSelectCard(-1, card_id);
+        if (RegroupChickenArmy.game.board.centralArea.marketArea.element.classList.contains("deckCardPicked") && card_id != undefined) {
+            RegroupChickenArmy.game.board.centralArea.marketArea.preSelectCard(-1, card_id);
         }
     }
 }
@@ -167,7 +168,7 @@ export class CardRotationWindow extends ListenerElement {
 
     PARENT_ID = `centralArea`;
     ELEMENT_ID = `cardRotationArea`;
-    htmlDefinition = `<div id="${this.ELEMENT_ID}">
+    HTML_DEFINITION = `<div id="${this.ELEMENT_ID}">
         <div id="cardRotation_ccw" class="cardRotation_btn"></div>
         <div id="cardRotation_cw" class="cardRotation_btn"></div>
     </div>`;
@@ -176,7 +177,7 @@ export class CardRotationWindow extends ListenerElement {
     cardRotation_ccw: HTMLDivElement;
     cardRotation_cw: HTMLDivElement;
 
-    public override afterRender(force: boolean): void {
+    public override afterRenderThis(force: boolean): void {
         this.card = new Card(this.id, this.ELEMENT_ID, "cardRotation_card", Cards[this.id as keyof Cards]);
         this.card.render();
         this.cardRotation_ccw = document.getElementById("cardRotation_ccw") as HTMLDivElement;
@@ -185,7 +186,7 @@ export class CardRotationWindow extends ListenerElement {
         this.enableRotationButtons();
         if (this.id == 0) {
             this.disableRotationButtons();
-            RegroupChickenArmy.game.addActionButton("confirmDeckPick_btn", _('Pick card from deck'), RegroupChickenArmy.game.marketArea.pickDeckCard);
+            RegroupChickenArmy.game.addActionButton("confirmDeckPick_btn", _('Pick card from deck'), RegroupChickenArmy.game.board.centralArea.marketArea.pickDeckCard);
         }
     }
 
@@ -219,8 +220,8 @@ export class CardRotationWindow extends ListenerElement {
             MouseHitbox.instance.stopSession();
             this.card.hide();
             this.disableRotationButtons();
-            RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.marketArea.confirmCardPlacement);
-            RegroupChickenArmy.game.addActionButton("cancelCardPlacement_btn", _('Cancel'), RegroupChickenArmy.game.marketArea.cancelCardPlacement);
+            RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.board.centralArea.marketArea.confirmCardPlacement);
+            RegroupChickenArmy.game.addActionButton("cancelCardPlacement_btn", _('Cancel'), RegroupChickenArmy.game.board.centralArea.marketArea.cancelCardPlacement);
         }
     }
 }

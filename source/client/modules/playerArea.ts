@@ -13,7 +13,7 @@ export class PlayerArea extends ListenerElement {
     PARENT_ID = "board";
     ELEMENT_ID = `playerArea_${this.id}`;
 
-    htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="playerArea"></div>`;
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="playerArea"></div>`;
 
     grid: Grid;
     panel: PlayerPanel;
@@ -23,7 +23,7 @@ export class PlayerArea extends ListenerElement {
         this.panel = new PlayerPanel(this.id);
     }
 
-    override afterRender(force: boolean): void {
+    override afterRenderThis(force: boolean): void {
         this.grid.render(force);
         this.panel.render(force);
     }

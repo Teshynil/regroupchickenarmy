@@ -2,23 +2,7 @@ import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "./gameElement";
 import { EventBus } from "./eventBus";
 import { Logger } from "./logger";
-
-export type NotifCallback<T extends keyof BGA.NotifTypes> = (notif: BGA.Notif<T>) => void;
-export type BoardEventCallback<T extends keyof Game.BoardEventTypes> = (event: Game.BoardEventTypes[T]) => void;
-
-export type ListenerConfig = {
-    // BGA notification listeners
-    [K in keyof BGA.NotifTypes]?: {
-        callback: NotifCallback<K>,
-        isCustomEvent?: false
-    }
-} & {
-    // Board DOM event listeners
-    [K in keyof Game.BoardEventTypes]?: {
-        callback: BoardEventCallback<K>,
-        isCustomEvent: true
-    }
-};
+import { BoardEventCallback, ListenerConfig, NotifCallback } from "./definitions";
 
 export abstract class ListenerElement extends GameElement {
     abstract get listeners(): ListenerConfig;

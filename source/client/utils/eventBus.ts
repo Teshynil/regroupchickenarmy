@@ -1,4 +1,4 @@
-import { BoardEventCallback } from "./listenerElement";
+import { BoardEventCallback } from "./definitions";
 
 export class EventBus {
     private static _instance: EventBus;

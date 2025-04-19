@@ -1,5 +1,6 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
+import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig } from "../utils/definitions";
 import { GameElement } from "../utils/gameElement";
 import { Animator } from "../utils/animations/animator";
 
@@ -14,23 +15,20 @@ export class LeaderSelection extends ListenerElement {
         }
     };
 
-    leaders: Leader[] = [new Leader(0), new Leader(1), new Leader(2), new Leader(3)];
+    // Use the static create method to create leaders with parent-child relationship
+    leaders: Leader[] = [
+        Leader.createChild(this, 0),
+        Leader.createChild(this, 1),
+        Leader.createChild(this, 2),
+        Leader.createChild(this, 3)
+    ];
 
-    override htmlDefinition: string = `<div id="${this.ELEMENT_ID}"></div>`;
+    override HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}"></div>`;
 
-    override afterRender() {
-        this.leaders.forEach(leader => {
-            leader?.render();
-        });
-    }
+    // No need to manually render or destroy leaders as they are now children
+    // and will be automatically rendered/destroyed with the parent
 
-    override beforeDestroy() {
-        this.leaders.forEach(leader => {
-            leader?.destroy();
-        });
-    }
-
-    async select(element: HTMLDivElement, leader_id: number, noop: boolean = false) {
+    async select(_element: HTMLDivElement, leader_id: number, _noop: boolean = false) {
         RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/selectLeader.html`, {
             leader_id: leader_id
         }, this, async function () {
@@ -68,10 +66,10 @@ class Leader extends GameElement {
     ELEMENT_ID = `leaderSelection_${this.id}`;
 
 
-    htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="leaderImg leader_${this.id}"></div>`;
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderImg leader_${this.id}"></div>`;
 
     override addEventListeners() {
-        this.addEventToElement(this.element, "click", () => RegroupChickenArmy.game.leaderSelection.select(this.element, this.id));
+        this.addEventToElement(this.element, "click", () => RegroupChickenArmy.game.board.centralArea.leaderSelection.select(this.element, this.id));
     }
 
 }

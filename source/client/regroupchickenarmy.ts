@@ -31,16 +31,18 @@ import { Cards } from "./modules/cards";
 import { Logger } from "./utils/logger";
 
 
-/** See {@link BGA.Gamegui} for more information. */
+/** See Gamegui for more information. */
 export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   static game: RegroupChickenArmy;
   leaders_id: { [key: string]: number; } = {};
   board: Board = new Board();
-  playerAreas: PlayerArea[];
-  marketArea: MarketArea;
-  leaderSelection: LeaderSelection;
 
-  /** See {@link BGA.Gamegui} for more information. */
+  // Convenience getters for accessing components through the board
+  get marketArea(): MarketArea { return this.board.centralArea.marketArea; }
+  get leaderSelection(): LeaderSelection { return this.board.centralArea.leaderSelection; }
+  get playerAreas(): PlayerArea[] { return this.board.playerAreas; }
+
+  /** See Gamegui for more information. */
   constructor() {
     super();
     // Initialize the Logger with a custom prefix
@@ -49,18 +51,14 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     RegroupChickenArmy.game = this;
   }
 
-  /** See {@link  BGA.Gamegui#setup} for more information. */
+  /** See Gamegui#setup for more information. */
   override setup(gamedatas: BGA.Gamedatas): void {
     Logger.info("Starting game setup");
     // Setting up player boards
     this.board.render();
 
-    this.playerAreas = [new PlayerArea(0), new PlayerArea(1), new PlayerArea(2), new PlayerArea(3)];
-
     //@ts-ignore
     window.grids = {};
-    this.marketArea = new MarketArea();
-    this.leaderSelection = new LeaderSelection();
 
     this.board.isActive = this.isCurrentPlayerActive();
 
@@ -78,18 +76,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   }
 
   renderGui(gamedatas: BGA.Gamedatas) {
-    this.marketArea.render();
-    for (let i = 0; i < 4; i++) {
-      this.playerAreas.at(i).panel.render();
-      this.playerAreas.at(i).panel.hide();
-    }
 
     let player_id: BGA.ID;
     for (player_id in gamedatas.players) {
       const player = gamedatas.players[player_id] as Player;
       const leaderId = player.leader_id;
       if (leaderId !== null) {
-        this.leaderSelection.leaders[leaderId] = null;
+        this.board.centralArea.leaderSelection.leaders[leaderId] = null;
         this.board.backgrounds[leaderId].isActive = true;
         this.playerAreas.at(leaderId).render(true);
         this.leaders_id[player_id] = Number(leaderId);
@@ -123,14 +116,14 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     let marketCard: { order: number, card_id: number };
     let i = 2;
     for (marketCard of gamedatas["market"]) {
-      this.marketArea.cards[i].dataset["cardId"] = `${marketCard.card_id}`;
+      this.board.centralArea.marketArea.cards[i].dataset["cardId"] = `${marketCard.card_id}`;
       i--;
     }
     if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game
       const player = gamedatas.players[this.player_id] as Player;
       if (this.board.isActive) {
         if (player.marketCardPicked !== null) {
-          this.marketArea.preSelectCard(-1, player.marketCardPicked);
+          this.board.centralArea.marketArea.preSelectCard(-1, player.marketCardPicked);
         }
       }
       const resources = gamedatas["resources"];
@@ -155,7 +148,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   ///////////////////////////////////////////////////
   //// Game & client states
 
-  /** See {@link BGA.Gamegui#onEnteringState} for more information. */
+  /** See Gamegui#onEnteringState for more information. */
   override async onEnteringState(
     ...[stateName, _state]: BGA.GameStateTuple<["name", "state"]>
   ): Promise<void> {
@@ -165,8 +158,8 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     this.board.waitAnimations();
     switch (stateName) {
       case "leaderSelection":
-        this.marketArea.hide();
-        this.leaderSelection.render();
+        this.board.centralArea.marketArea.hide();
+        this.board.centralArea.leaderSelection.show();
         break;
       case "leaderSelectionGame":
         break;
@@ -175,12 +168,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "turnSetup":
         break;
       case "playerTurn":
-        //TODO: this.marketArea.animateDealCards();
+        //TODO: this.board.centralArea.marketArea.animateDealCards();
         break;
       case "playerTurnGame":
         break;
       case "atkPhase":
         if (this.isCurrentPlayerActive()) {
+          await delay(3000);
           Logger.info("Current player is active, automatically sending attack action");
           this.ajaxcall(
             `/${this.game_name}/${this.game_name}/attack.html`,
@@ -210,7 +204,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     }
   }
 
-  /** See {@link BGA.Gamegui#onLeavingState} for more information. */
+  /** See Gamegui#onLeavingState for more information. */
   override onLeavingState(stateName: BGA.ActiveGameState["name"]): void {
     Logger.info("Leaving state: " + stateName);
 
@@ -220,7 +214,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     }
   }
 
-  /** See {@link BGA.Gamegui#onUpdateActionButtons} for more information. */
+  /** See Gamegui#onUpdateActionButtons for more information. */
   override onUpdateActionButtons(
     ...[stateName, args]: BGA.GameStateTuple<["name", "args"]>
   ): void {
@@ -249,7 +243,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   ///////////////////////////////////////////////////
   //// Reaction to cometD notifications
 
-  /** See {@link BGA.Gamegui#setupNotifications} for more information. */
+  /** See Gamegui#setupNotifications for more information. */
   override setupNotifications = () => {
     Logger.info("notifications subscriptions setup");
 
@@ -260,8 +254,8 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
     Logger.info("Entering Notification Boards initialized");
     await delay(1000);
-    this.leaderSelection.destroy();
-    this.marketArea.show();
+    this.board.centralArea.leaderSelection.destroy();
+    this.board.centralArea.marketArea.show();
     // Process initial cards
     const playerCards = notif.args.playersCards;
     dojo.publish('addInitialCards', [{

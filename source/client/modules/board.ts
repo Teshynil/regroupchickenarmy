@@ -1,16 +1,44 @@
 import { Animator } from "../utils/animations/animator";
 import { GameElement } from "../utils/gameElement";
+import { CentralArea } from "./centralArea";
+import { PlayerArea } from "./playerArea";
 
 export class Board extends GameElement {
     PARENT_ID = `game_play_area`;
     ELEMENT_ID = `board`;
-    htmlDefinition = `<div id="${this.ELEMENT_ID}"><div id="centralArea"></div></div>`;
+    HTML_DEFINITION = `<div id="${this.ELEMENT_ID}"></div>`;
 
-    backgrounds: PlayerBackground[] = [new PlayerBackground(0), new PlayerBackground(1), new PlayerBackground(2), new PlayerBackground(3)];
+    backgrounds: PlayerBackground[] = [];
+    centralArea: CentralArea;
+    playerAreas: PlayerArea[] = [];
 
-    public override afterRender(force: boolean): void {
-        this.backgrounds.forEach(background => {
-            background?.render();
+    constructor() {
+        super();
+
+        // Initialize child components with this as parent
+        this.backgrounds = [
+            PlayerBackground.createChild(this, 0),
+            PlayerBackground.createChild(this, 1),
+            PlayerBackground.createChild(this, 2),
+            PlayerBackground.createChild(this, 3)
+        ];
+
+        this.centralArea = CentralArea.createChild(this);
+
+        this.playerAreas = [
+            PlayerArea.createChild(this, 0),
+            PlayerArea.createChild(this, 1),
+            PlayerArea.createChild(this, 2),
+            PlayerArea.createChild(this, 3)
+        ];
+    }
+
+    public override afterRenderThis(_force: boolean): void {
+        // Children are automatically rendered by the parent class
+
+        // Hide player areas initially
+        this.playerAreas.forEach(playerArea => {
+            playerArea.hide();
         });
     }
 
@@ -49,10 +77,10 @@ class PlayerBackground extends GameElement {
     PARENT_ID = "board";
     ELEMENT_ID = `playerBackground_${this.id}`;
 
-    htmlDefinition: string = `<div id="${this.ELEMENT_ID}" class="playerBackground"></div>`;
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="playerBackground"></div>`;
 
 
-    public override afterRender(force: boolean): void {
+    public override afterRenderThis(_force: boolean): void {
         this.isActive = false;
     }
     set isActive(val: boolean) {

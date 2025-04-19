@@ -180,7 +180,7 @@ class Game extends \Table
 
         // Get information about players.
         $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score`, `leader_id`, `marketCardPicked` FROM `player`"
+            "SELECT `player_id` `id`, `player_score` `score`, `leader_id`, `marketCardPicked`, `is_first` FROM `player`"
         );
 
         // Get board data with all placed cards

@@ -5,7 +5,7 @@ import { EventBus } from "../utils/eventBus";
 
 export class Card extends DynamicGameElement {
 
-    override get htmlDefinition(): string {
+    override get HTML_DEFINITION(): string {
         return `<div id="${this.ELEMENT_ID}" class="card" data-card-id="${this.cardId}"></div>`
     };
 

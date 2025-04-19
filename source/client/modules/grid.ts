@@ -1,7 +1,8 @@
 import { remove } from "dojo/dom-class";
 import { GameElement } from "../utils/gameElement";
 import { Slot } from "../definitions";
-import { ListenerConfig, ListenerElement } from "../utils/listenerElement";
+import { ListenerElement } from "../utils/listenerElement";
+import { ListenerConfig } from "../utils/definitions";
 import { Cards, Card } from "./cards";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { delay } from "../utils/gameUtils";
@@ -25,7 +26,7 @@ export class Grid extends ListenerElement {
         }
     };
 
-    htmlDefinition = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
+    HTML_DEFINITION = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
 
     scrollmap: ScrollmapWithZoomNS.ScrollmapWithZoom;
     gridDiv: HTMLDivElement;
@@ -49,8 +50,8 @@ export class Grid extends ListenerElement {
     ];
     cardsPlayed: number = 0;
 
-    public override afterRender(force: boolean): void {
-        //@ts-ignore    
+    public override afterRenderThis(force: boolean): void {
+        //@ts-ignore
         this.scrollmap = new ebg.scrollmapWithZoom();
         this.scrollmap.minZoom = 0.5;
         this.scrollmap.maxZoom = 1;
@@ -310,7 +311,7 @@ export class Grid extends ListenerElement {
     async doMouseHitboxCollision(event: Game.BoardEventTypes["mouseHitboxCollision"]) {
         if (event.id != this.id) return;
         if (event.collisions.length == 4) {
-            const cardId = RegroupChickenArmy.game.marketArea.cardRotationWindow.card.cardId;
+            const cardId = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.cardId;
             const x = Number(event.collisions[0].dataset["x"]);
             const y = Number(event.collisions[0].dataset["y"]);
             this.createTemporalCardOnGrid(cardId, x, y);
@@ -329,7 +330,7 @@ export class Grid extends ListenerElement {
 
     createTemporalCardOnGrid(cardId: number, posX: number, posY: number) {
         document.getElementById("temporalCard")?.remove();
-        const rotation = RegroupChickenArmy.game.marketArea.cardRotationWindow.card.rotation;
+        const rotation = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.rotation;
         this.gridDiv.insertAdjacentHTML(
             this.insertPosition,
             `<div class="card" id="temporalCard" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}"></div>`);

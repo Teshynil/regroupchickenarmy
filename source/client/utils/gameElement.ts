@@ -13,14 +13,98 @@ export abstract class GameElement {
     private _element?: HTMLDivElement;
     private _enabledForEvents: boolean = true;
 
-    abstract get htmlDefinition(): string;
+    // Parent-child relationship properties
+    private _parent?: GameElement;
+    private _children: GameElement[] = [];
+
+    /**
+     * Determines if this element should be rendered when its parent is rendered
+     * Override this in child classes to change the default behavior
+     */
+    get renderWithParent(): boolean {
+        return true;
+    }
+
+    /**
+     * Gets the parent GameElement if one exists
+     */
+    get parent(): GameElement | undefined {
+        return this._parent;
+    }
+
+    /**
+     * Gets all child GameElements
+     */
+    get children(): GameElement[] {
+        return [...this._children]; // Return a copy to prevent direct modification
+    }
+
+    /**
+     * Static factory method to create a GameElement with a parent
+     * @param parent The parent GameElement
+     * @param id The ID of the element
+     * @returns A new GameElement instance
+     */
+    static createChild<T extends GameElement>(this: new (...args: any[]) => T, parent: GameElement, ...args: any[]): T {
+        const element = new this(...args);
+        parent.addChild(element);
+        return element;
+    }
+
+    abstract get HTML_DEFINITION(): string;
     get insertPosition(): InsertPosition {
         return `beforeend`;
     }
 
+    /**
+     * Creates a new GameElement
+     * @param id The ID of this element
+     */
     constructor(id: number = 0) {
         this._id = id;
         this.afterConstructor();
+    }
+
+    /**
+     * Adds a child GameElement to this element
+     * @param child The child element to add
+     */
+    public addChild(child: GameElement): void {
+        if (!this._children.includes(child)) {
+            this._children.push(child);
+            // Set this as the parent if it's not already set
+            if (child._parent !== this) {
+                // If child already has a parent, remove it from that parent's children
+                if (child._parent) {
+                    child._parent.removeChild(child);
+                }
+                child._parent = this;
+            }
+        }
+    }
+
+    /**
+     * Removes a child GameElement from this element
+     * @param child The child element to remove
+     */
+    public removeChild(child: GameElement): void {
+        const index = this._children.indexOf(child);
+        if (index !== -1) {
+            this._children.splice(index, 1);
+            // Clear parent reference if it points to this
+            if (child._parent === this) {
+                child._parent = undefined;
+            }
+        }
+    }
+
+    /**
+     * Finds a child element by its ID
+     * @param elementId The ID of the child element to find
+     * @returns The child element or undefined if not found
+     */
+    public findChildById(elementId: string): GameElement | undefined {
+        return this._children.find(child => child.ELEMENT_ID === elementId);
     }
 
     public afterConstructor() { }
@@ -42,11 +126,10 @@ export abstract class GameElement {
         }
     }
 
-    public beforeRender(force: boolean): void { };
+    public beforeRender(_force: boolean): void { };
 
     public render(force?: boolean): this {
         if (force === undefined) force = false;
-        this.beforeRender(force);
 
         if (this.elementSafe && !force) {
             Logger.debug(`Element ${this.consoleId} was already on the board`);
@@ -55,16 +138,30 @@ export abstract class GameElement {
         if (force) {
             this.destroy();
         }
+
+        this.beforeRender(force);
         const parentElement = document.getElementById(this.PARENT_ID);
         if (parentElement == null) throw new Error(`Parent Element for ${this.consoleId} not found`);
-        parentElement.insertAdjacentHTML(this.insertPosition, this.htmlDefinition);
+        parentElement.insertAdjacentHTML(this.insertPosition, this.HTML_DEFINITION);
 
-        this.afterRender(force);
+        this.afterRenderThis(force);
         this.addEventListeners();
+
+        // Render children that should be rendered with parent
+        this._children.forEach(child => {
+            if (child.renderWithParent) {
+                child.render(force);
+            }
+        });
+
+        this.afterRenderAll(force);
+
         return this;
     }
 
-    public afterRender(force: boolean): void { };
+    public afterRenderThis(_force: boolean): void { };
+
+    public afterRenderAll(_force: boolean): void { };
 
     public show() {
         this.element.style.removeProperty("display");
@@ -111,6 +208,19 @@ export abstract class GameElement {
     public beforeDestroy(): void { };
 
     public destroy() {
+        // First destroy all children
+        while (this._children.length > 0) {
+            const child = this._children[0];
+            child.destroy();
+            // removeChild will be called by the child's destroy method
+        }
+
+        // Remove from parent if exists
+        if (this._parent) {
+            this._parent.removeChild(this);
+            this._parent = undefined;
+        }
+
         try {
             this.element.remove();
             Logger.debug(`Destroying ${this.consoleId}`);
@@ -141,4 +251,6 @@ export abstract class DynamicGameElement extends GameElement {
         this._element_id = element_id;
         this.afterConstructor();
     }
+
+    // No need to override the create method as the base class version is flexible enough
 }
