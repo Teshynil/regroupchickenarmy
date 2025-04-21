@@ -41,13 +41,4 @@ export class CentralArea extends GameElement {
         }
     }
 
-    /**
-     * Toggles the expansion state of the central area
-     */
-    toggleExpansion(): void {
-        const boardElement = document.getElementById("board");
-        if (boardElement) {
-            boardElement.classList.toggle("centralAreaExpanded");
-        }
-    }
 }

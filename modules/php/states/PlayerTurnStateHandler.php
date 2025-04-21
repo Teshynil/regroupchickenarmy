@@ -6,6 +6,7 @@ use Bga\Games\RegroupChickenArmy\Components\Boards;
 use Bga\Games\RegroupChickenArmy\Game;
 use BgaUserException;
 use Bga\Games\RegroupChickenArmy\Components\Market;
+use Bga\Games\RegroupChickenArmy\Components\Players;
 use Bga\Games\RegroupChickenArmy\Components\Resources;
 use BgaVisibleSystemException;
 
@@ -33,12 +34,12 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         $game->trace("Player placing card ID: $cardId at position [$posX,$posY] with rotation: $rotation");
 
         $playerId = (int) $game->getCurrentPlayerId();
-        $playerName = $game->getActivePlayerName();
-        $leaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM player WHERE player_id = $playerId");
+        // $playerName = $game->getActivePlayerName(); // Uncomment if needed for notifications
+        $leaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM playerData WHERE player_id = $playerId");
         $game->debug("Player ID: $playerId with leader ID: $leaderId placing card");
 
         // Check if player is using a card from the deck
-        $deckCardId = $game->getUniqueValueFromDB("SELECT marketCardPicked FROM player WHERE player_id = $playerId");
+        $deckCardId = $game->getUniqueValueFromDB("SELECT marketCardPicked FROM playerData WHERE player_id = $playerId");
         if ($deckCardId !== null) {
             $game->debug("Player has deck card picked ID: $deckCardId");
             // Player is using a deck card
@@ -180,13 +181,15 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         $expectedCardCount = $currentRound + 1; // +1 for the initial card
         $game->debug("Current round: $currentRound, expected card count: $expectedCardCount");
 
-        // Get the count of cards placed by each player
+        // Get the count of cards placed by each player, ordered by leader_id
         $game->debug("Retrieving card counts for all players");
         $cardCounts = $game->getCollectionFromDB(
             "SELECT p.player_id, COUNT(bm.movement_id) as card_count
              FROM player p
-             LEFT JOIN boards_moves bm ON p.leader_id = bm.board_id
-             GROUP BY p.player_id"
+             JOIN playerData pd ON p.player_id = pd.player_id
+             LEFT JOIN boards_moves bm ON pd.leader_id = bm.board_id
+             GROUP BY p.player_id
+             ORDER BY pd.leader_id ASC"
         );
 
         // Check if all players have the expected number of cards
@@ -218,18 +221,11 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         // Otherwise, go to next player
         if ($allPlayersReachedTarget) {
             $game->trace("All players have reached target card count, moving to attack phase");
-            $nextPlayerId = $game->activeNextPlayer();
-            $game->debug("Activating next player ID: $nextPlayerId");
+            Players::activateNextPlayer($game);
             $game->gamestate->nextState('startAtkPhase');
         } else {
             $game->trace("Not all players have reached target card count, moving to next player");
-            $currentPlayerId = $game->getCurrentPlayerId();
-            $game->giveExtraTime($currentPlayerId);
-            $game->debug("Giving extra time to player ID: $currentPlayerId");
-
-            $nextPlayerId = $game->activeNextPlayer();
-            $game->debug("Activating next player ID: $nextPlayerId");
-
+            Players::activateNextPlayer($game);
             $game->gamestate->nextState('nextPlayer');
         }
     }

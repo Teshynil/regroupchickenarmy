@@ -3,6 +3,7 @@
 namespace Bga\Games\RegroupChickenArmy\States;
 
 use Bga\Games\RegroupChickenArmy\Components\Boards;
+use Bga\Games\RegroupChickenArmy\Components\Players;
 use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Bga\Games\RegroupChickenArmy\Game;
 use BgaUserException;
@@ -28,12 +29,18 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
     {
         $playerId = (int)$game->getActivePlayerId();
 
-        if ($game->getUniqueValueFromDB("SELECT player_id FROM player WHERE leader_id = $leaderId")) {
+        if ($game->getUniqueValueFromDB("SELECT player_id FROM playerData WHERE leader_id = $leaderId")) {
             $game->gamestate->nextState('notSelected');
             throw new BgaUserException(clienttranslate("That leader is already selected"));
         }
 
-        $game->DbQuery("UPDATE player SET leader_id = $leaderId WHERE player_id = $playerId");
+        // Ensure playerData entry exists
+        $game->DbQuery(
+            "INSERT IGNORE INTO playerData (player_id, is_first, has_attacked, has_healed, marketCardPicked, leader_id)
+             VALUES ($playerId, 0, 0, 0, 0, 0)"
+        );
+
+        Players::assignPlayerToLeader($game, $playerId, $leaderId);
 
         // Initialize resources for the selected leader
         Resources::initializeResources($game, $leaderId);
@@ -50,8 +57,10 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
     public static function executeGameState(Game $game): void
     {
         $checkAllLeadersSelected = (int) $game->getUniqueValueFromDB(
-            "SELECT COUNT(*) FROM `player` WHERE leader_id is null"
+            "SELECT COUNT(*) FROM `player` p LEFT JOIN `playerData` pd ON p.player_id = pd.player_id WHERE pd.leader_id IS NULL"
         );
+        $game->debug("Checking if all leaders are selected: $checkAllLeadersSelected");
+
         $transition = "selectLeader";
         if ($checkAllLeadersSelected == 0) {
             $transition = "allSelectedLeader";

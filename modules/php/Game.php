@@ -104,12 +104,12 @@ class Game extends \Table
             if (isset($args['player_id']) && !isset($args['player_name']) && str_contains($message, '${player_name}')) {
                 $args['player_name'] = $this->getPlayerNameById($args['player_id']);
             }
-        
+
             if (isset($args['card_id']) && !isset($args['card_name']) && str_contains($message, '${card_name}')) {
                 $args['card_name'] = self::$CARD_TYPES[$args['card_id']]['card_name'];
                 $args['i18n'][] = ['card_name'];
             }
-            
+
             return $args;
         });*/
     }
@@ -176,11 +176,14 @@ class Game extends \Table
         $result = [];
 
         // WARNING: We must only return information visible by the current player.
-        $current_player_id = (int) $this->getCurrentPlayerId();
+        // $current_player_id = (int) $this->getCurrentPlayerId(); // Uncomment if needed for filtering
 
         // Get information about players.
         $result["players"] = $this->getCollectionFromDb(
-            "SELECT `player_id` `id`, `player_score` `score`, `leader_id`, `marketCardPicked`, `is_first` FROM `player`"
+            "SELECT p.`player_id` `id`, p.`player_score` `score`, pd.`leader_id`, pd.`marketCardPicked`, pd.`is_first`, pd.`is_dead`
+             FROM `player` p
+             LEFT JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             ORDER BY pd.`leader_id` ASC"
         );
 
         // Get board data with all placed cards
@@ -251,6 +254,11 @@ class Game extends \Table
 
         Market::initializeMarket($this);
 
+        // Initialize playerData table for all players
+        $this->DbQuery(
+            "INSERT INTO playerData (player_id, is_first, has_attacked, has_healed, marketCardPicked, leader_id)
+             SELECT player_id, NULL, NULL, NULL, NULL, NULL FROM player"
+        );
 
         // Activate first player once everything has been initialized and ready.
         $this->activeNextPlayer();

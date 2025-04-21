@@ -70,11 +70,7 @@ export abstract class ListenerElement extends GameElement {
         });
     }
 
-    public override destroy() {
-        try {
-            this.element.remove();
-            Logger.debug(`Destroying ${this.consoleId}`);
-            this.unsubscribeAll();
-        } catch (error) { };
+    public override afterDestroy() {
+        this.unsubscribeAll();
     }
 }

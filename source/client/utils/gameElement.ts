@@ -198,8 +198,11 @@ export abstract class GameElement {
 
     public addEventToElement(element: Element, type: string, listener: Function) {
         const bindedListener = (event: Event) => {
-            if (RegroupChickenArmy.game.isCurrentPlayerActive() && this._enabledForEvents) {
+            Logger.debug(`Event ${type} on ${element.id} Triggered`);
+            if (!RegroupChickenArmy.game.isReadOnly() &&RegroupChickenArmy.game.isCurrentPlayerActive() && this._enabledForEvents) {
                 listener.call(this, event);
+            } else {
+                Logger.debug(`Event ${type} on ${element.id} Canceled due to: ${RegroupChickenArmy.game.isCurrentPlayerActive() ? "Not active player" : "Events disabled"}`);
             }
         };
         element.addEventListener(type, bindedListener);
@@ -224,8 +227,10 @@ export abstract class GameElement {
         try {
             this.element.remove();
             Logger.debug(`Destroying ${this.consoleId}`);
-        } catch (error) { } finally { this._element = undefined; }
+        } catch (error) { } finally { this.afterDestroy(); this._element = undefined; }
     }
+
+    public afterDestroy() { };
 
     protected get consoleId() {
         return `${this.constructor.name}:${this.id}`

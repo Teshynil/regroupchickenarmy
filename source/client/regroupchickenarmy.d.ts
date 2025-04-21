@@ -11,7 +11,7 @@ declare namespace BGA {
 
 	/** Goto {@link Gamedatas} or hover name for info. */
 	interface Gamedatas extends Record<string, any> {
-		"boards_moves": { [key: string]: { [key: string]: { board_id: number, movement_id: number, card_id: number, rotation: number, x: number, y: number } } };
+		"boards_moves": { [key: number]: { [key: number]: { board_id: number, movement_id: number, card_id: number, rotation: number, x: number, y: number } } };
 		"market": { order: number, card_id: number }[];
 		"resources": { [leaderId: string]: { fighter: number, wizard: number, shield: number, barrier: number, potion: number, coin: number } };
 	}
@@ -21,7 +21,6 @@ declare namespace BGA {
 		"leaderSelected": { player_name: string, player_id: number, leader_id: number };
 		"marketUpdate": { cards: { order: number, card_id: number }[] };
 		"addInitialCards": { playersCards: { [leaderId: string]: { leader_id: number, player_id: number, card_id: number } } };
-		"addCardToGrid": { card_id: number, rotation: number, leader_id: number, x: number, y: number };
 		"cardPlaced": {
 			player_name: string,
 			player_id: number,
@@ -40,7 +39,8 @@ declare namespace BGA {
 				shield: number,
 				barrier: number,
 				potion: number,
-				coin: number
+				coin: number,
+				health: number
 			}
 		};
 		"boardsInitialized": {
@@ -60,6 +60,20 @@ declare namespace BGA {
 			}
 		};
 		"firstPlayerSelected": { player_name: string, player_id: number };
+		"attackExecuted": {
+			player_name: string,
+			player_id: number,
+			attack_results: {
+				[player_id: string]: {
+					defender_id: number,
+					defender_name: string,
+					physical_damage: number,
+					magical_damage: number,
+					total_damage: number,
+					new_health: number
+				}
+			}
+		};
 	}
 
 	/** Goto {@link GameSpecificIdentifiers} or hover name for info. */

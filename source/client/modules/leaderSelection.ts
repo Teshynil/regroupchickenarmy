@@ -52,8 +52,28 @@ export class LeaderSelection extends ListenerElement {
             .build();
         await Animator.play(animation);
         element.remove();
-        this.leaders[leader_id] = null;
-        RegroupChickenArmy.game.playerAreas.at(leader_id).render(true);
+        this.leaders[leader_id].destroy();
+        RegroupChickenArmy.game.playerAreas.at(leader_id).render();
+        RegroupChickenArmy.game.playerAreas.at(leader_id).show();
+        const player_id = notif.args.player_id;
+        const playerName = RegroupChickenArmy.game.players_metadata[player_id].player_name;
+        RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.playerName = playerName;
+
+        const playerNameElement = document.querySelector<HTMLElement>(`#player_name_${player_id}>a`);
+        if (playerNameElement) {
+            const oldColor = RegroupChickenArmy.game.gamedatas.players[player_id].color;
+            const newColor = RegroupChickenArmy.game.leader_colors[leader_id];
+            playerNameElement.style.color = `#${newColor}`;
+            //Search for any logs and update them:
+
+            document.querySelectorAll<HTMLElement>(`span.playername[style*="#${oldColor}"]`).forEach(element => {
+                element.style.color = `#${newColor}`;
+            });
+
+            RegroupChickenArmy.game.gamedatas.players[player_id].color = newColor;
+
+        }
+
         RegroupChickenArmy.game.board.backgrounds.at(leader_id).isActive = true;
         if (this.leaders.every((e) => e == null)) {
             this.hide();

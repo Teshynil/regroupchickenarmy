@@ -6,7 +6,7 @@ use Bga\Games\RegroupChickenArmy\Components\Boards;
 use Bga\Games\RegroupChickenArmy\Components\Players;
 use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Bga\Games\RegroupChickenArmy\Game;
-use BgaUserException;
+// BgaUserException not used in this file
 use BgaVisibleSystemException;
 
 class PrepareBoardsStateHandler implements StateHandlerInterface
@@ -28,18 +28,22 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
         // Initialize all player boards
         Boards::initializeAllBoards($game);
 
+        $game->DbQuery(
+            "INSERT IGNORE INTO playerData (player_id, is_first, has_attacked, has_healed, marketCardPicked, leader_id)
+             SELECT player_id, 0, 0, 0, 0, 0 FROM player"
+        );
+
         // Initialize the first player
         $firstPlayerId = Players::initializeFirstPlayer($game);
         $firstPlayerName = $game->getPlayerNameById($firstPlayerId);
-        
-        // Notify all players about the first player
-        $game->notifyAllPlayers('firstPlayerSelected', clienttranslate('${player_name} is the first player for this round'), [
-            'player_name' => $firstPlayerName,
-            'player_id' => $firstPlayerId
-        ]);
 
         // Add initial cards to each player's board and collect data for notification
-        $player_initial_cards = $game->getCollectionFromDB("SELECT `leader_id`, `player_id`, 99 as card_id FROM `player`");
+        $player_initial_cards = $game->getCollectionFromDB(
+            "SELECT pd.`leader_id`, p.`player_id`, 99 as card_id
+             FROM `player` p
+             JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             ORDER BY pd.`leader_id` ASC"
+        );
         $player_resources = [];
 
         foreach ($player_initial_cards as $leaderId => $value) {
@@ -66,6 +70,12 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
         $game->notifyAllPlayers('boardsInitialized', "", [
             'playersCards' => $player_initial_cards,
             'playersResources' => $player_resources
+        ]);
+
+        // Notify all players about the first player
+        $game->notifyAllPlayers('firstPlayerSelected', clienttranslate('${player_name} is the first player for this round'), [
+            'player_name' => $firstPlayerName,
+            'player_id' => $firstPlayerId
         ]);
 
         $game->setGameStateValue('round', 1);

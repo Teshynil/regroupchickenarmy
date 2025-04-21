@@ -1,12 +1,25 @@
+import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { Animator } from "../utils/animations/animator";
+import { ListenerConfig } from "../utils/definitions";
 import { GameElement } from "../utils/gameElement";
+import { delay } from "../utils/gameUtils";
+import { ListenerElement } from "../utils/listenerElement";
+import { Logger } from "../utils/logger";
 import { CentralArea } from "./centralArea";
 import { PlayerArea } from "./playerArea";
 
-export class Board extends GameElement {
+export class Board extends ListenerElement {
     PARENT_ID = `game_play_area`;
     ELEMENT_ID = `board`;
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}"></div>`;
+
+    get listeners(): ListenerConfig {
+        return {
+            "firstPlayerSelected": { callback: this.doFirstPlayerSelected },
+            "attackExecuted": { callback: this.doAttackExecuted },
+            "resourcesUpdated": { callback: this.doUpdateResources }
+        }
+    };
 
     backgrounds: PlayerBackground[] = [];
     centralArea: CentralArea;
@@ -33,7 +46,7 @@ export class Board extends GameElement {
         ];
     }
 
-    public override afterRenderThis(_force: boolean): void {
+    public override afterRenderAll(_force: boolean): void {
         // Children are automatically rendered by the parent class
 
         // Hide player areas initially
@@ -70,6 +83,48 @@ export class Board extends GameElement {
             checkAnimation();
         });
     }
+
+    async doFirstPlayerSelected(notif: BGA.Notif<"firstPlayerSelected">) {
+        for (const playerAreas of this.playerAreas) {
+            playerAreas.panel.leaderPanel.hasPlayerToken = false;
+        }
+        const leaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(notif.args.player_id);
+        this.playerAreas.at(leaderId).panel.leaderPanel.hasPlayerToken = true;
+    }
+
+    async doAttackExecuted(notif: BGA.Notif<"attackExecuted">) {
+        Logger.info("Attack executed");
+        const attackerId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(notif.args.player_id);
+        const results = notif.args.attack_results;
+        for (const result in results) {
+            const defenderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(Number(result));
+            const defenderPanel = this.playerAreas.at(defenderId).panel;
+            const physicalDamage = results[result].physical_damage;
+            const magicalDamage = results[result].magical_damage;
+            const newHealth = results[result].new_health;
+            defenderPanel.receiveAttack(attackerId, results[result].new_health, physicalDamage, magicalDamage);
+            await delay(1000);
+        }
+    }
+
+    async doUpdateResources(notif: BGA.Notif<"resourcesUpdated">) {
+        const leaderId = notif.args.leader_id;
+        const resources = notif.args.resources;
+
+        const leaderPanel = this.playerAreas.at(leaderId).panel.leaderPanel;
+        const resourcePanel = this.playerAreas.at(leaderId).panel.resourcePanel;
+
+        // Update all resource counters
+        resourcePanel.shieldElement.innerText = resources.shield.toString();
+        resourcePanel.fighterElement.innerText = resources.fighter.toString();
+        resourcePanel.barrierElement.innerText = resources.barrier.toString();
+        resourcePanel.wizardElement.innerText = resources.wizard.toString();
+        resourcePanel.potionElement.innerText = resources.potion.toString();
+        resourcePanel.coinElement.innerText = resources.coin.toString();
+
+        leaderPanel.health = resources.health;
+    }
+
 }
 
 
@@ -83,6 +138,7 @@ class PlayerBackground extends GameElement {
     public override afterRenderThis(_force: boolean): void {
         this.isActive = false;
     }
+
     set isActive(val: boolean) {
         if (!val) {
             this.element.classList.add("inactive");

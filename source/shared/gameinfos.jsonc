@@ -24,7 +24,8 @@
 
   // Players
   "players": [2, 3, 4],
-  "player_colors": ["ff0000", "008000", "0000ff", "ffa500", "773300"],
+  // Player colors are temporal as the players select their leader and each leader has a color
+  "player_colors": ["000000", "982fff", "72c3b1", "e94190"],
   "favorite_colors_support": true,
   "suggest_player_number": null,
   "not_recommend_player_number": null,

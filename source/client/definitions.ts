@@ -20,4 +20,6 @@ export enum Slot {
 export interface Player extends BGA.GamePlayer {
     leader_id: number;
     marketCardPicked: number | null;
+    is_first: number;
+    is_dead: number;
 }

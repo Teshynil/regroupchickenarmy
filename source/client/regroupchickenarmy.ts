@@ -37,6 +37,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   leaders_id: { [key: string]: number; } = {};
   board: Board = new Board();
 
+  leader_colors = [
+    "ffa500",
+    "0000ff",
+    "ff0000",
+    "008000",
+  ];
+
   // Convenience getters for accessing components through the board
   get marketArea(): MarketArea { return this.board.centralArea.marketArea; }
   get leaderSelection(): LeaderSelection { return this.board.centralArea.leaderSelection; }
@@ -82,17 +89,20 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       const player = gamedatas.players[player_id] as Player;
       const leaderId = player.leader_id;
       if (leaderId !== null) {
-        this.board.centralArea.leaderSelection.leaders[leaderId] = null;
-        this.board.backgrounds[leaderId].isActive = true;
-        this.playerAreas.at(leaderId).render(true);
+        this.leaderSelection.leaders[leaderId].destroy();
+        this.playerAreas.at(leaderId).show();
+        this.playerAreas.at(leaderId).panel.resourcePanel.playerName = player.name;
+        this.board.backgrounds.at(leaderId).isActive = true;
         this.leaders_id[player_id] = Number(leaderId);
+        this.playerAreas.at(leaderId).panel.leaderPanel.hasPlayerToken = player.is_first == 1;
       }
     }
 
     // Render board cards from saved state
     if (gamedatas.boards_moves) {
-      for (const boardId in gamedatas.boards_moves) {
+      for (const boardId of Object.keys(gamedatas.boards_moves) as unknown as number[]) {
         const boardData = gamedatas.boards_moves[boardId];
+        this.playerAreas.at(boardId).grid.render();
         for (const movementId in boardData) {
           if (boardData[movementId].card_id) {
             this.playerAreas.at(boardData[movementId].board_id).grid.addCardToGrid(
@@ -109,7 +119,6 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
             );
           }
         }
-        this.playerAreas.at(Number(boardId)).grid.resizeGrid();
       }
     }
 
@@ -128,12 +137,29 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       }
       const resources = gamedatas["resources"];
       for (const leaderId in resources) {
-        this.playerAreas.at(Number(leaderId)).panel.resourcePanel.doUpdateResources({
+        this.board.doUpdateResources({
           args: {
             leader_id: Number(leaderId),
             resources: resources[leaderId]
           }
         } as unknown as BGA.Notif<"resourcesUpdated">);
+      }
+      const playerAreasToRemove = [...this.playerAreas];
+      for (player_id in gamedatas.players) {
+        const leaderId = this.leaders_id[player_id];
+        if (leaderId !== null) {
+          playerAreasToRemove[leaderId] = null;
+
+        }
+      }
+      for (const playerArea of playerAreasToRemove) {
+        if (playerArea == null) continue;
+        const id = playerArea.id;
+        playerArea.destroy();
+        this.playerAreas[id] = null;
+      }
+      for (const playerArea of this.playerAreas) {
+        playerArea?.grid.resizeGrid();
       }
     }
   }
@@ -165,7 +191,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         break;
       case "prepareBoards":
         break;
-      case "turnSetup":
+      case "roundSetup":
         break;
       case "playerTurn":
         //TODO: this.board.centralArea.marketArea.animateDealCards();
@@ -173,22 +199,12 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "playerTurnGame":
         break;
       case "atkPhase":
-        if (this.isCurrentPlayerActive()) {
+        if (this.isCurrentPlayerActive() && !this.isReadOnly() && false) {
           await delay(3000);
           Logger.info("Current player is active, automatically sending attack action");
-          this.ajaxcall(
-            `/${this.game_name}/${this.game_name}/attack.html`,
-            {},
-            this,
-            () => {
-              // Success callback
-              Logger.info("Attack action sent successfully");
-            },
-            (error) => {
-              // Error callback
-              Logger.error("Attack action failed", error);
-            }
-          );
+          this.ajaxAction("attack", {}, () => {
+            Logger.info("Attack action executed");
+          });
         } else {
           Logger.info("Current player is not active, waiting for active player to attack");
         }
@@ -196,6 +212,15 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "atkPhaseGame":
         break;
       case "healingPhase":
+        if (this.isCurrentPlayerActive() && !this.isReadOnly() && false) {
+          await delay(3000);
+          Logger.info("Current player is active, automatically sending heal action");
+          this.ajaxAction("heal", {}, () => {
+            Logger.info("Heal action executed");
+          });
+        } else {
+          Logger.info("Current player is not active, waiting for active player to heal");
+        }
         break;
       case "healingPhaseGame":
         break;
@@ -227,9 +252,19 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     }
 
     switch (stateName) {
-      case "leaderSelection":
-        // Add buttons to action bar...
-        // this.addActionButton( 'button_id', _('Button label'), this.onButtonClicked );
+      case "atkPhase":
+        this.addActionButton('button_id', _('Attack'), () => {
+          this.ajaxAction("attack", {}, () => {
+            Logger.info("Attack action executed");
+          });
+        });
+        break;
+      case "healingPhase":
+        this.addActionButton('button_id', _('Heal'), () => {
+          this.ajaxAction("heal", {}, () => {
+            Logger.info("Heal action executed");
+          });
+        });
         break;
     }
   }
@@ -249,6 +284,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
     this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
     this.notifqueue.setSynchronous('boardsInitialized', 2000);
+    this.notifqueue.setSynchronous('attackExecuted', 3000);
   };
 
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
@@ -258,6 +294,17 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     this.board.centralArea.marketArea.show();
     // Process initial cards
     const playerCards = notif.args.playersCards;
+    for (const playerArea of this.playerAreas) {
+      const playerAreaId = playerArea.id;
+      if (playerCards[playerAreaId] == null) {
+        playerArea.destroy();
+      }
+    }
+
+    for (const playerArea of this.playerAreas) {
+      playerArea.grid.render();
+    }
+
     dojo.publish('addInitialCards', [{
       args: {
         playersCards: playerCards
@@ -282,32 +329,6 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     }
   }
 
-  /* Example:
-
-  ntf_any( notif: BGA.Notif )
-  {
-    console.log( 'ntf_any', notif );
-    notif.args!['arg_0'];
-  }
-
-  ntf_actionTaken( notif: BGA.Notif<'actionTaken'> ) {
-    console.log( 'ntf_actionTaken', notif );
-  }
-
-  ntf_cardPlayed( notif: BGA.Notif<'cardPlayed_0' | 'cardPlayed_1'> )
-  {
-    console.log( 'ntf_cardPlayed', notif );
-    switch( notif.type ) {
-      case 'cardPlayed_0':
-        notif.args.arg_0;
-        break;
-      case 'cardPlayed_1':
-        notif.args.arg_1;
-        break;
-    }
-  }
-
-  */
 }
 
 // The global 'bgagame.regroupchickenarmy' class is instantiated when the page is loaded and used as the Gamegui.

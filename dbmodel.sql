@@ -1,7 +1,7 @@
 -- ------
 -- BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
 -- RegroupChickenArmy implementation : © Teshynil me@teshynil.dev
--- 
+--
 -- This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
 -- -----
@@ -107,9 +107,15 @@ CREATE TABLE IF NOT EXISTS `resources` (
     PRIMARY KEY (`leader_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 
--- Add leader position and picked card to player
-ALTER TABLE `player`
-    ADD `leader_id` INT UNSIGNED DEFAULT NULL,
-    ADD `is_first` INT UNSIGNED DEFAULT NULL,
-    ADD `has_attacked` INT UNSIGNED DEFAULT NULL,
-    ADD `marketCardPicked` INT UNSIGNED DEFAULT NULL;
+-- Create player data table to store game-specific player information
+CREATE TABLE IF NOT EXISTS `playerData` (
+    `player_id` int UNSIGNED NOT NULL,
+    `is_dead` int UNSIGNED NOT NULL DEFAULT 0,
+    `is_first` int UNSIGNED DEFAULT NULL,
+    `has_attacked` int UNSIGNED DEFAULT NULL,
+    `has_healed` int UNSIGNED DEFAULT NULL,
+    `marketCardPicked` int UNSIGNED DEFAULT NULL,
+    `leader_id` int UNSIGNED DEFAULT NULL,
+    `order_id` int UNSIGNED DEFAULT NULL,
+    PRIMARY KEY (`player_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8;

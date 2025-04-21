@@ -19,13 +19,8 @@ export class PlayerArea extends ListenerElement {
     panel: PlayerPanel;
 
     override afterConstructor() {
-        this.grid = new Grid(this.id);
-        this.panel = new PlayerPanel(this.id);
-    }
-
-    override afterRenderThis(force: boolean): void {
-        this.grid.render(force);
-        this.panel.render(force);
+        this.grid = Grid.createChild(this, this.id);
+        this.panel = PlayerPanel.createChild(this, this.id);
     }
 
     override afterShow() {

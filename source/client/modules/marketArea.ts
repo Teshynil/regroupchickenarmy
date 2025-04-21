@@ -44,7 +44,9 @@ export class MarketArea extends ListenerElement {
         this.cards[0] = document.getElementById("market_card_0") as HTMLDivElement;
         this.cards[1] = document.getElementById("market_card_1") as HTMLDivElement;
         this.cards[2] = document.getElementById("market_card_2") as HTMLDivElement;
-        this.addEventListeners();
+        for (let i = 0; i < 3; i++) {
+            this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
+        }
     }
 
     async doUpdateMarket(notif: BGA.Notif<"marketUpdate">) {
@@ -103,10 +105,8 @@ export class MarketArea extends ListenerElement {
 
     override addEventListeners(): void {
         this.addEventToElement(this.deck, "click", () => this.preSelectCard(-1, 0));
-        for (let i = 0; i < 3; i++) {
-            this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
-        }
     }
+
     public async confirmCardPlacement() {
         const card = document.getElementById("placedCard") as HTMLDivElement;
         const card_id = Number(card.dataset["cardId"]);

@@ -5,7 +5,6 @@ namespace Bga\Games\RegroupChickenArmy\States;
 use Bga\Games\RegroupChickenArmy\Game;
 use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Bga\Games\RegroupChickenArmy\Components\Players;
-use BgaUserException;
 use BgaVisibleSystemException;
 
 class AtkPhaseStateHandler implements StateHandlerInterface
@@ -29,7 +28,7 @@ class AtkPhaseStateHandler implements StateHandlerInterface
         $game->trace("Player executing attack action");
 
         $attackerId = (int) $game->getCurrentPlayerId();
-        $attackerLeaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM player WHERE player_id = $attackerId");
+        $attackerLeaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM playerData WHERE player_id = $attackerId");
         $attackerName = $game->getActivePlayerName();
 
         // Get attacker's resources (attack values)
@@ -39,9 +38,13 @@ class AtkPhaseStateHandler implements StateHandlerInterface
 
         $game->debug("Attacker ID: $attackerId (Leader: $attackerLeaderId) with physical attack: $physicalAttack, magical attack: $magicalAttack");
 
-        // Get all other players
+        // Get all other players ordered by leader_id
         $otherPlayers = $game->getCollectionFromDB(
-            "SELECT player_id, leader_id, player_name FROM player WHERE player_id <> $attackerId AND player_eliminated = 0"
+            "SELECT p.player_id, pd.leader_id, p.player_name
+             FROM player p
+             JOIN playerData pd ON p.player_id = pd.player_id
+             WHERE p.player_id <> $attackerId AND p.player_eliminated = 0
+             ORDER BY pd.leader_id ASC"
         );
 
         $attackResults = [];
@@ -94,7 +97,7 @@ class AtkPhaseStateHandler implements StateHandlerInterface
         ]);
 
         // Mark attacker as having attacked
-        $game->DbQuery("UPDATE player SET has_attacked = 1 WHERE player_id = $attackerId");
+        $game->DbQuery("UPDATE playerData SET has_attacked = 1 WHERE player_id = $attackerId");
 
         $game->trace("Attack complete, ending turn");
 
@@ -110,15 +113,16 @@ class AtkPhaseStateHandler implements StateHandlerInterface
         $game->giveExtraTime($currentPlayerId);
 
         $arePlayersThatHaveNotAttacked = $game->getUniqueValueFromDB(
-            "SELECT COUNT(*) FROM player WHERE has_attacked = 0"
+            "SELECT COUNT(*) FROM playerData WHERE has_attacked = 0"
         );
 
         if ($arePlayersThatHaveNotAttacked == 0) {
             $game->trace("All players have attacked, moving to healing phase");
+            Players::activateNextPlayer($game);
             $game->gamestate->nextState("atkPhaseEnded");
         } else {
             $game->trace("Moving to next player for attack phase");
-            $game->activeNextPlayer();
+            Players::activateNextPlayer($game);
             $game->gamestate->nextState("nextPlayer");
         }
     }

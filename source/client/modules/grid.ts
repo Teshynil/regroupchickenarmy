@@ -14,10 +14,11 @@ export class Grid extends ListenerElement {
 
     PARENT_ID = `playerArea_${this.id}`;
     ELEMENT_ID = `mapContainer_${this.id}`;
+    HTML_DEFINITION = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
+    override get renderWithParent() { return false };
 
     get listeners(): ListenerConfig {
         return {
-            "addCardToGrid": { callback: this.doAddCardToGrid },
             "addInitialCards": { callback: this.doAddInitialCard },
             "cardPlaced": { callback: this.doCardPlaced },
 
@@ -26,7 +27,6 @@ export class Grid extends ListenerElement {
         }
     };
 
-    HTML_DEFINITION = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
 
     scrollmap: ScrollmapWithZoomNS.ScrollmapWithZoom;
     gridDiv: HTMLDivElement;
@@ -56,8 +56,7 @@ export class Grid extends ListenerElement {
         this.scrollmap.minZoom = 0.5;
         this.scrollmap.maxZoom = 1;
         this.scrollmap.bEnableZooming = false;
-        //@ts-ignore
-        window.grids[this.id] = this;
+
         this.scrollmap.startPosition = { x: 0, y: 0 };
         this.scrollmap.createCompletely($(this.element));
         this.scrollmap.zoomingOptions.bWheelZooming = false;
@@ -81,8 +80,8 @@ export class Grid extends ListenerElement {
 
         }
         this.scrollmap.surface_div.style.cursor = "default";
+        this.scrollmap.scrollable_div.style.opacity = "1";
         this.activateCellsAroundPosition(6, 6);
-
         this.resizeGrid();
     }
 
@@ -168,6 +167,7 @@ export class Grid extends ListenerElement {
         this.grid[posY + 1][posX + 1] = slots[3];
 
         this.activateCellsAroundPosition(posX, posY);
+        Logger.debug(`Card ${cardId} added to grid ${this.consoleId} on position ${posX},${posY}`);
     }
 
     /**
@@ -193,12 +193,9 @@ export class Grid extends ListenerElement {
         }
     }
 
-    async doAddCardToGrid(notif: BGA.Notif<"addCardToGrid">) {
-
-    }
-
     async doAddInitialCard(notif: BGA.Notif<"addInitialCards">) {
         if (notif.args.playersCards[this.id] == undefined) return;
+        Logger.debug(`Adding initial card to grid ${this.consoleId}`);
         const card_id = notif.args.playersCards[this.id].card_id;
         this.addCardToGrid(card_id, 6, 6, 0);
         const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);

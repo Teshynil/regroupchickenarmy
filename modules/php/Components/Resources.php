@@ -3,7 +3,7 @@
 namespace Bga\Games\RegroupChickenArmy\Components;
 
 use Bga\Games\RegroupChickenArmy\Game;
-use BgaUserException;
+// BgaUserException not used in this file
 
 class Resources
 {
@@ -37,7 +37,7 @@ class Resources
         );
 
         $playerId = $game->getUniqueValueFromDB(
-            "SELECT player_id FROM player WHERE leader_id = $leaderId"
+            "SELECT player_id FROM playerData WHERE leader_id = $leaderId"
         );
 
         if ($playerId) {
@@ -52,7 +52,7 @@ class Resources
     {
         $players = Players::getRemainingPlayers($game);
 
-        foreach ($players as $playerId => $player) {
+        foreach ($players as $player) {
             $leaderId = $player['leader_id'];
             if ($leaderId) {
                 self::initializeResources($game, $leaderId);
@@ -243,9 +243,7 @@ class Resources
         $updatedResources = self::getResources($game, $boardId);
 
         // Get player ID for this leader
-        $playerId = $game->getUniqueValueFromDB(
-            "SELECT player_id FROM player WHERE leader_id = $boardId"
-        );
+        $playerId = Players::getPlayerId($game, $boardId);
 
         // Notify players about the resource update
         if ($notify) {

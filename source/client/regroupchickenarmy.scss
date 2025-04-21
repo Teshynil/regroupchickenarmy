@@ -22,7 +22,11 @@
 	--animation_long: 2s;
 	--card-size: calc(var(--cell-size) * 2);
 
-	--market-size-h: calc(var(--card-size)*2)
+	--market-size-h: calc(var(--card-size)*2);
+	--leader0_color: #ffa500;
+	--leader1_color: #0000ff;
+	--leader2_color: #ff0000;
+	--leader3_color: #008000;
 }
 
 // Main board layout
@@ -454,10 +458,30 @@
 
 	.resourcePanel {
 		grid-template-columns: repeat(6, 1fr);
+		grid-template-rows: 1fr var(--cell-size) 1fr;
+
+		@for $i from 0 through 3 {
+			&#resourcePanel_#{$i} {
+				@if $i < 2 {
+					grid-template-areas:
+						". . . . . ."
+						"Defense_Physic Attack_Physic Defense_Magic Attack_Magic Potion Coin"
+						"PlayerName PlayerName PlayerName PlayerName PlayerName PlayerName";
+				}
+
+				@else {
+					grid-template-areas:
+						"PlayerName PlayerName PlayerName PlayerName PlayerName PlayerName"
+						"Defense_Physic Attack_Physic Defense_Magic Attack_Magic Potion Coin"
+						". . . . . .";
+				}
+			}
+		}
+
+
 		align-content: center;
 
 		.resource {
-
 			background-repeat: no-repeat;
 			background-size: var(--cell-size);
 			background-position: center;
@@ -469,10 +493,11 @@
 
 			grid-template: 0.5fr 1fr / 0.5fr 1fr;
 
-			$types: 'Defense_Physic', 'Attack_Physic', 'Defense_Magic', 'Attack_Magic', 'Potion', 'Coin';
+			$types: Defense_Physic, Attack_Physic, Defense_Magic, Attack_Magic, Potion, Coin;
 
 			@each $type in $types {
 				&.#{$type} {
+					grid-area: $type;
 					background-image: url("img/Gui/#{$type}.webp");
 				}
 			}
@@ -490,6 +515,32 @@
 				display: block;
 				text-shadow: 0px 0px 5px white;
 				color: black;
+			}
+		}
+
+		.player-name {
+			grid-area: PlayerName;
+			font-size: 1vw;
+			text-align: center;
+			align-content: center;
+			position: relative;
+			display: block;
+			text-shadow: 0px 0px 3px #000000;
+
+			&#playerName_0 {
+				color: var(--leader0_color);
+			}
+
+			&#playerName_1 {
+				color: var(--leader1_color);
+			}
+
+			&#playerName_2 {
+				color: var(--leader2_color);
+			}
+
+			&#playerName_3 {
+				color: var(--leader3_color);
 			}
 		}
 

@@ -12,13 +12,12 @@ export class PlayerPanel extends GameElement {
     resourcePanel: ResourcePanel;
 
     public override afterConstructor(): void {
-        this.leaderPanel = new LeaderPanel(this.id);
-        this.resourcePanel = new ResourcePanel(this.id);
+        this.leaderPanel = LeaderPanel.createChild(this, this.id);
+        this.resourcePanel = ResourcePanel.createChild(this, this.id);
     }
 
-    override afterRenderThis() {
-        this.leaderPanel.render();
-        this.resourcePanel.render();
+    public receiveAttack(from: number, newHealth: number, physicalDamage: number, magicalDamage: number) {
+        this.leaderPanel.health = newHealth;
     }
 }
 
@@ -40,18 +39,24 @@ class LeaderPanel extends GameElement {
     get leaderElement() {
         return document.getElementById(`leaderImg_${this.id}`);
     }
+
+    set health(val: number) {
+        this.healthElement.innerText = val.toString();
+    }
+
+    set hasPlayerToken(val: boolean) {
+        if (val) {
+            this.leaderElement.classList.add("hasPlayerToken");
+        } else {
+            this.leaderElement.classList.remove("hasPlayerToken");
+        }
+    }
 }
 
-class ResourcePanel extends ListenerElement {
+class ResourcePanel extends GameElement {
     PARENT_ID = `playerPanel_${this.id}`;
     ELEMENT_ID = `resourcePanel_${this.id}`;
     get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
-
-    get listeners(): ListenerConfig {
-        return {
-            "resourcesUpdated": { callback: this.doUpdateResources }
-        }
-    };
 
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic" id="resourceContainer_${this.id}">
@@ -72,7 +77,12 @@ class ResourcePanel extends ListenerElement {
                 <div class="resource Coin" id="resourceContainer_${this.id}">
                     <span id="coins_${this.id}" class="resourceCounter">0</span>
                 </div>
+                <div class="player-name" id="playerName_${this.id}"></div>
 			</div>`;
+
+    set playerName(val: string) {
+        document.getElementById(`playerName_${this.id}`).innerText = val;
+    }
 
     get shieldElement() { return document.getElementById(`defPhy_${this.id}`) };
     get fighterElement() { return document.getElementById(`atkPhy_${this.id}`) };
@@ -87,19 +97,4 @@ class ResourcePanel extends ListenerElement {
     get wizardCount(): number { return Number(this.wizardElement.innerText) };
     get potionCount(): number { return Number(this.potionElement.innerText) };
     get coinCount(): number { return Number(this.coinElement.innerText) };
-
-    doUpdateResources(notif: BGA.Notif<"resourcesUpdated">): void {
-        // Only update if this notification is for our leader
-        if (notif.args.leader_id === this.id) {
-            const resources = notif.args.resources;
-            
-            // Update all resource counters
-            this.shieldElement.innerText = resources.shield.toString();
-            this.fighterElement.innerText = resources.fighter.toString();
-            this.barrierElement.innerText = resources.barrier.toString();
-            this.wizardElement.innerText = resources.wizard.toString();
-            this.potionElement.innerText = resources.potion.toString();
-            this.coinElement.innerText = resources.coin.toString();
-        }
-    }
 }

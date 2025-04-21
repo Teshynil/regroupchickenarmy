@@ -54,14 +54,13 @@
 	"prepareBoards": {
 		"type": "game",
 		"transitions": {
-			"startGame": "turnSetup"
+			"startGame": "roundSetup"
 		}
 	},
-	"turnSetup": {
+	"roundSetup": {
 		"type": "game",
 		"transitions": {
 			"startRound": "playerTurn",
-			"playerEliminated": "turnSetup",
 			"gameOver": "gameEnd"
 		}
 	},
@@ -127,7 +126,7 @@
 		"relatedGameState": {
 			"transitions": {
 				"nextPlayer": "healingPhase",
-				"healingPhaseEnded": "turnSetup",
+				"healingPhaseEnded": "roundSetup",
 			}
 		},
 		"possibleactions": {

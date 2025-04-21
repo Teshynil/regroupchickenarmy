@@ -2,8 +2,9 @@
 
 namespace Bga\Games\RegroupChickenArmy\States;
 
+use Bga\Games\RegroupChickenArmy\Components\Players;
+use Bga\Games\RegroupChickenArmy\Components\Resources;
 use Bga\Games\RegroupChickenArmy\Game;
-use BgaUserException;
 use BgaVisibleSystemException;
 
 class HealingPhaseStateHandler implements StateHandlerInterface
@@ -25,13 +26,84 @@ class HealingPhaseStateHandler implements StateHandlerInterface
     private static function heal(Game $game): void
     {
         $game->trace("Player executing heal action");
-        // Add your action logic here
+
+        // Get the current player's ID and leader ID
+        $playerId = (int) $game->getCurrentPlayerId();
+        $leaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM playerData WHERE player_id = $playerId");
+        $playerName = $game->getActivePlayerName();
+
+        $game->debug("Player ID: $playerId with leader ID: $leaderId healing");
+
+        // Get the player's resources
+        $resources = Resources::getResources($game, $leaderId);
+        $potionAmount = (int) $resources['potion'];
+        $currentHealth = (int) $resources['health'];
+
+        // Calculate new health after healing
+        $newHealth = $currentHealth + $potionAmount;
+
+        if ($newHealth > 30) {
+            $newHealth = 30;
+        }
+
+        // Update the health in the database
+        $game->DbQuery("UPDATE resources SET health = $newHealth WHERE leader_id = $leaderId");
+
+        // Update player score to match health
+        $game->DbQuery("UPDATE player SET player_score = $newHealth WHERE player_id = $playerId");
+
+        // Mark player as having healed
+        $game->DbQuery("UPDATE playerData SET has_healed = 1 WHERE player_id = $playerId");
+
+        if($potionAmount == 0) {
+            $game->trace("Player has no potions, ending turn");
+            $game->gamestate->nextState("turnEnded");
+            return;
+        }
+
+        // Notify all players about the healing
+        $game->notifyAllPlayers('healExecuted', clienttranslate('${player_name} healed ${heal_amount} points'), [
+            'player_name' => $playerName,
+            'player_id' => $playerId,
+            'leader_id' => $leaderId,
+            'heal_amount' => $potionAmount,
+            'new_health' => $newHealth
+        ]);
+
+        $game->trace("Healing complete, ending turn");
+
+        $game->gamestate->nextState("turnEnded");
     }
 
     public static function executeGameState(Game $game): void
     {
         $game->trace("Executing HealingPhase state");
-        // Add your state logic here
+
+        // Check if all players have healed
+        $currentPlayerId = $game->getCurrentPlayerId();
+        $game->giveExtraTime($currentPlayerId);
+
+        $arePlayersThatHaveNotHealed = $game->getUniqueValueFromDB(
+            "SELECT COUNT(*) FROM playerData WHERE has_healed = 0 AND is_dead = 0"
+        );
+
+        if ($arePlayersThatHaveNotHealed == 0) {
+            $game->trace("All players have healed, moving to next round");
+
+            // Reset has_healed flag for all players for the next round
+            $game->DbQuery("UPDATE playerData SET has_healed = 0");
+
+            // Update all player scores to match their health
+            Resources::updateHealthToScoreToAllPlayers($game);
+
+            // Increment round counter
+            $currentRound = $game->getGameStateValue('round');
+            $game->setGameStateValue('round', $currentRound + 1);
+            $game->gamestate->nextState("healingPhaseEnded");
+        } else {
+            $game->trace("Moving to next player for healing phase");
+            Players::activateNextPlayer($game);
+            $game->gamestate->nextState("nextPlayer");
+        }
     }
 }
-
