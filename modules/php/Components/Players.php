@@ -99,9 +99,6 @@ class Players
         $game->DbQuery("UPDATE playerData SET is_first = 0 WHERE player_id = $currentFirstPlayerId");
         $game->DbQuery("UPDATE playerData SET is_first = 1 WHERE player_id = $nextFirstPlayerId");
 
-        // Update the game state value
-        $game->setGameStateValue('firstPlayerId', $nextFirstPlayerId);
-
         $game->debug("First player rotated from ID: $currentFirstPlayerId to ID: $nextFirstPlayerId");
 
         return $nextFirstPlayerId;
