@@ -71,7 +71,7 @@ class AtkPhaseStateHandler implements StateHandlerInterface
 
             // Apply damage to defender's health
             $currentHealth = $defenderResources['health'];
-            $newHealth = max(0, $currentHealth - $totalDamage);
+            $newHealth = $currentHealth - $totalDamage;
 
             $game->debug("Defender health: $currentHealth -> $newHealth");
 

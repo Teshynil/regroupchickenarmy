@@ -18,6 +18,14 @@ export class PlayerArea extends ListenerElement {
     grid: Grid;
     panel: PlayerPanel;
 
+    eliminatePlayer() {
+        const player_id = RegroupChickenArmy.game.getPlayerIdFromLeaderId(this.id);
+        this.element.classList.add("player-eliminated");
+        this.panel.element.classList.add("player-eliminated");
+        this.panel.leaderPanel.healthElement.innerText = "X";
+        document.getElementById(`player_score_${player_id}`).classList.add("eliminated");
+    }
+
     override afterConstructor() {
         this.grid = Grid.createChild(this, this.id);
         this.panel = PlayerPanel.createChild(this, this.id);

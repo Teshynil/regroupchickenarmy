@@ -53,6 +53,15 @@ class Market
         );
     }
 
+    public static function getCardsInDeck(Game $game)
+    {
+        $game->trace("Retrieving number of cards in deck");
+
+        return $game->getUniqueValueFromDB(
+            "SELECT COUNT(*) FROM `market` WHERE `order` > 3;"
+        );
+    }
+
     public static function removeMarketCard(Game $game, int $cardId): void
     {
         $game->trace("Removing card ID: $cardId from market");

@@ -19,7 +19,12 @@ declare namespace BGA {
 	/** Goto {@link NotifTypes} or hover name for info. */
 	interface NotifTypes {
 		"leaderSelected": { player_name: string, player_id: number, leader_id: number };
-		"marketUpdate": { cards: { order: number, card_id: number }[] };
+		"marketUpdate": {
+			cards: {
+				order: number, card_id: number
+			}[],
+			cardsInDeck: number
+		};
 		"addInitialCards": { playersCards: { [leaderId: string]: { leader_id: number, player_id: number, card_id: number } } };
 		"cardPlaced": {
 			player_name: string,
@@ -73,6 +78,24 @@ declare namespace BGA {
 					new_health: number
 				}
 			}
+		};
+		"leaderEliminated": {
+			player_name: string,
+			player_id: number,
+			leader_id: number,
+			health: number
+		};
+		"gameWinner": {
+			player_name: string,
+			player_id: number,
+			health?: number
+		};
+		"healExecuted": {
+			player_name: string,
+			player_id: number,
+			leader_id: number,
+			heal_amount: number,
+			new_health: number
 		};
 	}
 

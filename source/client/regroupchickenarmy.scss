@@ -43,10 +43,15 @@
 	.playerArea {
 		box-sizing: content-box;
 		position: relative;
-		transition: opacity var(--animation_normal);
+		transition: opacity var(--animation_normal), filter var(--animation_normal);
 		width: 100%;
 		height: 100%;
 		z-index: 0;
+
+		&.game-winner {
+			filter: brightness(1.2) saturate(1.2);
+			box-shadow: 0 0 20px 10px gold;
+		}
 
 		// Player area positions
 		@for $i from 0 through 3 {
@@ -75,6 +80,11 @@
 			width: 100%;
 			height: 100% !important;
 		}
+	}
+
+	.player-eliminated {
+		filter: grayscale(1) brightness(0.9);
+		opacity: 0.8;
 	}
 
 	.playerBackground {
@@ -165,8 +175,20 @@
 			height: 100%;
 			align-content: center;
 
+			&.marketUnavailable {
+				filter: grayscale(0.2);
+
+				.card {
+					cursor: default !important;
+				}
+			}
+
 			#deck {
 				grid-area: deck;
+
+				&.empty {
+					display: none;
+				}
 			}
 
 			.card {
@@ -211,10 +233,6 @@
 
 			.card {
 				grid-area: card;
-
-				.deck {
-					cursor: pointer;
-				}
 			}
 
 			.cardRotation_btn {
@@ -400,12 +418,36 @@
 			align-content: center;
 			font-size: calc(100vw/40);
 			font-family: 'Gagalin', sans-serif;
-			transition: opacity var(--animation_long);
+			transition: opacity var(--animation_long), color var(--animation_normal);
 
 			background-size: var(--card-size);
 			background-repeat: no-repeat;
 			background-position: center;
 			background-image: url("img/Gui/GeneralBackground.webp");
+		}
+
+		&.eliminated {
+			.healthMarker {
+				color: #ff0000;
+				text-decoration: line-through;
+			}
+
+			.leaderImg {
+				filter: grayscale(100%) brightness(0.7);
+				opacity: 0.8;
+			}
+		}
+
+		&.winner {
+			.healthMarker {
+				color: gold;
+				text-shadow: 0 0 5px #ffffff;
+			}
+
+			.leaderImg {
+				filter: brightness(1.2) saturate(1.2);
+				box-shadow: 0 0 10px 5px gold;
+			}
 		}
 
 		@for $i from 0 through 3 {
@@ -607,9 +649,19 @@
 		}
 	}
 
+	// Styles for inactive player state
 	&:not(.activePlayer) {
-		#centralArea {
-			.card {}
+		.card {
+			cursor: default !important;
 		}
 	}
+}
+
+.player_score_value.eliminated {
+	font-size: 0;
+}
+
+.player_score_value.eliminated::before {
+	content: "X";
+	font-size: initial;
 }

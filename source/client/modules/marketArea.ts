@@ -56,6 +56,11 @@ export class MarketArea extends ListenerElement {
             const card_key = 2 - Number(key);
             this.cards[card_key].dataset["cardId"] = `${card.card_id}`;
         }
+        const cardsCount = notif.args.cardsInDeck;
+        this.deck.style.setProperty("--cardCount", `${cardsCount}`);
+        if (cardsCount == 0) {
+            this.deck.classList.add("empty");
+        }
     }
 
     doBlockMarket(notif: BGA.Notif<"deckCardPicked">) {
@@ -134,6 +139,7 @@ export class MarketArea extends ListenerElement {
             grid.addCardToGrid(card_id, pos_x, pos_y, rotation);
             grid.createCardOnGrid(card_id, pos_x, pos_y, rotation);
             grid.resizeGrid();
+            this.element.classList.remove("deckCardPicked");
         });
     }
 

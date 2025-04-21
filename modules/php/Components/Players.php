@@ -35,6 +35,7 @@ class Players
             "SELECT p.`player_id` `id`, p.`player_score` `score`, pd.`leader_id`
              FROM `player` p
              JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             WHERE p.`player_eliminated` = 0
              ORDER BY pd.`leader_id` ASC"
         );
     }
@@ -79,6 +80,12 @@ class Players
     public static function getPlayerId(Game $game, int $leaderId): int
     {
         return $game->getUniqueValueFromDB("SELECT player_id FROM playerData WHERE leader_id = $leaderId");
+    }
+
+    public static function isPlayerEliminated(Game $game, int $playerId): bool
+    {
+        $eliminated = $game->getUniqueValueFromDB("SELECT player_eliminated FROM player WHERE player_id = $playerId");
+        return $eliminated == 1;
     }
 
     /**

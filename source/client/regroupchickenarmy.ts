@@ -89,12 +89,16 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       const player = gamedatas.players[player_id] as Player;
       const leaderId = player.leader_id;
       if (leaderId !== null) {
+        const playerArea = this.playerAreas.at(leaderId);
         this.leaderSelection.leaders[leaderId].destroy();
-        this.playerAreas.at(leaderId).show();
-        this.playerAreas.at(leaderId).panel.resourcePanel.playerName = player.name;
+        playerArea.show();
+        playerArea.panel.resourcePanel.playerName = player.name;
         this.board.backgrounds.at(leaderId).isActive = true;
         this.leaders_id[player_id] = Number(leaderId);
-        this.playerAreas.at(leaderId).panel.leaderPanel.hasPlayerToken = player.is_first == 1;
+        playerArea.panel.leaderPanel.hasPlayerToken = player.is_first == 1;
+        if (player.eliminated == 1) {
+          playerArea.eliminatePlayer();
+        }
       }
     }
 
@@ -129,6 +133,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       i--;
     }
     if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game
+      this.board.centralArea.leaderSelection.destroy();
       const player = gamedatas.players[this.player_id] as Player;
       if (this.board.isActive) {
         if (player.marketCardPicked !== null) {
@@ -159,7 +164,18 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         this.playerAreas[id] = null;
       }
       for (const playerArea of this.playerAreas) {
+        if (playerArea == null) continue;
         playerArea?.grid.resizeGrid();
+      }
+    }
+    for (player_id in gamedatas.players) {
+      const player = gamedatas.players[player_id] as Player;
+      const leaderId = player.leader_id;
+      if (leaderId !== null) {
+        const playerArea = this.playerAreas.at(leaderId);
+        if (player.eliminated == 1) {
+          playerArea.eliminatePlayer();
+        }
       }
     }
   }
@@ -169,6 +185,14 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       id = Number(this.player_id);
     }
     return this.leaders_id[id];
+  }
+
+  getPlayerIdFromLeaderId(id: number = undefined): number {
+    if (id == undefined) {
+      id = Number(this.player_id);
+    }
+    const playerId = Object.keys(this.leaders_id).find(key => this.leaders_id[key] === id);
+    return Number(playerId);
   }
 
   ///////////////////////////////////////////////////
@@ -192,6 +216,9 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "prepareBoards":
         break;
       case "roundSetup":
+        this.marketArea.enableEvents();
+        this.marketArea.element.classList.remove("marketUnavailable");
+        this.marketArea.element.classList.remove("deckCardPicked");
         break;
       case "playerTurn":
         //TODO: this.board.centralArea.marketArea.animateDealCards();
@@ -199,6 +226,8 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "playerTurnGame":
         break;
       case "atkPhase":
+        this.marketArea.disableEvents();
+        this.marketArea.element.classList.add("marketUnavailable");
         if (this.isCurrentPlayerActive() && !this.isReadOnly() && false) {
           await delay(3000);
           Logger.info("Current player is active, automatically sending attack action");
@@ -283,8 +312,11 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     Logger.info("notifications subscriptions setup");
 
     this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
+    this.subscribeNotif('gameWinner', this.onGameWinner);
+
     this.notifqueue.setSynchronous('boardsInitialized', 2000);
     this.notifqueue.setSynchronous('attackExecuted', 3000);
+    this.notifqueue.setSynchronous('healExecuted', 1000);
   };
 
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
@@ -295,14 +327,16 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     // Process initial cards
     const playerCards = notif.args.playersCards;
     for (const playerArea of this.playerAreas) {
+      if (playerArea == null) continue;
       const playerAreaId = playerArea.id;
       if (playerCards[playerAreaId] == null) {
         playerArea.destroy();
+        this.playerAreas[playerAreaId] = null;
       }
     }
 
-    for (const playerArea of this.playerAreas) {
-      playerArea.grid.render();
+    for (const playerArea in notif.args.playersCards) {
+      this.playerAreas.at(Number(playerArea)).grid.render();
     }
 
     dojo.publish('addInitialCards', [{
@@ -326,6 +360,30 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
           },
         }]);
       }
+    }
+  }
+
+  private onGameWinner(notif: BGA.Notif<"gameWinner">): void {
+    Logger.info("Game winner notification", notif);
+
+    // Show a message announcing the winner
+    let message = _('${player_name} wins the game!').replace('${player_name}', notif.args.player_name);
+
+    // If health is provided, include it in the message
+    if (notif.args.health !== undefined) {
+      message = _('${player_name} wins with ${health} health!').replace('${player_name}', notif.args.player_name).replace('${health}', notif.args.health.toString());
+    }
+
+    this.showMessage(message, 'info');
+
+    // Highlight the winner's board
+    const winnerId = notif.args.player_id;
+    const winnerLeaderId = this.getLeaderIdFromPlayerId(winnerId);
+    const winnerArea = this.playerAreas.find(area => area && area.id === winnerLeaderId);
+
+    if (winnerArea) {
+      winnerArea.element.classList.add('game-winner');
+      winnerArea.panel.leaderPanel.element.classList.add('winner');
     }
   }
 

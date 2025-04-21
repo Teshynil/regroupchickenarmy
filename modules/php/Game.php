@@ -303,4 +303,22 @@ class Game extends \Table
 
         throw new \feException("Zombie mode not supported at this game state: \"{$state_name}\".");
     }
+
+    public function debugSetAllPlayersHP($hp): void
+    {
+        $this->DbQuery("UPDATE player SET player_score = $hp");
+        $this->DbQuery("UPDATE resources SET health = $hp");
+    }
+
+    public function debugSetLeaderHP($leader_id, $hp): void
+    {
+        $this->DbQuery("UPDATE resources SET health = $hp WHERE leader_id = $leader_id");
+        $playerId = $this->getUniqueValueFromDB("SELECT player_id FROM playerData WHERE leader_id = $leader_id");
+        $this->DbQuery("UPDATE player SET player_score = $hp WHERE player_id = $playerId");
+    }
+
+    public function debugRemoveAllCardsFromMarketExcept6Cards(): void
+    {
+        $this->DbQuery("DELETE FROM `market` WHERE `order` > 6");
+    }
 }

@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `resources` (
     `barrier` int UNSIGNED NOT NULL,
     `potion` int UNSIGNED NOT NULL,
     `coin` int UNSIGNED NOT NULL,
-    `health` int UNSIGNED NOT NULL,
+    `health` int NOT NULL,
     PRIMARY KEY (`leader_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 

@@ -17,7 +17,9 @@ export class Board extends ListenerElement {
         return {
             "firstPlayerSelected": { callback: this.doFirstPlayerSelected },
             "attackExecuted": { callback: this.doAttackExecuted },
-            "resourcesUpdated": { callback: this.doUpdateResources }
+            "resourcesUpdated": { callback: this.doUpdateResources },
+            "healExecuted": { callback: this.doHealExecuted },
+            "leaderEliminated": { callback: this.doLeaderEliminated }
         }
     };
 
@@ -85,8 +87,9 @@ export class Board extends ListenerElement {
     }
 
     async doFirstPlayerSelected(notif: BGA.Notif<"firstPlayerSelected">) {
-        for (const playerAreas of this.playerAreas) {
-            playerAreas.panel.leaderPanel.hasPlayerToken = false;
+        for (const playerArea of this.playerAreas) {
+            if (playerArea == null) continue;
+            playerArea.panel.leaderPanel.hasPlayerToken = false;
         }
         const leaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(notif.args.player_id);
         this.playerAreas.at(leaderId).panel.leaderPanel.hasPlayerToken = true;
@@ -97,14 +100,32 @@ export class Board extends ListenerElement {
         const attackerId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(notif.args.player_id);
         const results = notif.args.attack_results;
         for (const result in results) {
-            const defenderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(Number(result));
-            const defenderPanel = this.playerAreas.at(defenderId).panel;
+            const defenderLeaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(Number(result));
+            const defenderPanel = this.playerAreas.at(defenderLeaderId).panel;
             const physicalDamage = results[result].physical_damage;
             const magicalDamage = results[result].magical_damage;
             const newHealth = results[result].new_health;
-            defenderPanel.receiveAttack(attackerId, results[result].new_health, physicalDamage, magicalDamage);
+            defenderPanel.receiveAttack(attackerId, newHealth, physicalDamage, magicalDamage);
             await delay(1000);
         }
+    }
+
+    async doHealExecuted(notif: BGA.Notif<"healExecuted">) {
+        Logger.info("Heal executed");
+        const leaderId = notif.args.leader_id;
+        const leaderPanel = this.playerAreas.at(leaderId).panel.leaderPanel;
+        const newHealth = notif.args.new_health;
+        const player_id = notif.args.player_id;
+        leaderPanel.health = newHealth;
+        document.getElementById(`player_score_${player_id}`).innerText = newHealth.toString();
+    }
+
+    async doLeaderEliminated(notif: BGA.Notif<"leaderEliminated">) {
+        // Find the player area for the eliminated player
+        const leaderId = notif.args.leader_id;
+        const player_id = notif.args.player_id;
+        const playerArea = this.playerAreas.at(leaderId);
+        playerArea.eliminatePlayer();
     }
 
     async doUpdateResources(notif: BGA.Notif<"resourcesUpdated">) {

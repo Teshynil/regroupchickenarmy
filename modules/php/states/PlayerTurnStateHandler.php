@@ -67,7 +67,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
 
             // Clear the picked card
             $game->debug("Clearing picked card from player record");
-            $game->DbQuery("UPDATE player SET marketCardPicked = NULL WHERE player_id = $playerId");
+            $game->DbQuery("UPDATE playerData SET marketCardPicked = NULL WHERE player_id = $playerId");
 
             // Update resources based on the new card
             $game->debug("Updating resources based on new card placement");
@@ -147,7 +147,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         $game->debug("Player ID: $playerId ($playerName) picking deck card");
 
         $hasAlreadyPickADeckCard = $game->getUniqueValueFromDB(
-            "SELECT `marketCardPicked` FROM `player` WHERE `player_id` = $playerId"
+            "SELECT `marketCardPicked` FROM `playerData` WHERE `player_id` = $playerId"
         );
 
         if ($hasAlreadyPickADeckCard != null) {
@@ -160,7 +160,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         $game->debug("Retrieved deck card ID: $deckCardId");
 
         $game->debug("Assigning deck card to player");
-        $game->DbQuery("UPDATE player SET marketCardPicked = $deckCardId WHERE player_id = $playerId");
+        $game->DbQuery("UPDATE playerData SET marketCardPicked = $deckCardId WHERE player_id = $playerId");
 
         $game->trace("Notifying all players about deck card pick");
         $game->notifyAllPlayers('deckCardPicked', clienttranslate('${player_name} picked a card from the deck.'), [
@@ -188,6 +188,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
              FROM player p
              JOIN playerData pd ON p.player_id = pd.player_id
              LEFT JOIN boards_moves bm ON pd.leader_id = bm.board_id
+             WHERE p.player_eliminated = 0
              GROUP BY p.player_id
              ORDER BY pd.leader_id ASC"
         );
@@ -199,7 +200,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
             $count = (int) $data['card_count'];
             $game->debug("Player ID: $playerId has $count cards");
 
-            if ($count != $expectedCardCount) {
+            if ($count < $expectedCardCount) {
                 $game->debug("Player ID: $playerId has not reached target card count");
                 $allPlayersReachedTarget = false;
                 break;
@@ -207,14 +208,14 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         }
 
         $game->debug("Refreshing market cards");
-        Market::getAllMarketCards($game);
 
         $marketCards = Market::getAllMarketCards($game);
         $game->debug("Retrieved " . count($marketCards) . " market cards");
 
         $game->trace("Notifying players about market update");
         $game->notifyAllPlayers("marketUpdate", clienttranslate("The Market has been updated"), [
-            "cards" => $marketCards
+            "cards" => $marketCards,
+            "cardsInDeck" => Market::getCardsInDeck($game)
         ]);
 
         // If all players have reached the expected card count, transition to attack phase
