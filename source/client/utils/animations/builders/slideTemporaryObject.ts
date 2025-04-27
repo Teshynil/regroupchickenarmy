@@ -28,7 +28,7 @@ export class SlideTemporaryObjectBuilder extends SlideToObjectBuilder {
         this._from = from;
         return this;
     }
-    override build(): Animation {
+    override _build(): Animation {
         this._element = dojo.place(this._definition, this._parent);
         dojo.style(this._element, {
             position: 'absolute',
@@ -38,13 +38,15 @@ export class SlideTemporaryObjectBuilder extends SlideToObjectBuilder {
         });
         gameui.placeOnObject(this._element, this._from);
         const dojoAnimation = gameui.slideToObject(this._element, this._target, this._duration, this._delay);
-        const animation = new Animation(this._id, dojoAnimation, this._waitFor, this._waitForDuration);
-        animation.beforeStart = () => {
+        const animation = new Animation(this._id, this._element, dojoAnimation, this._waitFor, this._waitForDuration);
+        // This ensures the element is visible when the animation starts before any callbacks are executed
+        animation.beforeStartCallbacks.push(() => {
             dojo.style(this._element, 'opacity', '1');
-        }
-        animation.afterEnd = () => {
-            dojo.destroy(this._element);
-        }
+        });
+        // This ensures the element is destroyed when the animation ends and all callbacks are executed
+        this._afterEndCallbacks.push((element) => {
+            dojo.destroy(element);
+        });
         animation.debugData = {
             definition: this._definition,
             parent: this._parent,

@@ -61,12 +61,14 @@ export class MarketArea extends ListenerElement {
         if (cardsCount == 0) {
             this.deck.classList.add("empty");
         }
+        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
-    doBlockMarket(notif: BGA.Notif<"deckCardPicked">) {
+    async doBlockMarket(notif: BGA.Notif<"deckCardPicked">) {
         if (notif.args.player_id == RegroupChickenArmy.game.player_id) {
             this.preSelectCard(-1, notif.args.card_id);
         }
+        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
     public pickDeckCard() {
@@ -139,7 +141,7 @@ export class MarketArea extends ListenerElement {
             grid.addCardToGrid(card_id, pos_x, pos_y, rotation);
             grid.createCardOnGrid(card_id, pos_x, pos_y, rotation);
             grid.resizeGrid();
-            this.element.classList.remove("deckCardPicked");
+            RegroupChickenArmy.game.marketArea.element.classList.remove("deckCardPicked");
         });
     }
 
@@ -229,5 +231,6 @@ export class CardRotationWindow extends ListenerElement {
             RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.board.centralArea.marketArea.confirmCardPlacement);
             RegroupChickenArmy.game.addActionButton("cancelCardPlacement_btn", _('Cancel'), RegroupChickenArmy.game.board.centralArea.marketArea.cancelCardPlacement);
         }
+        return new Promise(resolve => setTimeout(resolve, 1));
     }
 }

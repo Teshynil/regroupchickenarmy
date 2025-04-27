@@ -103,37 +103,17 @@
 		}
 	},
 	"atkPhase": {
-		"description": "${actplayer} is attacking the other leaders",
-		"descriptionmyturn": "${you} are attacking the other leaders",
-		"type": "activeplayer",
-		"relatedGameState": {
-			"transitions": {
-				"nextPlayer": "atkPhase",
-				"atkPhaseEnded": "healingPhase",
-			}
-		},
-		"possibleactions": {
-			"attack": [],
-		},
+		"description": "The Armies are fighting",
+		"type": "game",
 		"transitions": {
-			"turnEnded": "atkPhaseGame",
+			"atkPhaseEnded": "healingPhase"
 		}
 	},
 	"healingPhase": {
-		"description": "${actplayer} is healing themself",
-		"descriptionmyturn": "${you} are healing yourself",
-		"type": "activeplayer",
-		"relatedGameState": {
-			"transitions": {
-				"nextPlayer": "healingPhase",
-				"healingPhaseEnded": "roundSetup",
-			}
-		},
-		"possibleactions": {
-			"heal": [],
-		},
+		"description": "The Leaders are healing themselves",
+		"type": "game",
 		"transitions": {
-			"turnEnded": "healingPhaseGame",
+			"healingPhaseEnded": "roundSetup"
 		}
 	},
 

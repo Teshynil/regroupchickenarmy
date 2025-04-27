@@ -20,9 +20,9 @@ export class SlideToObjectPosBuilder extends SlideToObjectBuilder {
         return this;
     }
 
-    override build(): Animation {
+    override _build(): Animation {
         const dojoAnimation = gameui.slideToObjectPos(this._element, this._target, this._targetX, this._targetY, this._duration, this._delay);
-        const animation = new Animation(this._id, dojoAnimation, this._waitFor, this._waitForDuration);
+        const animation = new Animation(this._id, this._element, dojoAnimation, this._waitFor, this._waitForDuration);
         animation.debugData = {
             element: this._element,
             target: this._target,

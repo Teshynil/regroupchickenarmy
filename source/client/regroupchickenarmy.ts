@@ -89,6 +89,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       const player = gamedatas.players[player_id] as Player;
       const leaderId = player.leader_id;
       if (leaderId !== null) {
+        gamedatas.players[player_id].color = this.leader_colors[leaderId];
         const playerArea = this.playerAreas.at(leaderId);
         this.leaderSelection.leaders[leaderId].destroy();
         playerArea.show();
@@ -228,35 +229,14 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "atkPhase":
         this.marketArea.disableEvents();
         this.marketArea.element.classList.add("marketUnavailable");
-        if (this.isCurrentPlayerActive() && !this.isReadOnly() && false) {
-          await delay(3000);
-          Logger.info("Current player is active, automatically sending attack action");
-          this.ajaxAction("attack", {}, () => {
-            Logger.info("Attack action executed");
-          });
-        } else {
-          Logger.info("Current player is not active, waiting for active player to attack");
-        }
-        break;
-      case "atkPhaseGame":
         break;
       case "healingPhase":
-        if (this.isCurrentPlayerActive() && !this.isReadOnly() && false) {
-          await delay(3000);
-          Logger.info("Current player is active, automatically sending heal action");
-          this.ajaxAction("heal", {}, () => {
-            Logger.info("Heal action executed");
-          });
-        } else {
-          Logger.info("Current player is not active, waiting for active player to heal");
-        }
-        break;
-      case "healingPhaseGame":
         break;
       case "gameEnd":
         break;
     }
   }
+
 
   /** See Gamegui#onLeavingState for more information. */
   override onLeavingState(stateName: BGA.ActiveGameState["name"]): void {
@@ -282,24 +262,38 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
     switch (stateName) {
       case "atkPhase":
-        this.addActionButton('button_id', _('Attack'), () => {
-          this.ajaxAction("attack", {}, () => {
-            Logger.info("Attack action executed");
-          });
-        });
         break;
       case "healingPhase":
-        this.addActionButton('button_id', _('Heal'), () => {
-          this.ajaxAction("heal", {}, () => {
-            Logger.info("Heal action executed");
-          });
-        });
         break;
     }
   }
 
   ///////////////////////////////////////////////////
   //// Utility methods
+
+
+   formats_string_recursive(template: string, args: Record<string, any> & { i18n?: Record<string, any>; type?: string | "chatmessage" | "tablechat" | "privatechat" | "groupchat"; message?: string; text?: string; }): string {
+    try {
+      if (template && args && !args["processed"]) {
+        args["processed"] = true;
+
+        const keys = { 'attack_results': (value: string) => { return `${value}` }, 'card_id': (value: string) => { return `${value}` } };
+
+        //loop the keys and for each one check if the key is present on the args, and if it is, replace the argument with the execution of the asociated function with value equal to the one present in the args
+        for (const key in keys) {
+          if (args[key]) {
+            const conversor = keys[key as keyof typeof keys];
+            args[key] = conversor(args[key]);
+          }
+        }
+
+      }
+    } catch (e) {
+      Logger.error("Exception thrown in format_string_recursive", e);
+    }
+
+    return this.getInherited("format_string_recursive", { callee: this.format_string_recursive, ...arguments },).bind(this)(template, args) as string;
+  }
 
   ///////////////////////////////////////////////////
   //// Player's action
@@ -315,13 +309,12 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     this.subscribeNotif('gameWinner', this.onGameWinner);
 
     this.notifqueue.setSynchronous('boardsInitialized', 2000);
-    this.notifqueue.setSynchronous('attackExecuted', 3000);
+    this.notifqueue.setSynchronous('attackExecuted', 2500);
     this.notifqueue.setSynchronous('healExecuted', 1000);
   };
 
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
     Logger.info("Entering Notification Boards initialized");
-    await delay(1000);
     this.board.centralArea.leaderSelection.destroy();
     this.board.centralArea.marketArea.show();
     // Process initial cards

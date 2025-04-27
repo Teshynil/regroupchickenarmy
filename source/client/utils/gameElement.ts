@@ -126,11 +126,9 @@ export abstract class GameElement {
         }
     }
 
-    public beforeRender(_force: boolean): void { };
+    public beforeRender(force: boolean): void { };
 
-    public render(force?: boolean): this {
-        if (force === undefined) force = false;
-
+    public render(force: boolean = false): this {
         if (this.elementSafe && !force) {
             Logger.debug(`Element ${this.consoleId} was already on the board`);
             return this;
@@ -232,7 +230,7 @@ export abstract class GameElement {
 
     public afterDestroy() { };
 
-    protected get consoleId() {
+    public get consoleId() {
         return `${this.constructor.name}:${this.id}`
     }
 }

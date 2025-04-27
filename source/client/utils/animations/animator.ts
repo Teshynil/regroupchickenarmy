@@ -1,4 +1,4 @@
-import { Animation } from "./animation";
+import { Animation, ElementOrId } from "./animation";
 import { Logger } from "../logger";
 import { SlideToObjectBuilder } from "./builders/slideToObjectBuilder";
 import { SlideToObjectPosBuilder } from "./builders/slideToObjectPosBuilder";
@@ -11,7 +11,7 @@ export class Animator {
     private isProcessingQueue: boolean = false;
     private waitingForDependencies: Map<string, { animation: Animation, resolve: () => void, timeoutId: number }> = new Map();
 
-    private constructor() {}
+    private constructor() { }
 
     /**
      * Get the singleton instance of the AnimationControl
@@ -28,38 +28,27 @@ export class Animator {
     }
 
     /**
-     * Enqueue a Dojo animation with an identifier
-     * @param id Unique identifier for this animation
-     * @param dojoAnimation The Dojo animation object
-     * @param waitFor Optional identifier of animation this one should wait for
-     * @param waitForDuration Maximum time to wait for dependency in ms
-     */
-    public enqueueDojoAnimation(
-        id: string, 
-        dojoAnimation: DojoJS.Animation, 
-        waitFor?: string, 
-        waitForDuration: number = 3000
-    ): Promise<void> {
-        const animation = new Animation(id, dojoAnimation, waitFor, waitForDuration);
-        return this.enqueue(animation);
-    }
-
-    /**
      * Enqueue an Animation object
      * @param animation The Animation object to enqueue
      */
     public enqueue(animation: Animation): Promise<void> {
         Logger.debug(`Enqueuing animation: ${animation.id}`);
-        
+
         return new Promise((resolve) => {
+            if (!animation.shouldEnqueue) {
+                Logger.debug(`Skipping queue for animation: ${animation.id}`);
+                this.processAsyncAnimation(animation, resolve, false);
+
+            }
+
             // If this animation depends on another animation
             if (animation.waitFor) {
                 const dependencyRunning = this.runningAnimations.has(animation.waitFor);
                 const dependencyQueued = this.animationQueue.some(item => item.animation.id === animation.waitFor);
-                
+
                 if (dependencyRunning || dependencyQueued) {
                     Logger.debug(`Animation ${animation.id} waiting for ${animation.waitFor}`);
-                    
+
                     // Set a timeout in case the dependency takes too long
                     const timeoutId = setTimeout(() => {
                         Logger.warn(`Timeout waiting for animation ${animation.waitFor}, proceeding with ${animation.id}`);
@@ -67,20 +56,20 @@ export class Animator {
                         this.animationQueue.push({ animation, resolve });
                         this.processQueue();
                     }, animation.waitForDuration);
-                    
+
                     // Store this animation as waiting for its dependency
-                    this.waitingForDependencies.set(animation.id, { 
-                        animation, 
+                    this.waitingForDependencies.set(animation.id, {
+                        animation,
                         resolve,
-                        timeoutId 
+                        timeoutId
                     });
                     return;
                 }
-                
+
                 // If dependency doesn't exist, proceed normally
                 Logger.debug(`Dependency ${animation.waitFor} not found for ${animation.id}, proceeding`);
             }
-            
+
             // Normal queue processing
             this.animationQueue.push({ animation, resolve });
             if (!this.isProcessingQueue) {
@@ -97,6 +86,33 @@ export class Animator {
         return this.runningAnimations.has(id);
     }
 
+
+    private processAsyncAnimation(animation: Animation, resolve: () => void, shouldContinueQueue = true): void {
+        Logger.debug(`Playing animation: ${animation.id}`);
+
+        // Mark this animation as running
+        animation.isRunning = true;
+        this.runningAnimations.set(animation.id, animation);
+        
+        animation.dojoAnimation.play();
+        dojo.connect(animation.dojoAnimation, "onEnd", () => {
+            Logger.debug(`Animation completed: ${animation.id}`);
+
+            // Mark as completed and remove from running
+            animation.isCompleted = true;
+            animation.isRunning = false;
+            this.runningAnimations.delete(animation.id);
+
+            // Check if any animations were waiting for this one
+            this.checkWaitingDependencies(animation.id);
+
+            resolve();
+            if (shouldContinueQueue) {
+                this.isProcessingQueue = false;
+                this.processQueue();
+            }
+        });
+    }
     /**
      * Process the animation queue
      */
@@ -107,29 +123,8 @@ export class Animator {
 
         this.isProcessingQueue = true;
         const { animation, resolve } = this.animationQueue.shift()!;
-        
-        Logger.debug(`Playing animation: ${animation.id}`);
-        
-        // Mark this animation as running
-        animation.isRunning = true;
-        this.runningAnimations.set(animation.id, animation);
 
-        animation.dojoAnimation.play();
-        dojo.connect(animation.dojoAnimation, "onEnd", () => {
-            Logger.debug(`Animation completed: ${animation.id}`);
-            
-            // Mark as completed and remove from running
-            animation.isCompleted = true;
-            animation.isRunning = false;
-            this.runningAnimations.delete(animation.id);
-            
-            // Check if any animations were waiting for this one
-            this.checkWaitingDependencies(animation.id);
-            
-            resolve();
-            this.isProcessingQueue = false;
-            this.processQueue();
-        });
+        this.processAsyncAnimation(animation, resolve);
     }
 
     /**
@@ -144,14 +139,14 @@ export class Animator {
             const { animation, resolve, timeoutId } = entry[1];
             if (animation.waitFor === completedAnimationId) {
                 Logger.debug(`Dependency ${completedAnimationId} completed, queueing ${waitingId}`);
-                
+
                 // Clear the timeout
                 clearTimeout(timeoutId);
-                
+
                 // Remove from waiting and add to regular queue
                 this.waitingForDependencies.delete(waitingId);
                 this.animationQueue.push({ animation, resolve });
-                
+
                 // Process the queue if it's not already being processed
                 if (!this.isProcessingQueue) {
                     this.processQueue();
@@ -174,20 +169,49 @@ export class Animator {
         return SlideTemporaryObjectBuilder.builder();
     }
 
+    private static resolveElement(animation: Animation): HTMLElement | null {
+        if (typeof animation.element === 'string') {
+            const element = document.getElementById(animation.element);
+            if (!element) {
+                Logger.error(`Failed to find element with id ${animation.element} for animation ${animation.id}.`);
+                return null;
+            }
+            return element;
+        } else {
+            return animation.element;
+        }
+    }
+
     /**
      * Plays the animation through the animation control system
      * Returns a promise that resolves when the animation completes
      */
     public static play(animation: Animation): Promise<void> {
-        // If beforeStart is defined, call it before enqueueing
-        if (animation.beforeStart) {
-            animation.beforeStart();
+        const element = Animator.resolveElement(animation);
+        if (!element) {
+            Logger.error(`Failed to find element for animation ${animation.id}. Skipping.`);
+            return Promise.resolve();
         }
 
-        // Connect afterEnd to the animation's onEnd event
-        if (animation.afterEnd) {
+        // Connect all beforeStart callbacks to the animation's onBegin event
+        for (const callback of animation.beforeStartCallbacks) {
+            dojo.connect(animation.dojoAnimation, "onBegin", () => {
+                try {
+                    callback(element);
+                } catch (error) {
+                    Logger.error(`Error executing beforeStart callback for animation ${animation.id}:`, error);
+                }
+            });
+        }
+
+        // Connect all afterEnd callbacks to the animation's onEnd event
+        for (const callback of animation.afterEndCallbacks) {
             dojo.connect(animation.dojoAnimation, "onEnd", () => {
-                animation.afterEnd();
+                try {
+                    callback(element);
+                } catch (error) {
+                    Logger.error(`Error executing afterEnd callback for animation ${animation.id}:`, error);
+                }
             });
         }
 

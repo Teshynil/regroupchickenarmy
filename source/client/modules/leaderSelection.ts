@@ -3,6 +3,7 @@ import { ListenerElement } from "../utils/listenerElement";
 import { ListenerConfig } from "../utils/definitions";
 import { GameElement } from "../utils/gameElement";
 import { Animator } from "../utils/animations/animator";
+import { Logger } from "../utils/logger";
 
 export class LeaderSelection extends ListenerElement {
 
@@ -47,7 +48,7 @@ export class LeaderSelection extends ListenerElement {
             .id(`MoveLeaderToStartPosition_${leader_id}`)
             .element(element)
             .target(`leaderImg_${leader_id}`)
-            .duration(800)
+            .duration(600)
             .delay(0)
             .build();
         await Animator.play(animation);
@@ -59,18 +60,20 @@ export class LeaderSelection extends ListenerElement {
         const playerName = RegroupChickenArmy.game.players_metadata[player_id].player_name;
         RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.playerName = playerName;
 
+        const oldColor = RegroupChickenArmy.game.gamedatas.players[player_id].color;
+        const newColor = RegroupChickenArmy.game.leader_colors[leader_id];
+        RegroupChickenArmy.game.gamedatas.players[player_id].color = newColor;
+        console.log("cambiando colores");
         const playerNameElement = document.querySelector<HTMLElement>(`#player_name_${player_id}>a`);
         if (playerNameElement) {
-            const oldColor = RegroupChickenArmy.game.gamedatas.players[player_id].color;
-            const newColor = RegroupChickenArmy.game.leader_colors[leader_id];
             playerNameElement.style.color = `#${newColor}`;
             //Search for any logs and update them:
 
             document.querySelectorAll<HTMLElement>(`span.playername[style*="#${oldColor}"]`).forEach(element => {
+                console.log(`Cambiando color de: ${oldColor} a ${newColor} para ${element.innerText}`);
                 element.style.color = `#${newColor}`;
             });
 
-            RegroupChickenArmy.game.gamedatas.players[player_id].color = newColor;
 
         }
 
@@ -78,6 +81,7 @@ export class LeaderSelection extends ListenerElement {
         if (this.leaders.every((e) => e == null)) {
             this.hide();
         }
+        return new Promise(resolve => setTimeout(resolve, 1));
     }
 }
 

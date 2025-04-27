@@ -19,7 +19,6 @@ export class Grid extends ListenerElement {
 
     get listeners(): ListenerConfig {
         return {
-            "addInitialCards": { callback: this.doAddInitialCard },
             "cardPlaced": { callback: this.doCardPlaced },
 
             "cardPrePlaced": { callback: this.doCardPrePlaced, isCustomEvent: true },
@@ -85,7 +84,7 @@ export class Grid extends ListenerElement {
         this.resizeGrid();
     }
 
-    resizeGrid() {
+    public resizeGrid() {
         Logger.debug(`Resizing grid ${this.consoleId}`);
         const activeCells = this.gridDiv.querySelectorAll<HTMLDivElement>('.cell.active');
 
@@ -193,10 +192,8 @@ export class Grid extends ListenerElement {
         }
     }
 
-    async doAddInitialCard(notif: BGA.Notif<"addInitialCards">) {
-        if (notif.args.playersCards[this.id] == undefined) return;
+    async addInitialCard(card_id: number) {
         Logger.debug(`Adding initial card to grid ${this.consoleId}`);
-        const card_id = notif.args.playersCards[this.id].card_id;
         this.addCardToGrid(card_id, 6, 6, 0);
         const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);
         card.render();
@@ -208,12 +205,14 @@ export class Grid extends ListenerElement {
             .target(`player_${this.id}_cell_${6}_${6}`)
             .duration(1000)
             .delay(0)
+            .shouldEnqueue(false)
             .build();
 
         await Animator.play(animation);
         element.remove();
         this.createCardOnGrid(card_id, 6, 6);
         this.resizeGrid();
+        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
     async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]) {
@@ -241,7 +240,7 @@ export class Grid extends ListenerElement {
             const existingCards = this.gridDiv.querySelectorAll(`.card[data-card-id="${cardId}"][data-x="${posX}"][data-y="${posY}"]`);
             if (existingCards.length > 0) {
                 // This specific card is already placed at this position, do nothing
-                return;
+                return new Promise(resolve => setTimeout(resolve, 1));
             }
 
             const marketArea = RegroupChickenArmy.game.marketArea;
@@ -258,13 +257,13 @@ export class Grid extends ListenerElement {
                     sourceElement = marketCard.id;
                 } else {
                     // Card is assumed to be already placed
-                    return;
+                    return new Promise(resolve => setTimeout(resolve, 1));
                 }
             }
 
-            const definition = `<div id="temporalCard" class="card" data-card-id="${cardId}" style="--rotation:${notif.args.rotation}"></div>`
+            const definition = `<div id="temporalCard_${this.id}_${cardId}" class="card" data-card-id="${cardId}" style="--rotation:${notif.args.rotation}"></div>`
             const animation = Animator.slideTemporaryObject
-                .id("temporalCard")
+                .id(`temporalCard_${this.id}_${cardId}`)
                 .definition(definition)
                 .parent(marketArea.element.id)
                 .from(sourceElement)
@@ -282,6 +281,7 @@ export class Grid extends ListenerElement {
             this.createCardOnGrid(cardId, posX, posY, notif.args.rotation);
             this.resizeGrid();
         }
+        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
     createCardOnGrid(cardId: number, posX: number, posY: number, rotation: number = 0) {

@@ -140,26 +140,6 @@ class Players
     }
 
     /**
-     * Get players ordered by their leader_id (from lowest to highest)
-     */
-    public static function getPlayersByLeaderId(Game $game): array
-    {
-        $game->debug("Getting players ordered by leader_id");
-
-        // Get all players with assigned leaders, ordered by leader_id
-        $players = $game->getCollectionFromDB(
-            "SELECT p.player_id, p.player_name, p.player_no, pd.leader_id
-             FROM player p
-             JOIN playerData pd ON p.player_id = pd.player_id
-             ORDER BY pd.leader_id ASC"
-        );
-
-        $game->debug("Players by leader_id: " . json_encode(array_keys($players)));
-
-        return $players;
-    }
-
-    /**
      * Activate the first player of the round
      */
     public static function activateFirstPlayer(Game $game): void
@@ -190,5 +170,40 @@ class Players
         $playerColor = self::LEADER_COLORS[$leaderId];
         $game->DbQuery("UPDATE player SET player_color = '$playerColor' WHERE player_id = $playerId");
         $game->debug("Assigned player color: $playerColor to player ID: $playerId");
+    }
+
+    /**
+     * Get remaining players in turn order starting from first player
+     */
+    public static function getRemainingPlayersInOrder(Game $game): array
+    {
+        return $game->getCollectionFromDb(
+            "SELECT p.`player_id` id, p.`player_score` score, pd.`leader_id`, pd.`order_id`, pd.`is_first`
+             FROM `player` p
+             JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             WHERE p.`player_eliminated` = 0
+             ORDER BY 
+                CASE 
+                    WHEN pd.`order_id` >= (SELECT pd.`order_id` FROM `playerData` pd WHERE pd.`is_first` = 1) THEN pd.`order_id`
+                    ELSE pd.`order_id` + 4
+                END
+            ASC"
+        );
+    }
+
+    public static function getNextPlayersInOrder(Game $game, int $currentPlayerId): array
+    {
+        return $game->getCollectionFromDb(
+            "SELECT p.`player_id` id, p.`player_score` score, pd.`leader_id`, pd.`order_id`, pd.`is_first`
+             FROM `player` p
+             JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             WHERE p.`player_eliminated` = 0
+             ORDER BY 
+                CASE 
+                    WHEN pd.`order_id` >= (SELECT pd.`order_id` FROM `playerData` pd WHERE pd.`player_id` = '$currentPlayerId') THEN pd.`order_id`
+                    ELSE pd.`order_id` + 4
+                END
+            ASC"
+        );
     }
 }

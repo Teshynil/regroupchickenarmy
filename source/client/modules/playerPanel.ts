@@ -2,6 +2,7 @@ import { GameElement } from "../utils/gameElement";
 import { ListenerElement } from "../utils/listenerElement";
 import { ListenerConfig } from "../utils/definitions";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
+import { Animator } from "../utils/animations/animator";
 
 export class PlayerPanel extends GameElement {
     PARENT_ID = `board`;
@@ -16,8 +17,59 @@ export class PlayerPanel extends GameElement {
         this.resourcePanel = ResourcePanel.createChild(this, this.id);
     }
 
-    public receiveAttack(from: number, newHealth: number, physicalDamage: number, magicalDamage: number) {
+    public async receiveAttack(from: number, newHealth: number, physicalDamage: number, magicalDamage: number, animationTime: number) {
+        const damageAnimationTime = animationTime / 2;
+        const health = this.leaderPanel.health;
+        this.element.style.setProperty("--element-animation-time", `${damageAnimationTime}ms`);
+        const physicalDamageAnimation = Animator.slideTemporaryObject
+            .id(`physical_DamageAnimation_${from}_to_${this.id}`)
+            .definition(`<div id="physical_DamageAnimation_${from}_to_${this.id}" class="physical damageText">-${physicalDamage}</div>`)
+            .parent(this.element.id)
+            .from(`healthMarker_${this.id}`)
+            .target(`healthMarker_${this.id}`)
+            .duration(damageAnimationTime)
+            .beforeStart((element) => {
+                element.classList.add("damageAnimation");
+            })
+            .delay(0)
+            .build();
+        const magicalDamageAnimation = Animator.slideTemporaryObject
+            .id(`magical_DamageAnimation_${from}_to_${this.id}`)
+            .definition(`<div id="magical_DamageAnimation_${from}_to_${this.id}" class="magical damageText">-${magicalDamage}</div>`)
+            .parent(this.element.id)
+            .from(`healthMarker_${this.id}`)
+            .target(`healthMarker_${this.id}`)
+            .duration(damageAnimationTime)
+            .beforeStart((element) => {
+                element.classList.add("damageAnimation");
+            })
+            .delay(0)
+            .build();
+        await Animator.play(physicalDamageAnimation);
+        this.leaderPanel.health = health - physicalDamage;
+        await Animator.play(magicalDamageAnimation);
         this.leaderPanel.health = newHealth;
+        this.element.style.removeProperty("--element-animation-time");
+    }
+
+    public async heal(healAmount: number, animationTime: number) {
+        const health = this.leaderPanel.health;
+        this.element.style.setProperty("--element-animation-time", `${animationTime}ms`);
+        const healAnimation = Animator.slideTemporaryObject
+            .id(`healAnimation_${this.id}`)
+            .definition(`<div id="healAnimation_${this.id}" class="heal damageText">+${healAmount}</div>`)
+            .parent(this.element.id)
+            .from(`healthMarker_${this.id}`)
+            .target(`healthMarker_${this.id}`)
+            .duration(animationTime)
+            .beforeStart((element) => {
+                element.classList.add("healAnimation");
+            })
+            .delay(0)
+            .build();
+        await Animator.play(healAnimation);
+        this.leaderPanel.health = health + healAmount;
+        this.element.style.removeProperty("--element-animation-time");
     }
 }
 
@@ -38,6 +90,10 @@ class LeaderPanel extends GameElement {
 
     get leaderElement() {
         return document.getElementById(`leaderImg_${this.id}`);
+    }
+
+    get health(): number {
+        return Number(this.healthElement.innerText);
     }
 
     set health(val: number) {
