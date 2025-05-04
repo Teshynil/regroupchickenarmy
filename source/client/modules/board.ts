@@ -1,10 +1,10 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { Animator } from "../utils/animations/animator";
-import { ListenerConfig } from "../utils/definitions";
-import { GameElement } from "../utils/gameElement";
-import { delay } from "../utils/gameUtils";
-import { ListenerElement } from "../utils/listenerElement";
-import { Logger } from "../utils/logger";
+import { Animator } from "../framework/animations/animator";
+import { ListenerConfig } from "../framework/core/types";
+import { GameElement } from "../framework/elements/gameElement";
+import { delay } from "../framework/utils/gameUtils";
+import { ListenerElement } from "../framework/elements/listenerElement";
+import { Logger } from "../framework/core/logger";
 import { CentralArea } from "./centralArea";
 import { PlayerArea } from "./playerArea";
 

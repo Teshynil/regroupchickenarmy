@@ -1,7 +1,5 @@
 import { Slot } from "../definitions";
-import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { DynamicGameElement } from "../utils/gameElement";
-import { EventBus } from "../utils/eventBus";
+import { DynamicGameElement } from "../framework/elements/gameElement";
 
 export class Card extends DynamicGameElement {
 

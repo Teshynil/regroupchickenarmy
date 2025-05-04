@@ -1,5 +1,5 @@
 import { Animation, ElementOrId } from "./animation";
-import { Logger } from "../logger";
+import { Logger } from "../../framework/core/logger";
 import { SlideToObjectBuilder } from "./builders/slideToObjectBuilder";
 import { SlideToObjectPosBuilder } from "./builders/slideToObjectPosBuilder";
 import { SlideTemporaryObjectBuilder } from "./builders/slideTemporaryObject";

@@ -14,11 +14,12 @@
 		// Ideally, all other files needed should be included through imports/ref tags in the above files.
 		// If you have other files that are not imported, you can include them here.
 		// Manually add any node_modules *.ts here. All other imports should be included automatically.
-		"../../node_modules/bga-ts-template/typescript/cookbook/common.ts",
+		"../../node_modules/teshynil-bga-template/typescript/cookbook/common.ts",
 	],
 	"include": [
 		"build/**/*.ts",
 		"utils/**/*.ts",
+		"framework/**/*.ts",
 	],
 	"compilerOptions": {
 		/* NEVER CHANGE THESE */
@@ -28,13 +29,13 @@
 		/* Recommended, should not need to change. */
 		"moduleResolution": "node10",
 		"lib": [ "dom", "esnext" ],
-		"types": [ "bga-ts-template" ], // Includes all non-module types which are on HTML script tags.
+		"types": [ "teshynil-bga-template" ], // Includes all non-module types which are on HTML script tags.
 
 		"paths": {
 			// Required: Allows modules to resolve correctly.
-			"*": [ "/*", "../../node_modules/bga-ts-template/typescript/types/*" ],
+			"*": [ "/*", "../../node_modules/teshynil-bga-template/typescript/types/*" ],
 			// Optional: Include cookbook modules when auto-completing modules. This are only included if imported in your code.
-			"cookbook/*": [ "../../node_modules/bga-ts-template/typescript/cookbook/*" ]
+			"cookbook/*": [ "../../node_modules/teshynil-bga-template/typescript/cookbook/*" ]
 		},
 		
 		/* Preference. This defaults to the most strict ts rules. */

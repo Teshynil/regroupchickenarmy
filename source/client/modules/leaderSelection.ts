@@ -1,9 +1,9 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { ListenerElement } from "../utils/listenerElement";
-import { ListenerConfig } from "../utils/definitions";
-import { GameElement } from "../utils/gameElement";
-import { Animator } from "../utils/animations/animator";
-import { Logger } from "../utils/logger";
+import { ListenerElement } from "../framework/elements/listenerElement";
+import { ListenerConfig } from "../framework/core/types";
+import { GameElement } from "../framework/elements/gameElement";
+import { Animator } from "../framework/animations/animator";
+import { Logger } from "../framework/core/logger";
 
 export class LeaderSelection extends ListenerElement {
 

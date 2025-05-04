@@ -1,4 +1,4 @@
-import { BoardEventCallback } from "./definitions";
+import { BoardEventCallback } from "./types";
 
 export class EventBus {
     private static _instance: EventBus;

@@ -1,9 +1,7 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { GameElement } from "../utils/gameElement";
-import { MouseHitbox } from "../utils/mouseHitbox";
-import { delay } from "../utils/gameUtils";
-import { ListenerElement } from "../utils/listenerElement";
-import { ListenerConfig } from "../utils/definitions";
+import { MouseHitbox } from "../framework/utils/mouseHitbox";
+import { ListenerElement } from "../framework/elements/listenerElement";
+import { ListenerConfig } from "../framework/core/types";
 import { Cards, Card } from "./cards";
 
 export class MarketArea extends ListenerElement {

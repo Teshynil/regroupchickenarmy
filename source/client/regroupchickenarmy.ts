@@ -21,14 +21,14 @@ import CommonMixer = require("cookbook/common");
 import "ebg/counter";
 import "./modules/thirdparty/scrollmapWithZoom";
 
-import { delay } from "./utils/gameUtils";
+import { delay } from "./framework/utils/gameUtils";
 import { Board } from "./modules/board";
 import { PlayerArea } from "./modules/playerArea";
 import { MarketArea } from "./modules/marketArea";
 import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
 import { Cards } from "./modules/cards";
-import { Logger } from "./utils/logger";
+import { Logger } from "./framework/core/logger";
 
 
 /** See Gamegui for more information. */

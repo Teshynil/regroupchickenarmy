@@ -1,4 +1,4 @@
-import { EventBus } from "./eventBus";
+import { EventBus } from "../core/eventBus";
 
 export class MouseHitbox {
     private static _instance: MouseHitbox | null = null;

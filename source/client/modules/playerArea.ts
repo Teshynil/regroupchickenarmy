@@ -1,6 +1,6 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { GameElement } from "../utils/gameElement";
-import { ListenerElement } from "../utils/listenerElement";
+import { GameElement } from "../framework/elements/gameElement";
+import { ListenerElement } from "../framework/elements/listenerElement";
 import { Grid } from "./grid";
 import { PlayerPanel } from "./playerPanel";
 export class PlayerArea extends ListenerElement {

@@ -1,5 +1,4 @@
-import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { Logger } from "./logger";
+import { Logger } from "../core/logger";
 
 export abstract class GameElement {
     abstract get PARENT_ID(): string;
@@ -197,10 +196,11 @@ export abstract class GameElement {
     public addEventToElement(element: Element, type: string, listener: Function) {
         const bindedListener = (event: Event) => {
             Logger.debug(`Event ${type} on ${element.id} Triggered`);
-            if (!RegroupChickenArmy.game.isReadOnly() &&RegroupChickenArmy.game.isCurrentPlayerActive() && this._enabledForEvents) {
+            //@ts-ignore
+            if (!gameui.isReadOnly() && gameui.isCurrentPlayerActive() && this._enabledForEvents) {
                 listener.call(this, event);
             } else {
-                Logger.debug(`Event ${type} on ${element.id} Canceled due to: ${RegroupChickenArmy.game.isCurrentPlayerActive() ? "Not active player" : "Events disabled"}`);
+                Logger.debug(`Event ${type} on ${element.id} Canceled due to: ${gameui.isCurrentPlayerActive() ? "Not active player" : "Events disabled"}`);
             }
         };
         element.addEventListener(type, bindedListener);

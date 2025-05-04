@@ -1,8 +1,7 @@
-import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { GameElement } from "./gameElement";
-import { EventBus } from "./eventBus";
-import { Logger } from "./logger";
-import { BoardEventCallback, ListenerConfig, NotifCallback } from "./definitions";
+import { EventBus } from "../core/eventBus";
+import { Logger } from "../core/logger";
+import { BoardEventCallback, ListenerConfig, NotifCallback } from "../core/types";
 
 export abstract class ListenerElement extends GameElement {
     abstract get listeners(): ListenerConfig;
@@ -38,7 +37,8 @@ export abstract class ListenerElement extends GameElement {
                     Logger.info(`Entering Notification ${eventType} on ${this.consoleId}`);
                     callback.call(this, notif);
                 };
-                this._listenersHandlers[eventType as keyof ListenerConfig] = RegroupChickenArmy.game.subscribeNotif(
+                //@ts-ignore
+                this._listenersHandlers[eventType as keyof ListenerConfig] = gameui.subscribeNotif(
                     eventType as keyof BGA.NotifTypes,
                     boundCallback as NotifCallback<keyof BGA.NotifTypes>
                 );

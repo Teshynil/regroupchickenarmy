@@ -1,4 +1,4 @@
-import { GameElement } from "../utils/gameElement";
+import { GameElement } from "../framework/elements/gameElement";
 import { MarketArea } from "./marketArea";
 import { LeaderSelection } from "./leaderSelection";
 

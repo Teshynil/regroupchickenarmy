@@ -1,8 +1,8 @@
-import { GameElement } from "../utils/gameElement";
-import { ListenerElement } from "../utils/listenerElement";
-import { ListenerConfig } from "../utils/definitions";
+import { GameElement } from "../framework/elements/gameElement";
+import { ListenerElement } from "../framework/elements/listenerElement";
+import { ListenerConfig } from "../framework/core/types";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { Animator } from "../utils/animations/animator";
+import { Animator } from "../framework/animations/animator";
 
 export class PlayerPanel extends GameElement {
     PARENT_ID = `board`;

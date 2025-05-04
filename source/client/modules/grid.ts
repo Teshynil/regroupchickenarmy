@@ -1,14 +1,14 @@
 import { remove } from "dojo/dom-class";
-import { GameElement } from "../utils/gameElement";
+import { GameElement } from "../framework/elements/gameElement";
 import { Slot } from "../definitions";
-import { ListenerElement } from "../utils/listenerElement";
-import { ListenerConfig } from "../utils/definitions";
+import { ListenerElement } from "../framework/elements/listenerElement";
+import { ListenerConfig } from "../framework/core/types";
 import { Cards, Card } from "./cards";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { delay } from "../utils/gameUtils";
-import { EventBus } from "../utils/eventBus";
-import { Animator } from "../utils/animations/animator";
-import { Logger } from "../utils/logger";
+import { delay } from "../framework/utils/gameUtils";
+import { EventBus } from "../framework/core/eventBus";
+import { Animator } from "../framework/animations/animator";
+import { Logger } from "../framework/core/logger";
 
 export class Grid extends ListenerElement {
 

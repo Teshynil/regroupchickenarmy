@@ -1,4 +1,4 @@
-import { Logger } from "./logger";
+import { Logger } from "../core/logger";
 
 export function delay(ms: number): Promise<void> {
     return new Promise((resolve) => {
