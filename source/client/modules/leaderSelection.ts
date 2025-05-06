@@ -4,6 +4,7 @@ import { ListenerConfig } from "../framework/core/types";
 import { GameElement } from "../framework/elements/gameElement";
 import { Animator } from "../framework/animations/animator";
 import { Logger } from "../framework/core/logger";
+import { Selectable } from "../framework/elements/behaviours/selectable";
 
 export class LeaderSelection extends ListenerElement {
 
@@ -40,10 +41,10 @@ export class LeaderSelection extends ListenerElement {
 
     }
 
-    async doSelect(notif: BGA.Notif<"leaderSelected">) {
-        const leader_id = notif.args.leader_id;
+    async doSelect(args: BGA.Notif<"leaderSelected">["args"]): Promise<void> {
+        const leader_id = args.leader_id;
         const element = this.leaders[leader_id].element;
-        RegroupChickenArmy.game.leaders_id[notif.args.player_id] = Number(leader_id);
+        RegroupChickenArmy.game.leaders_id[args.player_id] = Number(leader_id);
         const animation = Animator.slideToObject
             .id(`MoveLeaderToStartPosition_${leader_id}`)
             .element(element)
@@ -54,9 +55,10 @@ export class LeaderSelection extends ListenerElement {
         await Animator.play(animation);
         element.remove();
         this.leaders[leader_id].destroy();
+        this.leaders[leader_id] = null;
         RegroupChickenArmy.game.playerAreas.at(leader_id).render();
         RegroupChickenArmy.game.playerAreas.at(leader_id).show();
-        const player_id = notif.args.player_id;
+        const player_id = args.player_id;
         const playerName = RegroupChickenArmy.game.players_metadata[player_id].player_name;
         RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.playerName = playerName;
 
@@ -81,13 +83,22 @@ export class LeaderSelection extends ListenerElement {
         if (this.leaders.every((e) => e == null)) {
             this.hide();
         }
-        return new Promise(resolve => setTimeout(resolve, 1));
+    }
+
+    public markAsSelectable(bool: boolean) {
+        this.leaders.forEach(leader => {
+            if (leader !== null) {
+                leader.selectable = bool;
+            }
+        });
     }
 }
 
+@Selectable()
 class Leader extends GameElement {
     PARENT_ID = "leaderSelectionArea";
     ELEMENT_ID = `leaderSelection_${this.id}`;
+
 
 
     HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderImg leader_${this.id}"></div>`;

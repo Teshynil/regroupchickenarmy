@@ -1,4 +1,4 @@
-export type NotifCallback<T extends keyof BGA.NotifTypes> = (notif: BGA.Notif<T>) => void;
+export type NotifCallback<T extends keyof BGA.NotifTypes> = (args: BGA.Notif<T>["args"]) => Promise<void>;
 export type BoardEventCallback<T extends keyof Game.BoardEventTypes> = (event: Game.BoardEventTypes[T]) => void;
 
 export type ListenerConfig = {

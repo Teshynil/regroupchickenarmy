@@ -64,6 +64,8 @@ export abstract class CommonAnimationBuilder {
 
     public build(): Animation {
         const animation = this._build();
+        animation.duration = this._duration;
+        animation.delay = this._delay;
         this.setupCallbacks(animation);
         return animation;
     }

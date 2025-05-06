@@ -7,7 +7,8 @@ use BgaUserException;
 
 class Boards
 {
-    const GRID_SIZE = 14;
+    const GRID_SIZE = 20;
+    const MIDDLE_POINT = self::GRID_SIZE / 2 - 1;
     const EMPTY_SLOT = 'NN';
 
     public static function initializeBoard(Game $game, int $boardId): void
@@ -44,9 +45,10 @@ class Boards
         $game->dump("grid", $boardId);
         $boardMoves = self::getBoardMoves($game, $boardId);
         $isFirstCard = count($boardMoves) == 0;
+
         if ($isFirstCard) {
             //The first card should be only in the center of the board
-            if ($posX != 6 || $posY != 6) {
+            if ($posX != self::MIDDLE_POINT || $posY != self::MIDDLE_POINT) {
                 return false;
             }
             return true;

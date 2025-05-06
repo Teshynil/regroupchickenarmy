@@ -1,15 +1,15 @@
 import { BoardEventCallback } from "./types";
 
-export class EventBus {
-    private static _instance: EventBus;
+export class GameEventBus {
+    private static _instance: GameEventBus;
     private _listeners: Map<string, Map<string, Function>> = new Map();
     private _nextId: number = 1;
 
-    static get instance(): EventBus {
-        if (!EventBus._instance) {
-            EventBus._instance = new EventBus();
+    static get instance(): GameEventBus {
+        if (!GameEventBus._instance) {
+            GameEventBus._instance = new GameEventBus();
         }
-        return EventBus._instance;
+        return GameEventBus._instance;
     }
 
     /**

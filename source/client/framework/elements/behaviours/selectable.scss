@@ -1,0 +1,14 @@
+@keyframes selectableAnimation {
+    0% {
+        box-shadow: 0 0 0px 0px var(--selectable-color);
+    }
+
+    to {
+        box-shadow: 0 0 7px 0px var(--selectable-color);
+    }
+}
+
+.selectable {
+    box-shadow: 0 0 0px 0px var(--selectable-color);
+    animation: selectableAnimation 1s ease-in-out infinite alternate;
+}

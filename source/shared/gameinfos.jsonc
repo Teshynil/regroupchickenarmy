@@ -12,7 +12,7 @@
  * Comments in this file are minimized for clarity.
  */
 {
-  "$schema": "../../node_modules/bga-ts-template/schema/gameinfos.schema.json",
+  "$schema": "../../node_modules/teshynil-bga-template/schema/gameinfos.schema.json",
 
   // Game Externals and basic information
   "game_name": "Regroup! Chicken Army",

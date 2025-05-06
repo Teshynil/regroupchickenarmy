@@ -1,4 +1,5 @@
 import { Logger } from "../core/logger";
+import { createElement } from "../utils/dom";
 
 export abstract class GameElement {
     abstract get PARENT_ID(): string;
@@ -11,6 +12,16 @@ export abstract class GameElement {
     protected _id: number = 0;
     private _element?: HTMLDivElement;
     private _enabledForEvents: boolean = true;
+
+    protected behaviorActions: Function[] = [];
+
+    protected initializeBehaviors() {
+        return;
+    }
+
+    private runBehaviorActions() {
+        this.behaviorActions.forEach(action => action());
+    }
 
     // Parent-child relationship properties
     private _parent?: GameElement;
@@ -62,6 +73,7 @@ export abstract class GameElement {
     constructor(id: number = 0) {
         this._id = id;
         this.afterConstructor();
+        this.initializeBehaviors();
     }
 
     /**
@@ -127,7 +139,7 @@ export abstract class GameElement {
 
     public beforeRender(force: boolean): void { };
 
-    public render(force: boolean = false): this {
+    public render(force: boolean = false, args: { styles?: [{ [key: string]: string }] } = {}): this {
         if (this.elementSafe && !force) {
             Logger.debug(`Element ${this.consoleId} was already on the board`);
             return this;
@@ -139,7 +151,16 @@ export abstract class GameElement {
         this.beforeRender(force);
         const parentElement = document.getElementById(this.PARENT_ID);
         if (parentElement == null) throw new Error(`Parent Element for ${this.consoleId} not found`);
-        parentElement.insertAdjacentHTML(this.insertPosition, this.HTML_DEFINITION);
+        const element = createElement(this.HTML_DEFINITION);
+        if (args?.styles) {
+            for (const style of args.styles) {
+                for (const key in style) {
+                    element.style.setProperty(key, style[key]);
+                }
+            }
+        }
+        parentElement.insertAdjacentElement(this.insertPosition, element);
+        this.runBehaviorActions();
 
         this.afterRenderThis(force);
         this.addEventListeners();
@@ -160,30 +181,35 @@ export abstract class GameElement {
 
     public afterRenderAll(_force: boolean): void { };
 
-    public show() {
+    public show(): this {
         this.element.style.removeProperty("display");
         this.element.classList.remove("hidden");
         this.afterShow();
+        return this;
     }
     public afterShow() { }
 
-    public hide() {
+    public hide(): this {
         this.element.classList.add("hidden");
         this.afterHide();
+        return this;
     }
 
     public afterHide() { }
 
-    public deactivate() {
+    public deactivate(): this {
         this.element.style.display = "none";
+        return this;
     }
 
-    public enableEvents() {
+    public enableEvents(): this {
         this._enabledForEvents = true;
+        return this;
     }
 
-    public disableEvents() {
+    public disableEvents(): this {
         this._enabledForEvents = false;
+        return this;
     }
 
     protected addEventListeners(): void { };

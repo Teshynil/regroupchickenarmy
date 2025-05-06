@@ -69,12 +69,6 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
     this.board.isActive = this.isCurrentPlayerActive();
 
-    const to_preload = [];
-    for (const card_id in Cards) {
-      to_preload.push(`Cards/Card_${card_id}.webp`);
-    }
-
-    this.ensureSpecificGameImageLoading(to_preload);
     this.renderGui(gamedatas);
     // Setup game notifications to handle (see "setupNotifications" method below)
     this.setupNotifications();
@@ -92,6 +86,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         gamedatas.players[player_id].color = this.leader_colors[leaderId];
         const playerArea = this.playerAreas.at(leaderId);
         this.leaderSelection.leaders[leaderId].destroy();
+        this.leaderSelection.leaders[leaderId] = null;
         playerArea.show();
         playerArea.panel.resourcePanel.playerName = player.name;
         this.board.backgrounds.at(leaderId).isActive = true;
@@ -144,11 +139,9 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       const resources = gamedatas["resources"];
       for (const leaderId in resources) {
         this.board.doUpdateResources({
-          args: {
-            leader_id: Number(leaderId),
-            resources: resources[leaderId]
-          }
-        } as unknown as BGA.Notif<"resourcesUpdated">);
+          leader_id: Number(leaderId),
+          resources: resources[leaderId]
+        } as unknown as BGA.Notif<"resourcesUpdated">["args"]);
       }
       const playerAreasToRemove = [...this.playerAreas];
       for (player_id in gamedatas.players) {
@@ -211,6 +204,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "leaderSelection":
         this.board.centralArea.marketArea.hide();
         this.board.centralArea.leaderSelection.show();
+        this.board.centralArea.leaderSelection.markAsSelectable(this.board.isActive);
         break;
       case "leaderSelectionGame":
         break;
@@ -222,13 +216,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
         this.marketArea.element.classList.remove("deckCardPicked");
         break;
       case "playerTurn":
-        //TODO: this.board.centralArea.marketArea.animateDealCards();
         break;
       case "playerTurnGame":
         break;
       case "atkPhase":
         this.marketArea.disableEvents();
         this.marketArea.element.classList.add("marketUnavailable");
+        this.board.startAttackPhase();
         break;
       case "healingPhase":
         break;
@@ -272,18 +266,37 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
   //// Utility methods
 
 
-   formats_string_recursive(template: string, args: Record<string, any> & { i18n?: Record<string, any>; type?: string | "chatmessage" | "tablechat" | "privatechat" | "groupchat"; message?: string; text?: string; }): string {
+  override format_string_recursive(template: string, args: Record<string, any> & { i18n?: Record<string, any>; type?: string | "chatmessage" | "tablechat" | "privatechat" | "groupchat"; message?: string; text?: string; }): string {
     try {
       if (template && args && !args["processed"]) {
         args["processed"] = true;
 
-        const keys = { 'attack_results': (value: string) => { return `${value}` }, 'card_id': (value: string) => { return `${value}` } };
+        const keys = {
+          'attack_results': (value: string) => {
+            const attackResults = args["attack_results"] as BGA.Notif<"attackExecuted">["args"]["attack_results"];
+            const rows = [];
+            for (const defenderResult of Object.values(attackResults)) {
+              const defenderName = gameui.getFormattedPlayerName(defenderResult.defender_id);
+              const oldHealth = defenderResult.new_health + defenderResult.total_damage;
+              rows.push(`<tr><td>${defenderName}</td><td>${oldHealth} => ${defenderResult.new_health}</td></tr>`);
+            }
+            return `
+            <table><tbody>
+            ${rows.join('')}
+            </tbody></table>`
+          },
+          'card_id': (cardId: string) => {
+            const rotation = args["rotation"];
+            return `<br><div class="log-card rotatable card" data-card-id="${cardId}" style="--rotation:${rotation}; --step:90deg"></div>`;
+          }
+        };
 
         //loop the keys and for each one check if the key is present on the args, and if it is, replace the argument with the execution of the asociated function with value equal to the one present in the args
         for (const key in keys) {
           if (args[key]) {
             const conversor = keys[key as keyof typeof keys];
-            args[key] = conversor(args[key]);
+            const formatted_key = `${key}_formatted`;
+            args[formatted_key] = conversor(args[key]);
           }
         }
 
@@ -307,10 +320,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
     this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
     this.subscribeNotif('gameWinner', this.onGameWinner);
-
     this.notifqueue.setSynchronous('boardsInitialized', 2000);
-    this.notifqueue.setSynchronous('attackExecuted', 2500);
-    this.notifqueue.setSynchronous('healExecuted', 1000);
   };
 
   private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
@@ -332,11 +342,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       this.playerAreas.at(Number(playerArea)).grid.render();
     }
 
-    dojo.publish('addInitialCards', [{
-      args: {
-        playersCards: playerCards
-      },
-    }]);
+    this.board.doAddInitialsCards(notif.args);
 
     // Process initial resources
     const playerResources = notif.args.playersResources;
@@ -344,14 +350,11 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       const playerArea = this.playerAreas.find(area => area.grid.id === parseInt(leaderId));
       if (playerArea) {
         const resourceData = playerResources[leaderId];
-        // Trigger resource update notification manually
-        dojo.publish('resourcesUpdated', [{
-          args: {
-            player_id: resourceData.player_id,
-            leader_id: parseInt(leaderId),
-            resources: resourceData.resources
-          },
-        }]);
+        this.board.doUpdateResources({
+          player_id: resourceData.player_id,
+          leader_id: parseInt(leaderId),
+          resources: resourceData.resources
+        } as unknown as BGA.Notif<"resourcesUpdated">["args"]);
       }
     }
   }

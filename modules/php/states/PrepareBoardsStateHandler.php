@@ -51,7 +51,7 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
             $playerId = $value["player_id"];
 
             // Place the card on the board (without notification)
-            Boards::putCardOnBoard($game, $leaderId, $card_id, 0, 6, 6, false);
+            Boards::putCardOnBoard($game, $leaderId, $card_id, 0, Boards::MIDDLE_POINT, Boards::MIDDLE_POINT, false);
 
             // Update resources (without notification)
             Resources::updateResourcesFromBoard($game, $leaderId, false);

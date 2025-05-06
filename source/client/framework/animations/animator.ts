@@ -10,6 +10,8 @@ export class Animator {
     private runningAnimations: Map<string, Animation> = new Map();
     private isProcessingQueue: boolean = false;
     private waitingForDependencies: Map<string, { animation: Animation, resolve: () => void, timeoutId: number }> = new Map();
+    private animationTimeouts: Map<string, number> = new Map();
+    private static DEFAULT_TIMEOUT_BUFFER: number = 300;
 
     private constructor() { }
 
@@ -38,7 +40,7 @@ export class Animator {
             if (!animation.shouldEnqueue) {
                 Logger.debug(`Skipping queue for animation: ${animation.id}`);
                 this.processAsyncAnimation(animation, resolve, false);
-
+                return;
             }
 
             // If this animation depends on another animation
@@ -86,6 +88,43 @@ export class Animator {
         return this.runningAnimations.has(id);
     }
 
+    /**
+     * Force complete an animation that has timed out
+     * @param animationId The ID of the animation to force complete
+     */
+    private forceCompleteAnimation(animationId: string): void {
+        const animation = this.runningAnimations.get(animationId);
+        if (!animation) {
+            return;
+        }
+
+        Logger.warn(`Animation ${animationId} timed out, forcing completion`);
+        
+        // Try to stop the animation if it's still running
+        try {
+            animation.dojoAnimation.stop();
+        } catch (error) {
+            Logger.error(`Error stopping animation ${animationId}:`, error);
+        }
+
+        // Mark as completed and remove from running
+        animation.isCompleted = true;
+        animation.isRunning = false;
+        this.runningAnimations.delete(animationId);
+        
+        // Clear the timeout
+        if (this.animationTimeouts.has(animationId)) {
+            clearTimeout(this.animationTimeouts.get(animationId));
+            this.animationTimeouts.delete(animationId);
+        }
+
+        // Check if any animations were waiting for this one
+        this.checkWaitingDependencies(animationId);
+        
+        // Continue processing the queue
+        this.isProcessingQueue = false;
+        this.processQueue();
+    }
 
     private processAsyncAnimation(animation: Animation, resolve: () => void, shouldContinueQueue = true): void {
         Logger.debug(`Playing animation: ${animation.id}`);
@@ -94,9 +133,41 @@ export class Animator {
         animation.isRunning = true;
         this.runningAnimations.set(animation.id, animation);
         
+        // Set a timeout for this animation
+        const timeoutDuration = animation.duration + animation.delay + Animator.DEFAULT_TIMEOUT_BUFFER;
+        const timeoutId = setTimeout(() => {
+            Logger.warn(`Animation ${animation.id} timeout after ${timeoutDuration}ms`);
+            
+            // Execute all afterEnd callbacks before resolving
+            const element = Animator.resolveElement(animation);
+            if (element) {
+                for (const callback of animation.afterEndCallbacks) {
+                    try {
+                        callback(element);
+                    } catch (error) {
+                        Logger.error(`Error executing afterEnd callback for timed out animation ${animation.id}:`, error);
+                    }
+                }
+            }
+            
+            // Force complete the animation
+            this.forceCompleteAnimation(animation.id);
+            
+            // Resolve the promise
+            resolve();
+        }, timeoutDuration);
+        
+        this.animationTimeouts.set(animation.id, timeoutId);
+        
         animation.dojoAnimation.play();
         dojo.connect(animation.dojoAnimation, "onEnd", () => {
             Logger.debug(`Animation completed: ${animation.id}`);
+
+            // Clear the timeout since animation completed normally
+            if (this.animationTimeouts.has(animation.id)) {
+                clearTimeout(this.animationTimeouts.get(animation.id));
+                this.animationTimeouts.delete(animation.id);
+            }
 
             // Mark as completed and remove from running
             animation.isCompleted = true;

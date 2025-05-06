@@ -1,7 +1,13 @@
 import { Slot } from "../definitions";
 import { DynamicGameElement } from "../framework/elements/gameElement";
+import { Rotatable } from "../framework/elements/behaviours/rotatable";
 
+@Rotatable(90)
 export class Card extends DynamicGameElement {
+
+    public getSlots(): Slot[] {
+        return this._card.getSlots(this.rotation);
+    }
 
     override get HTML_DEFINITION(): string {
         return `<div id="${this.ELEMENT_ID}" class="card" data-card-id="${this.cardId}"></div>`
@@ -11,29 +17,25 @@ export class Card extends DynamicGameElement {
         return this._card.id;
     }
 
-    private _card: _Card;
-
-    get rotation(): number {
-        return Number(this.element.style.getPropertyValue("--rotation"));
-    }
-    set rotation(value: number) {
-        this.element.style.setProperty("--rotation", `${value}`);
-    }
-
-    rotate(rotation: number) {
-        this.rotation = this.rotation + rotation;
-    }
+    protected _card: _Card;
 
     constructor(id: number = 0, parent_id: string, element_id: string, card: _Card) {
         super(id, parent_id, element_id);
         this._card = card;
         this.afterConstructor();
     }
+}
+
+/* export class __Card extends Rotatable(_CardElement) {
+
+    override get step() {
+        return 90;
+    }
 
     public getSlots(): Slot[] {
         return this._card.getSlots(this.rotation);
     }
-}
+} */
 
 class _Card {
     id: number;
@@ -123,3 +125,4 @@ export class Cards {
     static 102 = new _Card(102, Slot.W2, Slot.S1, Slot.M1, Slot.F1);
     static 103 = new _Card(103, Slot.W1, Slot.S1, Slot.B2, Slot.S1);
 }
+

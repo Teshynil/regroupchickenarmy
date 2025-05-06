@@ -66,10 +66,14 @@ declare namespace BGA {
 		};
 		"firstPlayerSelected": { player_name: string, player_id: number };
 		"attackExecuted": {
+			leader_id: number,
 			player_name: string,
 			player_id: number,
+			physical_attack: number,
+			magical_attack: number,
 			attack_results: {
 				[player_id: string]: {
+					leader_id: number,
 					defender_id: number,
 					defender_name: string,
 					physical_damage: number,

@@ -1,7 +1,8 @@
 import { GameElement } from "./gameElement";
-import { EventBus } from "../core/eventBus";
+import { GameEventBus } from "../core/gameEventBus";
 import { Logger } from "../core/logger";
-import { BoardEventCallback, ListenerConfig, NotifCallback } from "../core/types";
+import { NotifCallback, BoardEventCallback, ListenerConfig } from "../core/types";
+import { BGAEventBus } from "../core/bgaEventBus";
 
 export abstract class ListenerElement extends GameElement {
     abstract get listeners(): ListenerConfig;
@@ -26,23 +27,21 @@ export abstract class ListenerElement extends GameElement {
                 const boardEventType = eventType as keyof Game.BoardEventTypes;
                 // Store the subscription ID instead of the handle
                 this._listenersHandlers[boardEventType] =
-                    EventBus.instance.subscribe(
+                    GameEventBus.instance.subscribe(
                         boardEventType,
                         boundCallback as BoardEventCallback<typeof boardEventType>
                     );
             } else {
                 // Setup BGA notification listener (existing functionality)
                 const callback = listener.callback as NotifCallback<keyof BGA.NotifTypes>;
-                const boundCallback = (notif: BGA.Notif<keyof BGA.NotifTypes>) => {
-                    Logger.info(`Entering Notification ${eventType} on ${this.consoleId}`);
-                    callback.call(this, notif);
+                const boundCallback = (args: BGA.Notif<keyof BGA.NotifTypes>["args"]): Promise<void> => {
+                    return callback.call(this, args);
                 };
-                //@ts-ignore
-                this._listenersHandlers[eventType as keyof ListenerConfig] = gameui.subscribeNotif(
-                    eventType as keyof BGA.NotifTypes,
-                    boundCallback as NotifCallback<keyof BGA.NotifTypes>
-                );
-                gameui.notifqueue.setSynchronous(eventType as keyof BGA.NotifTypes, 500);
+                this._listenersHandlers[eventType as keyof ListenerConfig] =
+                    BGAEventBus.instance.subscribe(
+                        eventType as keyof BGA.NotifTypes,
+                        boundCallback as NotifCallback<keyof BGA.NotifTypes>
+                    );
             }
         }
     }
@@ -55,10 +54,10 @@ export abstract class ListenerElement extends GameElement {
         if (handle) {
             if (listener.isCustomEvent) {
                 // For custom events, handle is a string subscription ID
-                EventBus.instance.unsubscribe(eventType as keyof Game.BoardEventTypes, handle as string);
+                GameEventBus.instance.unsubscribe(eventType as keyof Game.BoardEventTypes, handle as string);
             } else {
                 // For BGA notifications, handle is a DojoJS.Handle
-                dojo.unsubscribe(handle as DojoJS.Handle);
+                BGAEventBus.instance.unsubscribe(eventType as keyof BGA.NotifTypes, handle as string);
             }
             this._listenersHandlers[eventType as keyof ListenerConfig] = undefined;
         }

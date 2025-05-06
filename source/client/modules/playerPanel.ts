@@ -31,6 +31,9 @@ export class PlayerPanel extends GameElement {
             .beforeStart((element) => {
                 element.classList.add("damageAnimation");
             })
+            .afterEnd((element) => {
+                this.leaderPanel.health = health - physicalDamage;
+            })
             .delay(0)
             .build();
         const magicalDamageAnimation = Animator.slideTemporaryObject
@@ -39,15 +42,17 @@ export class PlayerPanel extends GameElement {
             .parent(this.element.id)
             .from(`healthMarker_${this.id}`)
             .target(`healthMarker_${this.id}`)
+            .waitFor(`physical_DamageAnimation_${from}_to_${this.id}`)
             .duration(damageAnimationTime)
             .beforeStart((element) => {
                 element.classList.add("damageAnimation");
             })
             .delay(0)
             .build();
-        await Animator.play(physicalDamageAnimation);
-        this.leaderPanel.health = health - physicalDamage;
-        await Animator.play(magicalDamageAnimation);
+        const promises = [];
+        if (physicalDamage > 0) promises.push(Animator.play(physicalDamageAnimation));
+        if (magicalDamage > 0) promises.push(Animator.play(magicalDamageAnimation));
+        await Promise.all(promises);
         this.leaderPanel.health = newHealth;
         this.element.style.removeProperty("--element-animation-time");
     }
@@ -68,7 +73,7 @@ export class PlayerPanel extends GameElement {
             .delay(0)
             .build();
         await Animator.play(healAnimation);
-        this.leaderPanel.health = health + healAmount;
+        this.leaderPanel.health = Math.min(30, health + healAmount);
         this.element.style.removeProperty("--element-animation-time");
     }
 }
@@ -81,7 +86,7 @@ class LeaderPanel extends GameElement {
 
     HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
                 <div id="healthMarker_${this.id}" class="healthMarker">30</div>
-                    <div id="leaderImg_${this.id}" class="leaderImg leader_${this.id}">
+                    <div id="leaderImg_${this.id}" class="leaderImg leaderSprites leader_${this.id}">
                 </div>
 			</div>`;
     get healthElement() {
@@ -115,22 +120,22 @@ class ResourcePanel extends GameElement {
     get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
 
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
-                <div class="resource Defense_Physic" id="resourceContainer_${this.id}">
+                <div class="resource Defense_Physic gui shieldTile" id="resourceContainer_${this.id}">
                     <span id="defPhy_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Attack_Physic" id="resourceContainer_${this.id}">
+                <div class="resource Attack_Physic gui fighterTile" id="resourceContainer_${this.id}">
                     <span id="atkPhy_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Defense_Magic" id="resourceContainer_${this.id}">
+                <div class="resource Defense_Magic gui barrierTile" id="resourceContainer_${this.id}">
                     <span id="defMag_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Attack_Magic" id="resourceContainer_${this.id}">
+                <div class="resource Attack_Magic gui wizardTile" id="resourceContainer_${this.id}">
                     <span id="atkMag_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Potion" id="resourceContainer_${this.id}">
+                <div class="resource Potion gui potionTile" id="resourceContainer_${this.id}">
                     <span id="potion_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Coin" id="resourceContainer_${this.id}">
+                <div class="resource Coin gui coinTile" id="resourceContainer_${this.id}">
                     <span id="coins_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="player-name" id="playerName_${this.id}"></div>

@@ -6,7 +6,7 @@ import { ListenerConfig } from "../framework/core/types";
 import { Cards, Card } from "./cards";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { delay } from "../framework/utils/gameUtils";
-import { EventBus } from "../framework/core/eventBus";
+import { GameEventBus } from "../framework/core/gameEventBus";
 import { Animator } from "../framework/animations/animator";
 import { Logger } from "../framework/core/logger";
 
@@ -31,25 +31,29 @@ export class Grid extends ListenerElement {
     gridDiv: HTMLDivElement;
     private minRow: number;
     private minCol: number;
-    grid: number[][] = [
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xE, 0xE, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xE, 0xE, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-        [0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF],
-    ];
+
+    private GRID_SIZE = 20;
+    grid: number[][] = [];
     cardsPlayed: number = 0;
 
+    private initializeGrid(): void {
+        // Create empty grid with all cells set to 0xF
+        this.grid = Array(this.GRID_SIZE).fill(0).map(() =>
+            Array(this.GRID_SIZE).fill(0xF)
+        );
+
+        // Set middle tiles to 0xE (empty)
+        const midPoint = Math.floor(this.GRID_SIZE / 2) - 1;
+        this.grid[midPoint][midPoint] = 0xE;
+        this.grid[midPoint][midPoint + 1] = 0xE;
+        this.grid[midPoint + 1][midPoint] = 0xE;
+        this.grid[midPoint + 1][midPoint + 1] = 0xE;
+    }
+
     public override afterRenderThis(force: boolean): void {
+        // Initialize grid
+        this.initializeGrid();
+
         //@ts-ignore
         this.scrollmap = new ebg.scrollmapWithZoom();
         this.scrollmap.minZoom = 0.5;
@@ -80,7 +84,9 @@ export class Grid extends ListenerElement {
         }
         this.scrollmap.surface_div.style.cursor = "default";
         this.scrollmap.scrollable_div.style.opacity = "1";
-        this.activateCellsAroundPosition(6, 6);
+
+        const midpoint = Math.floor(this.GRID_SIZE / 2) - 1;
+        this.activateCellsAroundPosition(midpoint, midpoint);
         this.resizeGrid();
     }
 
@@ -194,15 +200,15 @@ export class Grid extends ListenerElement {
 
     async addInitialCard(card_id: number) {
         Logger.debug(`Adding initial card to grid ${this.consoleId}`);
-        this.addCardToGrid(card_id, 6, 6, 0);
+        const midpoint = Math.floor(this.GRID_SIZE / 2) - 1;
+        this.addCardToGrid(card_id, midpoint, midpoint, 0);
         const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);
         card.render();
         const element = card.element;
-        // (element, `player_${this.id}_cell_${6}_${6}`, 1000, 0);
         const animation = Animator.slideToObject
             .id(`InitialCard_${this.id}`)
             .element(element)
-            .target(`player_${this.id}_cell_${6}_${6}`)
+            .target(`player_${this.id}_cell_${midpoint}_${midpoint}`)
             .duration(1000)
             .delay(0)
             .shouldEnqueue(false)
@@ -210,7 +216,7 @@ export class Grid extends ListenerElement {
 
         await Animator.play(animation);
         element.remove();
-        this.createCardOnGrid(card_id, 6, 6);
+        this.createCardOnGrid(card_id, midpoint, midpoint);
         this.resizeGrid();
         return new Promise(resolve => setTimeout(resolve, 1));
     }
@@ -230,23 +236,23 @@ export class Grid extends ListenerElement {
         }
     }
 
-    async doCardPlaced(notif: BGA.Notif<"cardPlaced">) {
-        if (this.id === notif.args.board_id) {
-            const cardId = notif.args.card_id;
-            const posX = notif.args.x;
-            const posY = notif.args.y;
+    async doCardPlaced(args: BGA.Notif<"cardPlaced">["args"]): Promise<void> {
+        if (this.id === args.board_id) {
+            const cardId = args.card_id;
+            const posX = args.x;
+            const posY = args.y;
 
             // Check if this specific card is already placed at this position in the DOM
             const existingCards = this.gridDiv.querySelectorAll(`.card[data-card-id="${cardId}"][data-x="${posX}"][data-y="${posY}"]`);
             if (existingCards.length > 0) {
                 // This specific card is already placed at this position, do nothing
-                return new Promise(resolve => setTimeout(resolve, 1));
+                return;
             }
 
             const marketArea = RegroupChickenArmy.game.marketArea;
 
             let sourceElement: string;
-            if (notif.args.isDeckCard) {
+            if (args.isDeckCard) {
                 sourceElement = "deck";
             } else {
                 // Check if card is in the market
@@ -257,11 +263,17 @@ export class Grid extends ListenerElement {
                     sourceElement = marketCard.id;
                 } else {
                     // Card is assumed to be already placed
-                    return new Promise(resolve => setTimeout(resolve, 1));
+                    return;
                 }
             }
 
-            const definition = `<div id="temporalCard_${this.id}_${cardId}" class="card" data-card-id="${cardId}" style="--rotation:${notif.args.rotation}"></div>`
+            const definition = `<div id="temporalCard_${this.id}_${cardId}"
+                class="card rotatable" 
+                data-card-id="${cardId}"
+                style="
+                    --rotation:${args.rotation};
+                    --step:90deg
+                "></div>`;
             const animation = Animator.slideTemporaryObject
                 .id(`temporalCard_${this.id}_${cardId}`)
                 .definition(definition)
@@ -277,17 +289,25 @@ export class Grid extends ListenerElement {
             }
             await Animator.play(animation);
 
-            this.addCardToGrid(cardId, posX, posY, notif.args.rotation);
-            this.createCardOnGrid(cardId, posX, posY, notif.args.rotation);
+            this.addCardToGrid(cardId, posX, posY, args.rotation);
+            this.createCardOnGrid(cardId, posX, posY, args.rotation);
             this.resizeGrid();
         }
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
     createCardOnGrid(cardId: number, posX: number, posY: number, rotation: number = 0) {
         this.cardsPlayed++;
         const zIndex = this.cardsPlayed;
-        this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div class="card" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="z-index:${zIndex};--rotation:${rotation}"></div>`);
+        this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div id="card_${this.id}_${this.cardsPlayed}"
+            class="card rotatable"
+            data-card-id="${cardId}" 
+            data-y="${posY}"
+            data-x="${posX}"
+            style="
+                z-index:${zIndex};
+                --rotation:${rotation};
+                --step:90deg;
+            "></div>`);
     }
 
     isValidPlacement(posX: number, posY: number): boolean {
@@ -330,7 +350,7 @@ export class Grid extends ListenerElement {
         const rotation = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.rotation;
         this.gridDiv.insertAdjacentHTML(
             this.insertPosition,
-            `<div class="card" id="temporalCard" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}"></div>`);
+            `<div class="card rotatable" id="temporalCard" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}; --step:90deg"></div>`);
         const temporalCard = document.getElementById("temporalCard") as HTMLDivElement;
         this.positionCardOnGrid(temporalCard, posX, posY);
         this.addEventToElement(temporalCard, "click", this.selectLocationForCardPlacement);
@@ -344,7 +364,7 @@ export class Grid extends ListenerElement {
         const cardId = Number(temporalCard.dataset["cardId"]);
         const rotation = Number(temporalCard.style.getPropertyValue("--rotation"));
         temporalCard.remove();
-        EventBus.instance.emit("cardPrePlaced",
+        GameEventBus.instance.emit("cardPrePlaced",
             { grid_id: this.id, x, y, cardId, rotation: rotation }
         );
     }

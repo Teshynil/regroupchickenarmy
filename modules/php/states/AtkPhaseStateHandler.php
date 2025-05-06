@@ -46,10 +46,12 @@ class AtkPhaseStateHandler implements StateHandlerInterface
 
             $damageResults[$attackerLeaderId] = [
                 'player_id' => $attackerId,
+                'physical_attack' => $physicalAttack,
+                'magical_attack' => $magicalAttack,
                 'defenders' => []
             ];
 
-            
+
             $defenders = Players::getNextPlayersInOrder($game, $attackerId);
             $order = 0;
             // Calculate damage against each defender
@@ -103,6 +105,9 @@ class AtkPhaseStateHandler implements StateHandlerInterface
                 continue;
             }
 
+            $physicalAttack = $damageResults[$attackerLeaderId]['physical_attack'];
+            $magicalAttack = $damageResults[$attackerLeaderId]['magical_attack'];
+
             $attackResults = [];
 
             // Apply damage to each defender
@@ -126,6 +131,7 @@ class AtkPhaseStateHandler implements StateHandlerInterface
 
                 // Record attack result
                 $attackResults[$relativeOrder] = [
+                    'leader_id' => $defenderLeaderId,
                     'defender_id' => $defenderId,
                     'defender_name' => $defenderName,
                     'physical_damage' => $defenderData['physical_damage'],
@@ -136,9 +142,12 @@ class AtkPhaseStateHandler implements StateHandlerInterface
             }
 
             // Notify all players about the attack results
-            $game->notifyAllPlayers('attackExecuted', clienttranslate('${player_name} attacks all other players {attack_results}'), [
+            $game->notifyAllPlayers("attackExecuted", clienttranslate('${player_name} attacks all other players ${attack_results_formatted}'), [
+                'leader_id' => $attackerLeaderId,
                 'player_name' => $attackerName,
                 'player_id' => $attackerId,
+                'physical_attack' => $physicalAttack,
+                'magical_attack' => $magicalAttack,
                 'attack_results' => $attackResults
             ]);
         }

@@ -18,8 +18,8 @@ export class MarketArea extends ListenerElement {
     override HTML_DEFINITION: string = `
     <div id="${this.ELEMENT_ID}">
         <div id="deck" class="deck card" data-card-id="0"></div>
-        <div id="market_cost_0"></div>
-        <div id="market_cost_1"></div>
+        <div id="market_cost_0" class="gui coin2"></div>
+        <div id="market_cost_1" class="gui coin1"></div>
     </div>`;
 
     deck: HTMLDivElement;
@@ -43,30 +43,38 @@ export class MarketArea extends ListenerElement {
         this.cards[1] = document.getElementById("market_card_1") as HTMLDivElement;
         this.cards[2] = document.getElementById("market_card_2") as HTMLDivElement;
         for (let i = 0; i < 3; i++) {
+            const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
+            if (RegroupChickenArmy.game.board.isActive) {
+                const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
+                const cardCost = 2 - i;
+                if (availableCoins >= cardCost) {
+                    this.cards[i].classList.add("selectable");
+                } else {
+                    this.cards[i].classList.remove("selectable");
+                }
+            }
             this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
         }
     }
 
-    async doUpdateMarket(notif: BGA.Notif<"marketUpdate">) {
+    async doUpdateMarket(args: BGA.Notif<"marketUpdate">["args"]): Promise<void> {
         this.renderCards();
-        for (let key in notif.args.cards) {
-            const card = notif.args.cards[key];
+        for (let key in args.cards) {
+            const card = args.cards[key];
             const card_key = 2 - Number(key);
             this.cards[card_key].dataset["cardId"] = `${card.card_id}`;
         }
-        const cardsCount = notif.args.cardsInDeck;
+        const cardsCount = args.cardsInDeck;
         this.deck.style.setProperty("--cardCount", `${cardsCount}`);
         if (cardsCount == 0) {
             this.deck.classList.add("empty");
         }
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
-    async doBlockMarket(notif: BGA.Notif<"deckCardPicked">) {
-        if (notif.args.player_id == RegroupChickenArmy.game.player_id) {
-            this.preSelectCard(-1, notif.args.card_id);
+    async doBlockMarket(args: BGA.Notif<"deckCardPicked">["args"]): Promise<void> {
+        if (args.player_id == RegroupChickenArmy.game.player_id) {
+            this.preSelectCard(-1, args.card_id);
         }
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
     public pickDeckCard() {
@@ -221,7 +229,7 @@ export class CardRotationWindow extends ListenerElement {
         this.cardRotation_cw.style.display = "block";
     }
 
-    async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]) {
+    async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]): Promise<void> {
         if (this.id == event.cardId) {
             MouseHitbox.instance.stopSession();
             this.card.hide();
@@ -229,6 +237,5 @@ export class CardRotationWindow extends ListenerElement {
             RegroupChickenArmy.game.addActionButton("confirmCardPlacement_btn", _('Place card'), RegroupChickenArmy.game.board.centralArea.marketArea.confirmCardPlacement);
             RegroupChickenArmy.game.addActionButton("cancelCardPlacement_btn", _('Cancel'), RegroupChickenArmy.game.board.centralArea.marketArea.cancelCardPlacement);
         }
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 }

@@ -1,4 +1,4 @@
-import { EventBus } from "../core/eventBus";
+import { GameEventBus } from "../core/gameEventBus";
 
 export class MouseHitbox {
     private static _instance: MouseHitbox | null = null;
@@ -136,7 +136,7 @@ export class MouseHitbox {
         if (this.haveCollisionsChanged(newCollisions)) {
             this.currentCollisions = newCollisions;
 
-            EventBus.instance.emit('mouseHitboxCollision', {
+            GameEventBus.instance.emit('mouseHitboxCollision', {
                 id: this.hitboxId,
                 collisions: this.currentCollisions
             });

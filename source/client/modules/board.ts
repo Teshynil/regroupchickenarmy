@@ -7,6 +7,7 @@ import { ListenerElement } from "../framework/elements/listenerElement";
 import { Logger } from "../framework/core/logger";
 import { CentralArea } from "./centralArea";
 import { PlayerArea } from "./playerArea";
+import { AttackPhaseContainer } from "./attackDisplay";
 
 export class Board extends ListenerElement {
     PARENT_ID = `game_play_area`;
@@ -27,6 +28,7 @@ export class Board extends ListenerElement {
     backgrounds: PlayerBackground[] = [];
     centralArea: CentralArea;
     playerAreas: PlayerArea[] = [];
+    attackDisplay: AttackPhaseContainer;
 
     constructor() {
         super();
@@ -47,6 +49,8 @@ export class Board extends ListenerElement {
             PlayerArea.createChild(this, 2),
             PlayerArea.createChild(this, 3)
         ];
+
+        this.attackDisplay = AttackPhaseContainer.createChild(this);
     }
 
     public override afterRenderAll(_force: boolean): void {
@@ -87,41 +91,44 @@ export class Board extends ListenerElement {
         });
     }
 
-    async doFirstPlayerSelected(notif: BGA.Notif<"firstPlayerSelected">) {
+    async doFirstPlayerSelected(args: BGA.Notif<"firstPlayerSelected">["args"]): Promise<void> {
         for (const playerArea of this.playerAreas) {
             if (playerArea == null) continue;
             playerArea.panel.leaderPanel.hasPlayerToken = false;
         }
-        const leaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(notif.args.player_id);
+        const leaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(args.player_id);
         this.playerAreas.at(leaderId).panel.leaderPanel.hasPlayerToken = true;
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
-    async doAddInitialsCards(notif: BGA.Notif<"addInitialCards">) {
-        const playersCards = notif.args.playersCards;
+    async doAddInitialsCards(args: BGA.Notif<"addInitialCards">["args"]): Promise<void> {
+        const playersCards = args.playersCards;
+        const promises = [];
         for (const leaderData of Object.values(playersCards)) {
             const leaderId = leaderData.leader_id;
             const playerArea = this.playerAreas.at(leaderId);
             const grid = playerArea.grid;
-            grid.addInitialCard(leaderData.card_id);
+            promises.push(grid.addInitialCard(leaderData.card_id));
         }
-        return delay(1000);
+        await Promise.all(promises);
     }
 
-    async doAttackExecuted(notif: BGA.Notif<"attackExecuted">) {
-        const attackerLeaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(notif.args.player_id);
+    startAttackPhase() {
+        this.attackDisplay.render();
+        this.attackDisplay.banner.element.classList.add("animate");
+    }
 
-        //@ts-ignore
-        const attackerNameFormatted = RegroupChickenArmy.game.getFormattedPlayerName(notif.args.player_id);
+    async doAttackExecuted(args: BGA.Notif<"attackExecuted">["args"]): Promise<void> {
+        const attackerLeaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(args.player_id);
 
-        const attackerName = RegroupChickenArmy.game.getPlayerName(notif.args.player_id);
+        const attackerNameFormatted = RegroupChickenArmy.game.getFormattedPlayerName(args.player_id);
+
+        const attackerName = RegroupChickenArmy.game.getPlayerName(args.player_id);
 
         Logger.info(`Attack executed by ${attackerName} (${attackerLeaderId})`);
-        const results = notif.args.attack_results;
-        const delayTime = Math.min(1800, 5000 / Object.keys(results).length);
+        const results = args.attack_results;
+        const delayTime = Math.min(1800, 5000 / Object.keys(results).length); // 5000ms / number of defenders, capped at 1800ms
         for (const defenderResult of Object.values(results)) {
             const defenderId = defenderResult.defender_id;
-            //@ts-ignore
             const defenderName = RegroupChickenArmy.game.getFormattedPlayerName(defenderId);
             const defenderLeaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(Number(defenderId));
             Logger.warn(`Defender ${defenderResult.defender_name} (${defenderLeaderId}) received ${defenderResult.total_damage} damage from ${attackerName} (${attackerLeaderId})`);
@@ -130,32 +137,44 @@ export class Board extends ListenerElement {
             const magicalDamage = defenderResult.magical_damage;
             const totalDamage = defenderResult.total_damage;
             const newHealth = defenderResult.new_health;
-            //@ts-ignore
-            RegroupChickenArmy.game.statusBar.setTitle("${attacker} Attacks ${defender} doing them ${damage} points of damage", { attacker: attackerNameFormatted, defender: defenderName, damage: totalDamage });
-            await defenderPanel.receiveAttack(attackerLeaderId, newHealth, physicalDamage, magicalDamage, delayTime);
+
+            if (totalDamage === 0) {
+                RegroupChickenArmy.game.statusBar.setTitle(_("${attacker} Attacks ${defender} but inflicts no damage"), { attacker: attackerNameFormatted, defender: defenderName });
+                await delay(1000);
+            } else {
+                RegroupChickenArmy.game.statusBar.setTitle(_("${attacker} Attacks ${defender} doing them ${damage} points of damage"), { attacker: attackerNameFormatted, defender: defenderName, damage: totalDamage });
+                await defenderPanel.receiveAttack(attackerLeaderId, newHealth, physicalDamage, magicalDamage, delayTime);
+            }
         }
-        return new Promise(resolve => setTimeout(resolve, 1));
+        await delay(500);
     }
 
-    async doHealExecuted(notif: BGA.Notif<"healExecuted">) {
+    async doHealExecuted(args: BGA.Notif<"healExecuted">["args"]): Promise<void> {
         Logger.info("Heal executed");
-        const leaderId = notif.args.leader_id;
+        const leaderId = args.leader_id;
         const leaderPanel = this.playerAreas.at(leaderId).panel;
-        await leaderPanel.heal(notif.args.heal_amount, 800);
-        return new Promise(resolve => setTimeout(resolve, 1));
+        const oldHealth = leaderPanel.leaderPanel.health;
+        const newHealth = args.new_health;
+        if (oldHealth === 30) {
+            RegroupChickenArmy.game.statusBar.setTitle(_("${player} tried to heal but was already at full health"), { player: args.player_name });
+            await delay(600);
+        } else {
+            RegroupChickenArmy.game.statusBar.setTitle(_("${player} healed ${amount} points"), { player: args.player_name, amount: args.heal_amount });
+            await leaderPanel.heal(args.heal_amount, 800);
+            await delay(500);
+        }
     }
 
-    async doLeaderEliminated(notif: BGA.Notif<"leaderEliminated">) {
+    async doLeaderEliminated(args: BGA.Notif<"leaderEliminated">["args"]): Promise<void> {
         // Find the player area for the eliminated player
-        const leaderId = notif.args.leader_id;
+        const leaderId = args.leader_id;
         const playerArea = this.playerAreas.at(leaderId);
         playerArea.eliminatePlayer();
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
-    async doUpdateResources(notif: BGA.Notif<"resourcesUpdated">) {
-        const leaderId = notif.args.leader_id;
-        const resources = notif.args.resources;
+    async doUpdateResources(args: BGA.Notif<"resourcesUpdated">["args"]): Promise<void> {
+        const leaderId = args.leader_id;
+        const resources = args.resources;
 
         const leaderPanel = this.playerAreas.at(leaderId).panel.leaderPanel;
         const resourcePanel = this.playerAreas.at(leaderId).panel.resourcePanel;
@@ -169,7 +188,6 @@ export class Board extends ListenerElement {
         resourcePanel.coinElement.innerText = resources.coin.toString();
 
         leaderPanel.health = resources.health;
-        return new Promise(resolve => setTimeout(resolve, 1));
     }
 
 }
@@ -179,7 +197,7 @@ class PlayerBackground extends GameElement {
     PARENT_ID = "board";
     ELEMENT_ID = `playerBackground_${this.id}`;
 
-    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="playerBackground"></div>`;
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="playerBackground leader_${this.id} background leaderSprites"></div>`;
 
 
     public override afterRenderThis(_force: boolean): void {
