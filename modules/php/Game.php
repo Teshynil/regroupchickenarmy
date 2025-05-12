@@ -126,9 +126,14 @@ class Game extends \Table
      */
     public function getGameProgression()
     {
-        // TODO: compute and return the game progression
-
-        return 0;
+        $progress = $this->getUniqueValueFromDB("SELECT GREATEST(
+            LEAST(
+                (1 -(SUM(player_score)/(30*COUNT(*))))*100
+            ,100)
+        ,0) FROM `player` WHERE player_eliminated = 0;");
+        $this->debug("Game progression: $progress");
+        $progress = (int) $progress;
+        return $progress;
     }
 
 
@@ -326,10 +331,5 @@ class Game extends \Table
         $this->DbQuery("UPDATE resources SET health = $hp WHERE leader_id = $leader_id");
         $playerId = $this->getUniqueValueFromDB("SELECT player_id FROM playerData WHERE leader_id = $leader_id");
         $this->DbQuery("UPDATE player SET player_score = $hp WHERE player_id = $playerId");
-    }
-
-    public function debugRemoveAllCardsFromMarketExcept6Cards(): void
-    {
-        $this->DbQuery("DELETE FROM `market` WHERE `order` > 6");
     }
 }

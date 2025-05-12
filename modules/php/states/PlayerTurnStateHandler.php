@@ -183,6 +183,14 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         $expectedCardCount = $currentRound + 1; // +1 for the initial card
         $game->debug("Current round: $currentRound, expected card count: $expectedCardCount");
 
+        $deckCardPicked = $game->getUniqueValueFromDB("SELECT marketCardPicked FROM playerData WHERE marketCardPicked IS NOT NULL");
+
+        if ($deckCardPicked != null) {
+            $game->trace("Deck card picked still on Game State Zombie Detected, shuffling deck");
+            $game->DbQuery("UPDATE playerData SET marketCardPicked = NULL");
+            Market::shuffleDeck($game);
+        }
+
         // Get the count of cards placed by each player, ordered by leader_id
         $game->debug("Retrieving card counts for all players");
         $cardCounts = $game->getCollectionFromDB(

@@ -82,11 +82,13 @@ class HealingPhaseStateHandler implements StateHandlerInterface
 
             $healResult = $healingResults[$leaderId];
 
+            $score = $healResult['new_health'];
+
             // Update health in database
-            $game->DbQuery("UPDATE resources SET health = {$healResult['new_health']} WHERE leader_id = $leaderId");
+            $game->DbQuery("UPDATE resources SET health = $score WHERE leader_id = $leaderId");
 
             // Update player score to match health
-            $game->DbQuery("UPDATE player SET player_score = {$healResult['new_health']} WHERE player_id = $playerId");
+            $game->DbQuery("UPDATE player SET player_score = $score WHERE player_id = $playerId");
 
             // Notify all players about the healing
             if ($healResult['heal_amount'] > 0) {

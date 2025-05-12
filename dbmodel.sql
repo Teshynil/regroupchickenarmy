@@ -88,9 +88,10 @@ VALUES (0, 'EE','EE','EE','EE'),
 
 -- Create the market
 CREATE TABLE IF NOT EXISTS `market` (
-    `order` int UNSIGNED NOT NULL AUTO_INCREMENT,
+    `market_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+    `order` int UNSIGNED NOT NULL,
     `card_id` int UNSIGNED NOT NULL,
-    PRIMARY KEY (`order`),
+    PRIMARY KEY (`market_id`),
     KEY `card_id_fk` (`card_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 

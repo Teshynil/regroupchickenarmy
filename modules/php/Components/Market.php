@@ -10,22 +10,27 @@ class Market
     {
         $game->trace("Initializing market with randomized cards");
 
-        $game::DbQuery("INSERT INTO `market` (card_id)
-            SELECT card_id 
-            FROM `cards` 
-            WHERE card_id BETWEEN 1 AND 98 
-            ORDER BY RAND();");
+        $game::DbQuery("INSERT INTO `market` (`order`, `card_id`)
+            SELECT @row := @row + 1 AS rand, card_id
+            FROM (SELECT card_id 
+                FROM `cards`
+                WHERE card_id BETWEEN 1 AND 98
+                ORDER BY RAND()) AS cards
+            CROSS JOIN 
+                (SELECT @row := 0) AS init;");
     }
 
     public static function shuffleDeck(Game $game): void
     {
         $game->trace("Shuffling deck");
 
-        $game::DbQuery("INSERT INTO `market` (card_id
-            SELECT card_id
-            FROM `market`
-            WHERE `order` > 3
-            ORDER BY RAND();");
+        $game::DbQuery("UPDATE `market` m
+            JOIN (
+                SELECT m2.market_id, (@row := @row + 1) + 3 AS new_order
+                FROM (SELECT market_id FROM market WHERE `order` > 3 ORDER BY RAND()) m2
+                CROSS JOIN (SELECT @row := 0) AS init
+            ) AS shuffled ON m.market_id = shuffled.market_id
+            SET m.`order` = shuffled.new_order;");
     }
 
     public static function getMarketCard(Game $game, int $position)
