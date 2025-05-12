@@ -101,7 +101,7 @@ class Leader extends GameElement {
 
 
 
-    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderImg leader_${this.id}"></div>`;
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderImg sprite leaderSprites leader_${this.id}"></div>`;
 
     override addEventListeners() {
         this.addEventToElement(this.element, "click", () => RegroupChickenArmy.game.board.centralArea.leaderSelection.select(this.element, this.id));

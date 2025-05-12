@@ -9,148 +9,140 @@
     --leader-cols: 5;
 }
 
+.sprite:not(:has(.sprite-b))::after,
+.sprite-b:not(:has(.sprite))::before {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    --row: round(down, var(--i) / var(--cols), 1);
+    background-size: calc(100% * var(--cols)) calc(100% * var(--rows));
+    background-position: calc(var(--i) * -100%) calc(var(--row) * -100%);
+    background-image: var(--sprite-url);
+}
+
 .card {
-    &::after {
-        content: '';
-        display: block;
-        --i: 0;
-        --row: round(down, var(--i) / var(--cards-cols), 1);
-        background-size: calc(100% * var(--cards-cols)) calc(100% * var(--cards-rows));
-        background-position: calc(var(--i) * -100%) calc(var(--row) * -100%);
-        background-image: url("img/Cards/SpriteCards_0.webp");
-    }
+
+    --cols: var(--cards-cols);
+    --rows: var(--cards-rows);
+    --sprite-url: url("img/Cards/SpriteCards_0.webp");
 
     @for $i from 0 through 43 {
-        &[data-card-id="#{$i}"]::after {
+        &[data-card-id="#{$i}"] {
             --i: #{$i};
         }
     }
 
     @for $i from 99 through 103 {
-        &[data-card-id="#{$i}"]::after {
+        &[data-card-id="#{$i}"] {
             --i: #{$i - 99 + 44};
         }
     }
 }
 
 .gui {
-    &::after {
-        content: '';
-        display: block;
-        --i: 0;
-        --row: round(down, var(--i) / var(--gui-cols), 1);
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-size: calc(100% * var(--gui-cols)) calc(100% * var(--gui-rows));
-        background-position: calc(var(--i) * -100%) calc(var(--row) * -100%);
-        background-image: url("img/Gui/SpriteGui_0.webp");
-    }
+    --cols: var(--gui-cols);
+    --rows: var(--gui-rows);
+    --sprite-url: url("img/Gui/SpriteGui_0.webp");
 
-    &.background::after {
+    &.background {
         --i: 0;
     }
 
-    &.borders::after {
+    &.borders {
         --i: 1;
     }
 
-    &.armies::after {
+    &.armies {
         --i: 2;
     }
 
-    &.shieldTile::after {
+    &.shieldTile {
         --i: 3;
     }
 
-    &.coin1::after {
+    &.coin1 {
         --i: 4;
     }
 
-    &.rotationArrows::after {
+    &.rotationArrows {
         --i: 5;
     }
 
-    &.playerToken::after {
+    &.playerToken {
         --i: 6;
     }
 
-    &.barrierTile::after {
+    &.barrierTile {
         --i: 7;
     }
 
-    &.shield::after {
+    &.shield {
         --i: 8;
     }
 
-    &.coin2::after {
+    &.coin2 {
         --i: 9;
     }
 
-    &.barrier::after {
+    &.barrier {
         --i: 10;
     }
 
-    &.fighterTile::after {
+    &.fighterTile {
         --i: 11;
     }
 
-    &.fighter::after {
+    &.fighter {
         --i: 12;
     }
 
-    &.wizardTile::after {
+    &.wizardTile {
         --i: 13;
     }
 
-    &.wizard::after {
+    &.wizard {
         --i: 15;
     }
 
-    &.potionTile::after {
+    &.potionTile {
         --i: 16;
     }
 
-    &.potion::after {
+    &.potion {
         --i: 17;
     }
 
-    &.coinTile::after {
+    &.coinTile {
         --i: 18;
     }
 }
 
 .leaderSprites {
-    &::after {
-        content: '';
-        display: block;
-        width: 100%;
-        height: 100%;
-        --i: 0;
-        --row: round(down, var(--i) / var(--leader-cols), 1);
-        background-size: calc(100% * var(--leader-cols)) calc(100% * var(--leader-rows));
-        background-position: calc(var(--i) * -100%) calc(var(--row) * -100%);
-        background-image: url("img/Leaders/SpriteLeaders_0.webp");
-    }
 
+    --cols: var(--leader-cols);
+    --rows: var(--leader-rows);
+    --sprite-url: url("img/Leaders/SpriteLeaders_0.webp");
+    
     @for $i from 0 through 3 {
-        &.background.leader_#{$i}::after {
+        &.background.leader_#{$i} {
             --i: #{$i};
         }
 
-        &.leader_#{$i}::after {
+        &.leader_#{$i} {
             --i: #{$i + 4};
         }
 
-        &.alt.leader_#{$i}::after {
+        &.alt.leader_#{$i} {
             --i: #{$i + 8};
         }
 
-        &.noBack.leader_#{$i}::after {
+        &.noBack.leader_#{$i} {
             --i: #{$i + 12};
         }
 
-        &.alt.noBack.leader_#{$i}::after {
+        &.alt.noBack.leader_#{$i} {
             --i: #{$i + 16};
         }
     }

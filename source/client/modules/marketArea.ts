@@ -8,6 +8,8 @@ export class MarketArea extends ListenerElement {
     PARENT_ID = "centralArea";
     ELEMENT_ID = "market";
 
+    override get renderWithParent() { return false };
+
     get listeners() {
         return {
             "marketUpdate": { callback: this.doUpdateMarket },
@@ -17,9 +19,9 @@ export class MarketArea extends ListenerElement {
 
     override HTML_DEFINITION: string = `
     <div id="${this.ELEMENT_ID}">
-        <div id="deck" class="deck card" data-card-id="0"></div>
-        <div id="market_cost_0" class="gui coin2"></div>
-        <div id="market_cost_1" class="gui coin1"></div>
+        <div id="deck" class="deck sprite card" data-card-id="0"></div>
+        <div id="market_cost_0" class="sprite gui coin2"></div>
+        <div id="market_cost_1" class="sprite gui coin1"></div>
     </div>`;
 
     deck: HTMLDivElement;
@@ -34,17 +36,22 @@ export class MarketArea extends ListenerElement {
 
     renderCards() {
         const cardsHtml = `
-        <div id="market_card_0" class="card" data-card-id="0"></div>
-        <div id="market_card_1" class="card" data-card-id="0"></div>
-        <div id="market_card_2" class="card" data-card-id="0"></div>`;
+        <div id="market_card_0" class="sprite card" data-card-id="0"></div>
+        <div id="market_card_1" class="sprite card" data-card-id="0"></div>
+        <div id="market_card_2" class="sprite card" data-card-id="0"></div>`;
         this.cards.forEach(c => c?.remove());
         this.element.insertAdjacentHTML("beforeend", cardsHtml);
         this.cards[0] = document.getElementById("market_card_0") as HTMLDivElement;
         this.cards[1] = document.getElementById("market_card_1") as HTMLDivElement;
         this.cards[2] = document.getElementById("market_card_2") as HTMLDivElement;
-        for (let i = 0; i < 3; i++) {
-            const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
-            if (RegroupChickenArmy.game.board.isActive) {
+        this.prepareAvailableCards();
+    }
+
+    prepareAvailableCards() {
+        if (RegroupChickenArmy.game.board.isActive) {
+            this.deck.classList.add("selectable");
+            for (let i = 0; i < 3; i++) {
+                const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
                 const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
                 const cardCost = 2 - i;
                 if (availableCoins >= cardCost) {
@@ -52,8 +59,10 @@ export class MarketArea extends ListenerElement {
                 } else {
                     this.cards[i].classList.remove("selectable");
                 }
+                this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
             }
-            this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
+        } else {
+            this.deck.classList.remove("selectable");
         }
     }
 
@@ -80,7 +89,7 @@ export class MarketArea extends ListenerElement {
     public pickDeckCard() {
         RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/pickDeckCard.html`, {},
             this, async function () {
-                this.disableEvents();
+                RegroupChickenArmy.game.marketArea.disableEvents();
             });
     }
 
@@ -216,6 +225,8 @@ export class CardRotationWindow extends ListenerElement {
             const scale = grid.scrollmap.zoom;
             MouseHitbox.instance.startSession(leader_id, 50 * scale * 0.95, cells, true);
             this.enableRotationButtons();
+        } else {
+            MouseHitbox.instance.stopSession();
         }
     }
 

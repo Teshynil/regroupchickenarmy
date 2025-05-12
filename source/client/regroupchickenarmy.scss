@@ -7,7 +7,7 @@
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  */
-
+@use "framework/elements/styles/core.scss";
 @use "framework/elements/behaviours/rotatable.scss";
 @use "framework/elements/behaviours/selectable.scss";
 @use "sprites.scss";
@@ -203,6 +203,11 @@
 			}
 
 			.card {
+
+				&[data-card-id="0"]:not(.deck) {
+					display: none;
+				}
+
 				cursor: pointer;
 
 				@for $i from 0 through 2 {
@@ -391,7 +396,7 @@
 		.damageContainer {
 			display: grid;
 			position: absolute;
-			width: calc(2 * var(--card-size));
+			width: calc(2.25 * var(--card-size));
 			height: var(--card-size);
 			grid-template-rows: 1fr;
 			align-content: center;
@@ -399,27 +404,17 @@
 			grid-auto-columns: max-content;
 			grid-auto-flow: column;
 
-			&.resource {
-				::before {
+			&.sprite-b {
+				&::before {
 					content: "";
 					display: block;
 					width: var(--card-size);
 					height: var(--card-size);
-					background-repeat: no-repeat;
-					background-size: var(--card-size);
-					background-position: center;
+					position: relative;
 				}
 
 				&:has(.damageText)::before {
 					margin-right: calc(-0.5* var(--cell-size));
-				}
-
-				$types: Fighter, Wizard, Shield, Barrier;
-
-				@each $type in $types {
-					&.#{$type}::before {
-						background-image: url("img/Gui/#{$type}.webp");
-					}
 				}
 
 				.damageText {
@@ -433,7 +428,7 @@
 
 				font-size: var(--cell-size);
 				font-family: "Gagalin", sans-serif;
-				position: absolute;
+				position: relative;
 				text-align: center;
 				align-content: center;
 				color: black;
@@ -553,22 +548,22 @@
 
 	.leaderImg {
 		position: relative;
+
 		&::after {
 			width: var(--card-size);
 			height: var(--card-size);
 		}
 
-		&.hasPlayerToken::after {
-			content: '';
-			display: block;
-			position: absolute;
-			width: 50%;
-			height: 50%;
-			background-image: url(img/Gui/CurrentPlayerToken.webp);
-			background-repeat: no-repeat;
-			background-size: contain;
-			right: -15%;
-			bottom: -15%;
+		&>.playerToken::after {
+			width: 60%;
+			height: 60%;
+			opacity: 100%;
+			z-index: 3;
+			filter: drop-shadow(0px 0px 2px #bbb) drop-shadow(0px 0px 2px #bbb);
+		}
+
+		&:not(.hasPlayerToken) .playerToken::after {
+			opacity: 0%;
 		}
 
 	}
@@ -681,13 +676,6 @@
 		margin: calc((100% - var(--highlight-size)) / 2);
 	}
 
-	.hidden {
-		opacity: 0;
-		pointer-events: none;
-		user-select: none;
-		touch-action: none;
-	}
-
 	//Animaciones
 	&.activePlayer {
 		#centralArea {
@@ -714,6 +702,7 @@
 
 			.card {
 				cursor: default !important;
+				animation: none !important;
 			}
 		}
 
@@ -723,6 +712,48 @@
 			}
 		}
 	}
+
+	.damageContainer {
+		transition: opacity var(--animation_normal);
+
+		&.animate {
+			@for $i from 0 through 3 {
+				&#damageContainer_#{$i} {
+
+					// If the first two leaders the damage animation is to the top
+					@if $i < 2 {
+						animation: moveDamageContainerTop var(--animation-duration) ease-out both;
+					}
+
+					// If the last two leaders the damage animation is to the bottom
+					@if $i >=2 {
+						animation: moveDamageContainerBottom var(--animation-duration) ease-out both;
+					}
+				}
+			}
+		}
+	}
+
+	@keyframes moveDamageContainerBottom {
+		0% {
+			transform: translateY(0%);
+		}
+
+		100% {
+			transform: translateY(calc(1*var(--card-size)));
+		}
+	}
+
+	@keyframes moveDamageContainerTop {
+		0% {
+			transform: translateY(0%);
+		}
+
+		100% {
+			transform: translateY(calc(-1*var(--card-size)));
+		}
+	}
+
 
 	// Styles for inactive player state
 	&:not(.activePlayer) {
@@ -831,9 +862,6 @@
 	display: block;
 	justify-self: center;
 	margin: 5px;
-
-	&::after {
-		width: var(--cell-size);
-		height: var(--cell-size);
-	}
+	width: var(--cell-size);
+	height: var(--cell-size);
 }

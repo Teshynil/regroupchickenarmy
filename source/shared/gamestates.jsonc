@@ -48,7 +48,8 @@
 		},
 		"transitions": {
 			"selected": "leaderSelectionGame",
-			"notSelected": "leaderSelection"
+			"notSelected": "leaderSelection",
+			"zombiePass": "leaderSelectionGame"
 		}
 	},
 	"prepareBoards": {
@@ -99,7 +100,8 @@
 		"transitions": {
 			"deckCardPicked": "playerTurn",
 			"retry": "playerTurn",
-			"turnEnded": "playerTurnGame"
+			"turnEnded": "playerTurnGame",
+			"zombiePass": "playerTurnGame"
 		}
 	},
 	"atkPhase": {

@@ -1,5 +1,5 @@
 export type ElementOrId = string | HTMLElement;
-export type AnimationCallback = (element: HTMLElement) => void;
+export type AnimationCallback = (element: HTMLElement, animation?: Animation) => void;
 
 export class Animation {
     public id: string;

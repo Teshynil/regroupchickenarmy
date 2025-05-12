@@ -4,3 +4,4 @@ export function createElement(html: string): HTMLElement {
     div.innerHTML = html;
     return div.firstElementChild as HTMLElement;
 }
+

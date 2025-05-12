@@ -10,7 +10,7 @@ export class Card extends DynamicGameElement {
     }
 
     override get HTML_DEFINITION(): string {
-        return `<div id="${this.ELEMENT_ID}" class="card" data-card-id="${this.cardId}"></div>`
+        return `<div id="${this.ELEMENT_ID}" class="sprite card" data-card-id="${this.cardId}"></div>`
     };
 
     get cardId(): number {

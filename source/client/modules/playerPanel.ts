@@ -16,66 +16,6 @@ export class PlayerPanel extends GameElement {
         this.leaderPanel = LeaderPanel.createChild(this, this.id);
         this.resourcePanel = ResourcePanel.createChild(this, this.id);
     }
-
-    public async receiveAttack(from: number, newHealth: number, physicalDamage: number, magicalDamage: number, animationTime: number) {
-        const damageAnimationTime = animationTime / 2;
-        const health = this.leaderPanel.health;
-        this.element.style.setProperty("--element-animation-time", `${damageAnimationTime}ms`);
-        const physicalDamageAnimation = Animator.slideTemporaryObject
-            .id(`physical_DamageAnimation_${from}_to_${this.id}`)
-            .definition(`<div id="physical_DamageAnimation_${from}_to_${this.id}" class="physical damageText">-${physicalDamage}</div>`)
-            .parent(this.element.id)
-            .from(`healthMarker_${this.id}`)
-            .target(`healthMarker_${this.id}`)
-            .duration(damageAnimationTime)
-            .beforeStart((element) => {
-                element.classList.add("damageAnimation");
-            })
-            .afterEnd((element) => {
-                this.leaderPanel.health = health - physicalDamage;
-            })
-            .delay(0)
-            .build();
-        const magicalDamageAnimation = Animator.slideTemporaryObject
-            .id(`magical_DamageAnimation_${from}_to_${this.id}`)
-            .definition(`<div id="magical_DamageAnimation_${from}_to_${this.id}" class="magical damageText">-${magicalDamage}</div>`)
-            .parent(this.element.id)
-            .from(`healthMarker_${this.id}`)
-            .target(`healthMarker_${this.id}`)
-            .waitFor(`physical_DamageAnimation_${from}_to_${this.id}`)
-            .duration(damageAnimationTime)
-            .beforeStart((element) => {
-                element.classList.add("damageAnimation");
-            })
-            .delay(0)
-            .build();
-        const promises = [];
-        if (physicalDamage > 0) promises.push(Animator.play(physicalDamageAnimation));
-        if (magicalDamage > 0) promises.push(Animator.play(magicalDamageAnimation));
-        await Promise.all(promises);
-        this.leaderPanel.health = newHealth;
-        this.element.style.removeProperty("--element-animation-time");
-    }
-
-    public async heal(healAmount: number, animationTime: number) {
-        const health = this.leaderPanel.health;
-        this.element.style.setProperty("--element-animation-time", `${animationTime}ms`);
-        const healAnimation = Animator.slideTemporaryObject
-            .id(`healAnimation_${this.id}`)
-            .definition(`<div id="healAnimation_${this.id}" class="heal damageText">+${healAmount}</div>`)
-            .parent(this.element.id)
-            .from(`healthMarker_${this.id}`)
-            .target(`healthMarker_${this.id}`)
-            .duration(animationTime)
-            .beforeStart((element) => {
-                element.classList.add("healAnimation");
-            })
-            .delay(0)
-            .build();
-        await Animator.play(healAnimation);
-        this.leaderPanel.health = Math.min(30, health + healAmount);
-        this.element.style.removeProperty("--element-animation-time");
-    }
 }
 
 class LeaderPanel extends GameElement {
@@ -86,9 +26,10 @@ class LeaderPanel extends GameElement {
 
     HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
                 <div id="healthMarker_${this.id}" class="healthMarker">30</div>
-                    <div id="leaderImg_${this.id}" class="leaderImg leaderSprites leader_${this.id}">
-                </div>
-			</div>`;
+                    <div id="leaderImg_${this.id}" class="leaderImg sprite leaderSprites leader_${this.id}">
+                    <div id="playerTokenHolder_${this.id}" class="sprite gui playerToken"></div>
+                    </div>
+			    </div>`;
     get healthElement() {
         return document.getElementById(`healthMarker_${this.id}`);
     }
@@ -120,22 +61,22 @@ class ResourcePanel extends GameElement {
     get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
 
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
-                <div class="resource Defense_Physic gui shieldTile" id="resourceContainer_${this.id}">
+                <div class="resource Defense_Physic sprite gui shieldTile" id="resourceContainer_${this.id}">
                     <span id="defPhy_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Attack_Physic gui fighterTile" id="resourceContainer_${this.id}">
+                <div class="resource Attack_Physic sprite gui fighterTile" id="resourceContainer_${this.id}">
                     <span id="atkPhy_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Defense_Magic gui barrierTile" id="resourceContainer_${this.id}">
+                <div class="resource Defense_Magic sprite gui barrierTile" id="resourceContainer_${this.id}">
                     <span id="defMag_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Attack_Magic gui wizardTile" id="resourceContainer_${this.id}">
+                <div class="resource Attack_Magic sprite gui wizardTile" id="resourceContainer_${this.id}">
                     <span id="atkMag_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Potion gui potionTile" id="resourceContainer_${this.id}">
+                <div class="resource Potion sprite gui potionTile" id="resourceContainer_${this.id}">
                     <span id="potion_${this.id}" class="resourceCounter">0</span>
                 </div>
-                <div class="resource Coin gui coinTile" id="resourceContainer_${this.id}">
+                <div class="resource Coin sprite gui coinTile" id="resourceContainer_${this.id}">
                     <span id="coins_${this.id}" class="resourceCounter">0</span>
                 </div>
                 <div class="player-name" id="playerName_${this.id}"></div>

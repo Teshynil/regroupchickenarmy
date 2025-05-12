@@ -42,6 +42,8 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
             "SELECT pd.`leader_id`, p.`player_id`, 99 as card_id
              FROM `player` p
              JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             WHERE p.`player_eliminated` = 0
+             AND pd.`leader_id` IS NOT NULL
              ORDER BY pd.`leader_id` ASC"
         );
         $player_resources = [];
@@ -84,7 +86,3 @@ class PrepareBoardsStateHandler implements StateHandlerInterface
         $game->gamestate->nextState('startGame');
     }
 }
-
-
-
-

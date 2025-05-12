@@ -36,6 +36,7 @@ class Players
              FROM `player` p
              JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
              WHERE p.`player_eliminated` = 0
+             AND pd.`leader_id` IS NOT NULL
              ORDER BY pd.`leader_id` ASC"
         );
     }
@@ -122,7 +123,7 @@ class Players
         $nextPlayerId = $game->getUniqueValueFromDB(
             "SELECT player_id FROM playerData
              WHERE order_id > $currentOrderId
-             AND is_dead = 0 
+             AND is_dead = 0 AND leader_id IS NOT NULL
              ORDER BY order_id ASC LIMIT 1"
         );
 
@@ -131,7 +132,7 @@ class Players
         if (!$nextPlayerId) {
             $nextPlayerId = $game->getUniqueValueFromDB(
                 "SELECT player_id FROM playerData
-                WHERE is_dead = 0
+                WHERE is_dead = 0 AND leader_id IS NOT NULL
                 ORDER BY order_id ASC LIMIT 1"
             );
         }
@@ -182,6 +183,7 @@ class Players
              FROM `player` p
              JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
              WHERE p.`player_eliminated` = 0
+             AND pd.`leader_id` IS NOT NULL
              ORDER BY 
                 CASE 
                     WHEN pd.`order_id` >= (SELECT pd.`order_id` FROM `playerData` pd WHERE pd.`is_first` = 1) THEN pd.`order_id`
@@ -198,6 +200,7 @@ class Players
              FROM `player` p
              JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
              WHERE p.`player_eliminated` = 0
+             AND pd.`leader_id` IS NOT NULL
              ORDER BY 
                 CASE 
                     WHEN pd.`order_id` >= (SELECT pd.`order_id` FROM `playerData` pd WHERE pd.`player_id` = '$currentPlayerId') THEN pd.`order_id`

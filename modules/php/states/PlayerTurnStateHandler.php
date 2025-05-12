@@ -33,6 +33,8 @@ class PlayerTurnStateHandler implements StateHandlerInterface
     {
         $game->trace("Player placing card ID: $cardId at position [$posX,$posY] with rotation: $rotation");
 
+        $rotation = (($rotation % 4) + 4) % 4;
+
         $playerId = (int) $game->getCurrentPlayerId();
         // $playerName = $game->getActivePlayerName(); // Uncomment if needed for notifications
         $leaderId = (int) $game->getUniqueValueFromDB("SELECT leader_id FROM playerData WHERE player_id = $playerId");
@@ -188,7 +190,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
              FROM player p
              JOIN playerData pd ON p.player_id = pd.player_id
              LEFT JOIN boards_moves bm ON pd.leader_id = bm.board_id
-             WHERE p.player_eliminated = 0
+             WHERE p.player_eliminated = 0 AND p.player_zombie = 0
              GROUP BY p.player_id
              ORDER BY pd.leader_id ASC"
         );
@@ -231,7 +233,3 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         }
     }
 }
-
-
-
-

@@ -1,8 +1,9 @@
-import { Animation, ElementOrId } from "./animation";
+import { Animation } from "./animation";
 import { Logger } from "../../framework/core/logger";
 import { SlideToObjectBuilder } from "./builders/slideToObjectBuilder";
 import { SlideToObjectPosBuilder } from "./builders/slideToObjectPosBuilder";
 import { SlideTemporaryObjectBuilder } from "./builders/slideTemporaryObject";
+import { CssAnimationBuilder } from "./builders/cssAnimation";
 
 export class Animator {
     private static _instance: Animator | null = null;
@@ -99,7 +100,7 @@ export class Animator {
         }
 
         Logger.warn(`Animation ${animationId} timed out, forcing completion`);
-        
+
         // Try to stop the animation if it's still running
         try {
             animation.dojoAnimation.stop();
@@ -111,7 +112,7 @@ export class Animator {
         animation.isCompleted = true;
         animation.isRunning = false;
         this.runningAnimations.delete(animationId);
-        
+
         // Clear the timeout
         if (this.animationTimeouts.has(animationId)) {
             clearTimeout(this.animationTimeouts.get(animationId));
@@ -120,7 +121,7 @@ export class Animator {
 
         // Check if any animations were waiting for this one
         this.checkWaitingDependencies(animationId);
-        
+
         // Continue processing the queue
         this.isProcessingQueue = false;
         this.processQueue();
@@ -132,33 +133,33 @@ export class Animator {
         // Mark this animation as running
         animation.isRunning = true;
         this.runningAnimations.set(animation.id, animation);
-        
+
         // Set a timeout for this animation
         const timeoutDuration = animation.duration + animation.delay + Animator.DEFAULT_TIMEOUT_BUFFER;
         const timeoutId = setTimeout(() => {
             Logger.warn(`Animation ${animation.id} timeout after ${timeoutDuration}ms`);
-            
+
             // Execute all afterEnd callbacks before resolving
             const element = Animator.resolveElement(animation);
             if (element) {
                 for (const callback of animation.afterEndCallbacks) {
                     try {
-                        callback(element);
+                        callback(element, animation);
                     } catch (error) {
                         Logger.error(`Error executing afterEnd callback for timed out animation ${animation.id}:`, error);
                     }
                 }
             }
-            
+
             // Force complete the animation
             this.forceCompleteAnimation(animation.id);
-            
+
             // Resolve the promise
             resolve();
         }, timeoutDuration);
-        
+
         this.animationTimeouts.set(animation.id, timeoutId);
-        
+
         animation.dojoAnimation.play();
         dojo.connect(animation.dojoAnimation, "onEnd", () => {
             Logger.debug(`Animation completed: ${animation.id}`);
@@ -240,6 +241,10 @@ export class Animator {
         return SlideTemporaryObjectBuilder.builder();
     }
 
+    public static get cssAnimation(): CssAnimationBuilder {
+        return CssAnimationBuilder.builder();
+    }
+
     private static resolveElement(animation: Animation): HTMLElement | null {
         if (typeof animation.element === 'string') {
             const element = document.getElementById(animation.element);
@@ -268,7 +273,7 @@ export class Animator {
         for (const callback of animation.beforeStartCallbacks) {
             dojo.connect(animation.dojoAnimation, "onBegin", () => {
                 try {
-                    callback(element);
+                    callback(element, animation);
                 } catch (error) {
                     Logger.error(`Error executing beforeStart callback for animation ${animation.id}:`, error);
                 }
@@ -279,7 +284,7 @@ export class Animator {
         for (const callback of animation.afterEndCallbacks) {
             dojo.connect(animation.dojoAnimation, "onEnd", () => {
                 try {
-                    callback(element);
+                    callback(element, animation);
                 } catch (error) {
                     Logger.error(`Error executing afterEnd callback for animation ${animation.id}:`, error);
                 }

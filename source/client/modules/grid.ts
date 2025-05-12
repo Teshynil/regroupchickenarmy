@@ -268,18 +268,19 @@ export class Grid extends ListenerElement {
             }
 
             const definition = `<div id="temporalCard_${this.id}_${cardId}"
-                class="card rotatable" 
-                data-card-id="${cardId}"
-                style="
-                    --rotation:${args.rotation};
-                    --step:90deg
-                "></div>`;
+                class="sprite card rotatable" 
+                data-card-id="${cardId}"></div>`;
             const animation = Animator.slideTemporaryObject
                 .id(`temporalCard_${this.id}_${cardId}`)
                 .definition(definition)
                 .parent(marketArea.element.id)
                 .from(sourceElement)
                 .target(`player_${this.id}_cell_${posY}_${posX}`)
+                .beforeStart((element) => {
+                    element.style.setProperty("--rotation", `${args.rotation}`);
+                    element.style.setProperty("--step", "90deg");
+                    element.style.scale = `${this.scrollmap.zoom}`;
+                })
                 .duration(1000)
                 .delay(0)
                 .build();
@@ -299,7 +300,7 @@ export class Grid extends ListenerElement {
         this.cardsPlayed++;
         const zIndex = this.cardsPlayed;
         this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div id="card_${this.id}_${this.cardsPlayed}"
-            class="card rotatable"
+            class="sprite card rotatable"
             data-card-id="${cardId}" 
             data-y="${posY}"
             data-x="${posX}"
@@ -311,7 +312,7 @@ export class Grid extends ListenerElement {
     }
 
     isValidPlacement(posX: number, posY: number): boolean {
-        if (posX < 0 || posY < 0 || posX > 12 || posY > 12) {
+        if (posX < 0 || posY < 0 || posX > this.GRID_SIZE - 2 || posY > this.GRID_SIZE - 2) {
             return false;
         }
 
@@ -350,7 +351,7 @@ export class Grid extends ListenerElement {
         const rotation = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.rotation;
         this.gridDiv.insertAdjacentHTML(
             this.insertPosition,
-            `<div class="card rotatable" id="temporalCard" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}; --step:90deg"></div>`);
+            `<div id="temporalCard" class="sprite card rotatable" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}; --step:90deg"></div>`);
         const temporalCard = document.getElementById("temporalCard") as HTMLDivElement;
         this.positionCardOnGrid(temporalCard, posX, posY);
         this.addEventToElement(temporalCard, "click", this.selectLocationForCardPlacement);

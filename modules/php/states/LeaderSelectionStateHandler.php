@@ -57,7 +57,8 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
     public static function executeGameState(Game $game): void
     {
         $checkAllLeadersSelected = (int) $game->getUniqueValueFromDB(
-            "SELECT COUNT(*) FROM `player` p LEFT JOIN `playerData` pd ON p.player_id = pd.player_id WHERE pd.leader_id IS NULL"
+            "SELECT COUNT(*) FROM `player` p LEFT JOIN `playerData` pd ON p.player_id = pd.player_id WHERE pd.leader_id IS NULL
+            AND p.player_eliminated = 0 AND p.player_zombie = 0"
         );
         $game->debug("Checking if all leaders are selected: $checkAllLeadersSelected");
 
@@ -71,6 +72,4 @@ class LeaderSelectionStateHandler implements StateHandlerInterface
         $player_id = $game->activeNextPlayer();
         $game->gamestate->nextState($transition);
     }
-
 }
-

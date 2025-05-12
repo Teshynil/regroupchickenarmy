@@ -1,4 +1,5 @@
 import { Animation, AnimationCallback } from "../animation";
+import { Logger } from "../../core/logger";
 
 export abstract class CommonAnimationBuilder {
     protected _id: string;
@@ -63,6 +64,11 @@ export abstract class CommonAnimationBuilder {
     }
 
     public build(): Animation {
+        if (!this._id) {
+            // If id is not provided, we generate a random one
+            this._id = `animation_${Math.floor(Math.random() * 100000)}`;
+            Logger.debug(`Animation id not provided, generated random one: ${this._id}`);
+        }
         const animation = this._build();
         animation.duration = this._duration;
         animation.delay = this._delay;

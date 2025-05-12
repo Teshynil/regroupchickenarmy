@@ -40,8 +40,8 @@ export class SlideTemporaryObjectBuilder extends SlideToObjectBuilder {
         const dojoAnimation = gameui.slideToObject(this._element, this._target, this._duration, this._delay);
         const animation = new Animation(this._id, this._element, dojoAnimation, this._waitFor, this._waitForDuration);
         // This ensures the element is visible when the animation starts before any callbacks are executed
-        animation.beforeStartCallbacks.push(() => {
-            dojo.style(this._element, 'opacity', '1');
+        animation.beforeStartCallbacks.push((element) => {
+            dojo.style(element, 'opacity', '1');
         });
         // This ensures the element is destroyed when the animation ends and all callbacks are executed
         this._afterEndCallbacks.push((element) => {

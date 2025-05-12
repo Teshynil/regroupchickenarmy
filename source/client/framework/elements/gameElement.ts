@@ -120,7 +120,7 @@ export abstract class GameElement {
 
     public afterConstructor() { }
 
-    get element() {
+    get element(): HTMLDivElement {
         if (this._element !== undefined)
             return this._element;
         const element = document.getElementById(this.ELEMENT_ID);
@@ -129,7 +129,11 @@ export abstract class GameElement {
         return this._element
     }
 
-    private get elementSafe() {
+    public isRendered(): boolean {
+        return this.elementSafe !== undefined;
+    }
+
+    private get elementSafe(): HTMLDivElement | undefined {
         try {
             return this.element;
         } catch (error) {
@@ -150,7 +154,7 @@ export abstract class GameElement {
 
         this.beforeRender(force);
         const parentElement = document.getElementById(this.PARENT_ID);
-        if (parentElement == null) throw new Error(`Parent Element for ${this.consoleId} not found`);
+        if (parentElement == null) throw new Error(`Parent Element #${this.PARENT_ID} for ${this.consoleId} not found`);
         const element = createElement(this.HTML_DEFINITION);
         if (args?.styles) {
             for (const style of args.styles) {

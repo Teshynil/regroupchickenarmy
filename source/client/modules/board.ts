@@ -2,7 +2,7 @@ import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { Animator } from "../framework/animations/animator";
 import { ListenerConfig } from "../framework/core/types";
 import { GameElement } from "../framework/elements/gameElement";
-import { delay } from "../framework/utils/gameUtils";
+import { delay, waitUntil } from "../framework/utils/gameUtils";
 import { ListenerElement } from "../framework/elements/listenerElement";
 import { Logger } from "../framework/core/logger";
 import { CentralArea } from "./centralArea";
@@ -114,55 +114,86 @@ export class Board extends ListenerElement {
 
     startAttackPhase() {
         this.attackDisplay.render();
+        this.attackDisplay.show();
         this.attackDisplay.banner.element.classList.add("animate");
+        this.attackDisplay.element.classList.add("animate");
+    }
+
+    async stopAttackPhase() {
+        if (this.attackDisplay.isRendered()) {
+            this.attackDisplay.banner.element.classList.remove("animate");
+            this.attackDisplay.element.classList.remove("animate");
+            await delay(1000);
+            this.attackDisplay.hide();
+        }
     }
 
     async doAttackExecuted(args: BGA.Notif<"attackExecuted">["args"]): Promise<void> {
-        const attackerLeaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(args.player_id);
-
-        const attackerNameFormatted = RegroupChickenArmy.game.getFormattedPlayerName(args.player_id);
-
-        const attackerName = RegroupChickenArmy.game.getPlayerName(args.player_id);
-
-        Logger.info(`Attack executed by ${attackerName} (${attackerLeaderId})`);
-        const results = args.attack_results;
-        const delayTime = Math.min(1800, 5000 / Object.keys(results).length); // 5000ms / number of defenders, capped at 1800ms
-        for (const defenderResult of Object.values(results)) {
-            const defenderId = defenderResult.defender_id;
-            const defenderName = RegroupChickenArmy.game.getFormattedPlayerName(defenderId);
-            const defenderLeaderId = RegroupChickenArmy.game.getLeaderIdFromPlayerId(Number(defenderId));
-            Logger.warn(`Defender ${defenderResult.defender_name} (${defenderLeaderId}) received ${defenderResult.total_damage} damage from ${attackerName} (${attackerLeaderId})`);
-            const defenderPanel = this.playerAreas.at(defenderLeaderId).panel;
-            const physicalDamage = defenderResult.physical_damage;
-            const magicalDamage = defenderResult.magical_damage;
-            const totalDamage = defenderResult.total_damage;
-            const newHealth = defenderResult.new_health;
-
-            if (totalDamage === 0) {
-                RegroupChickenArmy.game.statusBar.setTitle(_("${attacker} Attacks ${defender} but inflicts no damage"), { attacker: attackerNameFormatted, defender: defenderName });
-                await delay(1000);
-            } else {
-                RegroupChickenArmy.game.statusBar.setTitle(_("${attacker} Attacks ${defender} doing them ${damage} points of damage"), { attacker: attackerNameFormatted, defender: defenderName, damage: totalDamage });
-                await defenderPanel.receiveAttack(attackerLeaderId, newHealth, physicalDamage, magicalDamage, delayTime);
-            }
+        const result = await waitUntil(() => this.attackDisplay.isRendered(), 3000);
+        if (!result) {
+            Logger.error("Attack display was not rendered in time, this was not expected");
         }
-        await delay(500);
+        await delay(1000);
+
+
+        const noDamage = args.magical_attack + args.physical_attack == 0;
+        if (noDamage) {
+            RegroupChickenArmy.game.statusBar.setTitle(_("${attacker} Has no armies to attack with"), { attacker: args.player_name });
+            await delay(1000);
+            return;
+        }
+
+        RegroupChickenArmy.game.statusBar.setTitle(_("${attacker} Armies Attack!"), { attacker: args.player_name });
+
+        if (args.physical_attack != 0) {
+            this.attackDisplay.initializeAttack(args);
+            this.attackDisplay.initializePhysicalDamage(args);
+            await this.attackDisplay.runAttackAnimation(args);
+            for (const defender of Object.values(args.attack_results)) {
+                const defenderId = defender.leader_id;
+                const defenderPanel = this.playerAreas.at(defenderId).panel;
+                defenderPanel.leaderPanel.health -= defender.physical_damage;
+            }
+            await this.attackDisplay.hideDamageAnimation();
+            await delay(500);
+            this.attackDisplay.finishDamageDisplay();
+        }
+
+        if (args.magical_attack != 0) {
+            this.attackDisplay.initializeAttack(args);
+            this.attackDisplay.initializeMagicalDamage(args);
+            await this.attackDisplay.runAttackAnimation(args);
+            for (const defender of Object.values(args.attack_results)) {
+                const defenderId = defender.leader_id;
+                const defenderPanel = this.playerAreas.at(defenderId).panel;
+                defenderPanel.leaderPanel.health -= defender.magical_damage;
+            }
+            await this.attackDisplay.hideDamageAnimation();
+            await delay(500);
+            this.attackDisplay.finishDamageDisplay();
+        }
+
     }
 
     async doHealExecuted(args: BGA.Notif<"healExecuted">["args"]): Promise<void> {
-        Logger.info("Heal executed");
         const leaderId = args.leader_id;
-        const leaderPanel = this.playerAreas.at(leaderId).panel;
-        const oldHealth = leaderPanel.leaderPanel.health;
+        const leaderPanel = this.playerAreas.at(leaderId).panel.leaderPanel;
+        const oldHealth = leaderPanel.health;
         const newHealth = args.new_health;
         if (oldHealth === 30) {
             RegroupChickenArmy.game.statusBar.setTitle(_("${player} tried to heal but was already at full health"), { player: args.player_name });
-            await delay(600);
-        } else {
-            RegroupChickenArmy.game.statusBar.setTitle(_("${player} healed ${amount} points"), { player: args.player_name, amount: args.heal_amount });
-            await leaderPanel.heal(args.heal_amount, 800);
             await delay(500);
+            return;
         }
+
+        this.attackDisplay.initializeHealing(args);
+        RegroupChickenArmy.game.statusBar.setTitle(_("${player} is healing!"), { player: args.player_name });
+
+        await this.attackDisplay.runHealAnimation(args);
+        leaderPanel.health = Math.min(30, newHealth);
+        await this.attackDisplay.hideDamageAnimation();
+        await delay(500);
+        this.attackDisplay.finishDamageDisplay();
     }
 
     async doLeaderEliminated(args: BGA.Notif<"leaderEliminated">["args"]): Promise<void> {
@@ -197,7 +228,7 @@ class PlayerBackground extends GameElement {
     PARENT_ID = "board";
     ELEMENT_ID = `playerBackground_${this.id}`;
 
-    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="playerBackground leader_${this.id} background leaderSprites"></div>`;
+    HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="playerBackground leader_${this.id} sprite leaderSprites background"></div>`;
 
 
     public override afterRenderThis(_force: boolean): void {

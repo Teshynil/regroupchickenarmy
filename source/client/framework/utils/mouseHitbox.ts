@@ -1,4 +1,5 @@
 import { GameEventBus } from "../core/gameEventBus";
+import { Logger } from "../core/logger";
 
 export class MouseHitbox {
     private static _instance: MouseHitbox | null = null;
@@ -29,8 +30,14 @@ export class MouseHitbox {
      */
     public startSession(id: number, hitboxSize: number, elementsToCollideWith: HTMLElement[], highlightCollisionables: boolean = false): void {
         if (this.sessionActive) {
+            Logger.warn("Mouse hitbox session already active, stopping previous session");
             this.stopSession();
         }
+        if (elementsToCollideWith.length == 0) {
+            Logger.warn("No elements to collide with, stopping mouse hitbox session");
+            return;
+        }
+        Logger.debug(`Starting mouse hitbox session with ${elementsToCollideWith.length} elements to collide with`);
 
         this.sessionActive = true;
         this.hitboxId = id;
@@ -53,6 +60,7 @@ export class MouseHitbox {
      */
     public stopSession(): void {
         if (!this.sessionActive) return;
+        Logger.debug("Stopping mouse hitbox session");
 
         document.removeEventListener('mousemove', this.mouseMoveListener);
         this.removeHitboxElement();

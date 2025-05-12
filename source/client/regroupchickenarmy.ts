@@ -122,12 +122,10 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       }
     }
 
-    let marketCard: { order: number, card_id: number };
-    let i = 2;
-    for (marketCard of gamedatas["market"]) {
-      this.board.centralArea.marketArea.cards[i].dataset["cardId"] = `${marketCard.card_id}`;
-      i--;
-    }
+    this.marketArea.render();
+    // Simulate a market update
+    this.board.centralArea.marketArea.doUpdateMarket(gamedatas["market"]);
+
     if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game
       this.board.centralArea.leaderSelection.destroy();
       const player = gamedatas.players[this.player_id] as Player;
@@ -211,11 +209,13 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       case "prepareBoards":
         break;
       case "roundSetup":
+        this.board.stopAttackPhase();
         this.marketArea.enableEvents();
         this.marketArea.element.classList.remove("marketUnavailable");
         this.marketArea.element.classList.remove("deckCardPicked");
         break;
       case "playerTurn":
+        this.marketArea.prepareAvailableCards();
         break;
       case "playerTurnGame":
         break;
@@ -287,7 +287,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
           },
           'card_id': (cardId: string) => {
             const rotation = args["rotation"];
-            return `<br><div class="log-card rotatable card" data-card-id="${cardId}" style="--rotation:${rotation}; --step:90deg"></div>`;
+            return `<br><div class="log-card rotatable sprite card" data-card-id="${cardId}" style="--rotation:${rotation}; --step:90deg"></div>`;
           }
         };
 

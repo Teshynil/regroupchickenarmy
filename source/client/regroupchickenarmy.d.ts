@@ -12,7 +12,7 @@ declare namespace BGA {
 	/** Goto {@link Gamedatas} or hover name for info. */
 	interface Gamedatas extends Record<string, any> {
 		"boards_moves": { [key: number]: { [key: number]: { board_id: number, movement_id: number, card_id: number, rotation: number, x: number, y: number } } };
-		"market": { order: number, card_id: number }[];
+		"market": { cards: { order: number, card_id: number }[], cardsInDeck: number };
 		"resources": { [leaderId: string]: { fighter: number, wizard: number, shield: number, barrier: number, potion: number, coin: number } };
 	}
 

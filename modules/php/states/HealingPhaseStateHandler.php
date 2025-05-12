@@ -29,23 +29,27 @@ class HealingPhaseStateHandler implements StateHandlerInterface
 
         // Get all remaining players
         $remainingPlayers = Players::getRemainingPlayers($game);
-        
+
         // Get all resources at once
         $allResources = Resources::getAllResources($game);
-        
+
         $healingResults = [];
-        
+
         foreach ($remainingPlayers as $playerId => $playerData) {
             $leaderId = (int) $playerData['leader_id'];
-            
+
             // Get leader's resources from pre-fetched data
             $resources = $allResources[$leaderId];
-            $potionAmount = (int) $resources['potion'];
             $currentHealth = (int) $resources['health'];
-            
+            if ($currentHealth > 0) {
+                $potionAmount = (int) $resources['potion'];
+            } else {
+                $potionAmount = 0;
+            }
+
             // Calculate new health after healing
             $newHealth = min(30, $currentHealth + $potionAmount);
-            
+
             $healingResults[$leaderId] = [
                 'player_id' => $playerId,
                 'current_health' => $currentHealth,
@@ -53,7 +57,7 @@ class HealingPhaseStateHandler implements StateHandlerInterface
                 'new_health' => $newHealth
             ];
         }
-        
+
         return $healingResults;
     }
 
@@ -63,27 +67,27 @@ class HealingPhaseStateHandler implements StateHandlerInterface
 
         // Calculate all potential healing
         $healingResults = self::calculateHealingForAllLeaders($game);
-        
+
         // Get players in correct order
         $orderedPlayers = Players::getRemainingPlayersInOrder($game);
-        
+
         // Execute healing in order
         foreach ($orderedPlayers as $playerId => $playerData) {
             $leaderId = (int) $playerData['leader_id'];
             $playerName = $game->getPlayerNameById($playerId);
-            
+
             if (!isset($healingResults[$leaderId])) {
                 continue;
             }
-            
+
             $healResult = $healingResults[$leaderId];
-            
+
             // Update health in database
             $game->DbQuery("UPDATE resources SET health = {$healResult['new_health']} WHERE leader_id = $leaderId");
-            
+
             // Update player score to match health
             $game->DbQuery("UPDATE player SET player_score = {$healResult['new_health']} WHERE player_id = $playerId");
-            
+
             // Notify all players about the healing
             if ($healResult['heal_amount'] > 0) {
                 $game->notifyAllPlayers('healExecuted', clienttranslate('${player_name} healed ${heal_amount} points'), [
@@ -95,16 +99,14 @@ class HealingPhaseStateHandler implements StateHandlerInterface
                 ]);
             }
         }
-        
+
         // Update all player scores to match their health
         Resources::updateHealthToScoreToAllPlayers($game);
-        
+
         // Increment round counter
         $currentRound = $game->getGameStateValue('round');
         $game->setGameStateValue('round', $currentRound + 1);
-        
+
         $game->gamestate->nextState("healingPhaseEnded");
     }
 }
-
-

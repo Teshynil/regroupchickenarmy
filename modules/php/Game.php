@@ -191,7 +191,10 @@ class Game extends \Table
             "SELECT `board_id`, `movement_id` , `card_id`, `rotation`, `x`, `y` FROM `boards_moves`"
         );
 
-        $result["market"] = Market::getAllMarketCards($this);
+        $result["market"] = [
+            "cards" => Market::getAllMarketCards($this),
+            "cardsInDeck" => Market::getCardsInDeck($this)
+        ];
 
         $result["resources"] = Resources::getAllResources($this);
 
@@ -286,6 +289,14 @@ class Game extends \Table
 
         if ($state["type"] === "activeplayer") {
             switch ($state_name) {
+                case "leaderSelection": {
+                        $this->gamestate->nextState("zombiePass");
+                        break;
+                    }
+                case "playerTurn": {
+                        $this->gamestate->nextState("zombiePass");
+                        break;
+                    }
                 default: {
                         $this->gamestate->nextState("zombiePass");
                         break;
