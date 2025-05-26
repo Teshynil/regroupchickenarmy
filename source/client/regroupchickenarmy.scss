@@ -51,7 +51,6 @@
     @media (max-width: 1024px) {
         --refSize: calc(0.5vh + 0.5vw);
     }
-    
 }
 
 //Main board layout
@@ -709,12 +708,18 @@
                 &#damageContainer_#{$i} {
                     // If the first two leaders the damage animation is to the top
                     @if $i < 2 {
-                        animation: moveDamageContainerTop var(--animation-duration, var(--animation_normal)) ease-out both;
+                        animation: moveDamageContainerTop
+                            var(--animation-duration, var(--animation_normal))
+                            ease-out
+                            both;
                     }
 
                     // If the last two leaders the damage animation is to the bottom
                     @if $i >=2 {
-                        animation: moveDamageContainerBottom var(--animation-duration, var(--animation_normal)) ease-out both;
+                        animation: moveDamageContainerBottom
+                            var(--animation-duration, var(--animation_normal))
+                            ease-out
+                            both;
                     }
                 }
             }

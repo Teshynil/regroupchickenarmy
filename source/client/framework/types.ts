@@ -1,22 +1,20 @@
 declare global {
-
     namespace Game {
         /**
          * Empty interface to be extended by the game
          */
-        interface GameSpecificEventTypes { }
+        interface GameSpecificEventTypes {}
 
         /**
          * Empty interface to be extended by the game
          */
-        interface GameSpecificSettings { }
+        interface GameSpecificSettings {}
     }
-
 }
 /**
  * Event callback type for BGA notifications, these should be defined in the game's .d.ts file
  */
-export type NotifCallback<T extends keyof BGA.NotifTypes> = (args: BGA.Notif<T>["args"]) => Promise<void>;
+export type NotifCallback<T extends keyof BGA.NotifTypes> = (args: BGA.Notif<T>['args']) => Promise<void>;
 
 /**
  * Event callback type for custom board events, these should be defined in the game's .d.ts file
@@ -42,12 +40,12 @@ export type ListenerConfig = {
  * Base event types for the framework
  */
 export interface CoreEventTypes {
-    "settingChanged": { key: keyof GameSettings, value: GameSettings[keyof GameSettings] };
+    settingChanged: { key: keyof GameSettings; value: GameSettings[keyof GameSettings] };
 }
 
 /**
-* Base settings interface for the framework
-*/
+ * Base settings interface for the framework
+ */
 export interface CoreGameSettings {
     // This setting represents the multiplier for the duration of the animations
     // If 0 is set, animations are disabled, If 1 is set, animations are at normal speed
@@ -56,14 +54,13 @@ export interface CoreGameSettings {
 }
 
 /**
-* Combined settings interface that merges base settings with game-specific settings
-* This should be extended in the game's .d.ts file, not here.
-*/
-export interface GameEventTypes extends CoreEventTypes, Game.GameSpecificEventTypes { }
-
+ * Combined settings interface that merges base settings with game-specific settings
+ * This should be extended in the game's .d.ts file, not here.
+ */
+export interface GameEventTypes extends CoreEventTypes, Game.GameSpecificEventTypes {}
 
 /**
  * Combined settings interface that merges base settings with game-specific settings
  * This should be extended in the game's .d.ts file, not here.
  */
-export interface GameSettings extends CoreGameSettings, Game.GameSpecificSettings { }
+export interface GameSettings extends CoreGameSettings, Game.GameSpecificSettings {}

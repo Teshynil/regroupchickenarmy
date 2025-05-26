@@ -1,8 +1,8 @@
-import { GameElement } from "./gameElement";
-import { GameEventBus } from "../core/eventBus/gameEventBus";
-import { Logger } from "../core/logger";
-import { NotifCallback, GameEventCallback, ListenerConfig, GameEventTypes } from "../types";
-import { BGAEventBus } from "../core/eventBus/bgaEventBus";
+import { GameElement } from './gameElement';
+import { GameEventBus } from '../core/eventBus/gameEventBus';
+import { Logger } from '../core/logger';
+import { NotifCallback, GameEventCallback, ListenerConfig, GameEventTypes } from '../types';
+import { BGAEventBus } from '../core/eventBus/bgaEventBus';
 
 export abstract class ListenerElement extends GameElement {
     abstract get listeners(): ListenerConfig;
@@ -26,22 +26,20 @@ export abstract class ListenerElement extends GameElement {
                 const boundCallback = listener.callback.bind(_this);
                 const boardEventType = eventType as keyof GameEventTypes;
                 // Store the subscription ID instead of the handle
-                this._listenersHandlers[boardEventType] =
-                    GameEventBus.instance.subscribe(
-                        boardEventType,
-                        boundCallback as GameEventCallback<typeof boardEventType>
-                    );
+                this._listenersHandlers[boardEventType] = GameEventBus.instance.subscribe(
+                    boardEventType,
+                    boundCallback as GameEventCallback<typeof boardEventType>,
+                );
             } else {
                 // Setup BGA notification listener (existing functionality)
                 const callback = listener.callback as NotifCallback<keyof BGA.NotifTypes>;
-                const boundCallback = (args: BGA.Notif<keyof BGA.NotifTypes>["args"]): Promise<void> => {
+                const boundCallback = (args: BGA.Notif<keyof BGA.NotifTypes>['args']): Promise<void> => {
                     return callback.call(this, args);
                 };
-                this._listenersHandlers[eventType as keyof ListenerConfig] =
-                    BGAEventBus.instance.subscribe(
-                        eventType as keyof BGA.NotifTypes,
-                        boundCallback as NotifCallback<keyof BGA.NotifTypes>
-                    );
+                this._listenersHandlers[eventType as keyof ListenerConfig] = BGAEventBus.instance.subscribe(
+                    eventType as keyof BGA.NotifTypes,
+                    boundCallback as NotifCallback<keyof BGA.NotifTypes>,
+                );
             }
         }
     }

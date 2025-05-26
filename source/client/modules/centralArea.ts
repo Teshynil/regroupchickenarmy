@@ -1,10 +1,10 @@
-import { GameElement } from "../framework/elements/gameElement";
-import { MarketArea } from "./marketArea";
-import { LeaderSelection } from "./leaderSelection";
+import { GameElement } from '../framework/elements/gameElement';
+import { MarketArea } from './marketArea';
+import { LeaderSelection } from './leaderSelection';
 
 export class CentralArea extends GameElement {
-    PARENT_ID = "board";
-    ELEMENT_ID = "centralArea";
+    PARENT_ID = 'board';
+    ELEMENT_ID = 'centralArea';
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}"></div>`;
 
     marketArea: MarketArea;
@@ -24,9 +24,9 @@ export class CentralArea extends GameElement {
      * Note: The actual CSS class is added to the board element
      */
     expand(): void {
-        const boardElement = document.getElementById("board");
+        const boardElement = document.getElementById('board');
         if (boardElement) {
-            boardElement.classList.add("centralAreaExpanded");
+            boardElement.classList.add('centralAreaExpanded');
         }
     }
 
@@ -35,10 +35,9 @@ export class CentralArea extends GameElement {
      * Note: The actual CSS class is removed from the board element
      */
     collapse(): void {
-        const boardElement = document.getElementById("board");
+        const boardElement = document.getElementById('board');
         if (boardElement) {
-            boardElement.classList.remove("centralAreaExpanded");
+            boardElement.classList.remove('centralAreaExpanded');
         }
     }
-
 }

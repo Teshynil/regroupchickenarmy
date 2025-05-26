@@ -23,19 +23,18 @@
 }
 
 .card {
-
     --cols: var(--cards-cols);
     --rows: var(--cards-rows);
-    --sprite-url: url("img/Cards/SpriteCards_0.webp");
+    --sprite-url: url('img/Cards/SpriteCards_0.webp');
 
     @for $i from 0 through 43 {
-        &[data-card-id="#{$i}"] {
+        &[data-card-id='#{$i}'] {
             --i: #{$i};
         }
     }
 
     @for $i from 99 through 103 {
-        &[data-card-id="#{$i}"] {
+        &[data-card-id='#{$i}'] {
             --i: #{$i - 99 + 44};
         }
     }
@@ -44,7 +43,7 @@
 .gui {
     --cols: var(--gui-cols);
     --rows: var(--gui-rows);
-    --sprite-url: url("img/Gui/SpriteGui_0.webp");
+    --sprite-url: url('img/Gui/SpriteGui_0.webp');
 
     &.background {
         --i: 0;
@@ -120,11 +119,10 @@
 }
 
 .leaderSprites {
-
     --cols: var(--leader-cols);
     --rows: var(--leader-rows);
-    --sprite-url: url("img/Leaders/SpriteLeaders_0.webp");
-    
+    --sprite-url: url('img/Leaders/SpriteLeaders_0.webp');
+
     @for $i from 0 through 3 {
         &.background.leader_#{$i} {
             --i: #{$i};
@@ -146,5 +144,4 @@
             --i: #{$i + 16};
         }
     }
-
 }

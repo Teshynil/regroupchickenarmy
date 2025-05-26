@@ -1,4 +1,4 @@
-import { GameEventCallback, GameEventTypes } from "../../types";
+import { GameEventCallback, GameEventTypes } from '../../types';
 
 export class GameEventBus {
     private static _instance: GameEventBus;
@@ -47,10 +47,9 @@ export class GameEventBus {
      */
     emit(eventType: keyof GameEventTypes, detail: GameEventTypes[keyof GameEventTypes]): void {
         if (this._listeners.has(eventType)) {
-            this._listeners.get(eventType)!.forEach(callback => {
+            this._listeners.get(eventType)!.forEach((callback) => {
                 callback(detail);
             });
         }
     }
 }
-

@@ -1,5 +1,5 @@
-import { GameElement } from "../framework/elements/gameElement";
-import { RegroupChickenArmy } from "../regroupchickenarmy";
+import { GameElement } from '../framework/elements/gameElement';
+import { RegroupChickenArmy } from '../regroupchickenarmy';
 
 export class PlayerPanel extends GameElement {
     PARENT_ID = `board`;
@@ -19,7 +19,9 @@ class LeaderPanel extends GameElement {
     PARENT_ID = `playerPanel_${this.id}`;
     ELEMENT_ID = `leaderPanel_${this.id}`;
 
-    get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
+    get isRTL() {
+        return this.id % 2 == 1 ? 'rtl' : '';
+    }
 
     HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
                 <div id="healthMarker_${this.id}" class="healthMarker"></div>
@@ -47,9 +49,9 @@ class LeaderPanel extends GameElement {
 
     set hasPlayerToken(val: boolean) {
         if (val) {
-            this.leaderElement.classList.add("hasPlayerToken");
+            this.leaderElement.classList.add('hasPlayerToken');
         } else {
-            this.leaderElement.classList.remove("hasPlayerToken");
+            this.leaderElement.classList.remove('hasPlayerToken');
         }
     }
 }
@@ -57,7 +59,9 @@ class LeaderPanel extends GameElement {
 class ResourcePanel extends GameElement {
     PARENT_ID = `playerPanel_${this.id}`;
     ELEMENT_ID = `resourcePanel_${this.id}`;
-    get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
+    get isRTL() {
+        return this.id % 2 == 1 ? 'rtl' : '';
+    }
 
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic sprite gui shieldTile" id="resourceContainer_${this.id}">
@@ -85,17 +89,41 @@ class ResourcePanel extends GameElement {
         document.getElementById(`playerName_${this.id}`).innerText = val;
     }
 
-    get shieldElement() { return document.getElementById(`defPhy_${this.id}`) };
-    get fighterElement() { return document.getElementById(`atkPhy_${this.id}`) };
-    get barrierElement() { return document.getElementById(`defMag_${this.id}`) };
-    get wizardElement() { return document.getElementById(`atkMag_${this.id}`) };
-    get potionElement() { return document.getElementById(`potion_${this.id}`) };
-    get coinElement() { return document.getElementById(`coins_${this.id}`) };
+    get shieldElement() {
+        return document.getElementById(`defPhy_${this.id}`);
+    }
+    get fighterElement() {
+        return document.getElementById(`atkPhy_${this.id}`);
+    }
+    get barrierElement() {
+        return document.getElementById(`defMag_${this.id}`);
+    }
+    get wizardElement() {
+        return document.getElementById(`atkMag_${this.id}`);
+    }
+    get potionElement() {
+        return document.getElementById(`potion_${this.id}`);
+    }
+    get coinElement() {
+        return document.getElementById(`coins_${this.id}`);
+    }
 
-    get shieldCount(): number { return Number(this.shieldElement.innerText) };
-    get fighterCount(): number { return Number(this.fighterElement.innerText) };
-    get barrierCount(): number { return Number(this.barrierElement.innerText) };
-    get wizardCount(): number { return Number(this.wizardElement.innerText) };
-    get potionCount(): number { return Number(this.potionElement.innerText) };
-    get coinCount(): number { return Number(this.coinElement.innerText) };
+    get shieldCount(): number {
+        return Number(this.shieldElement.innerText);
+    }
+    get fighterCount(): number {
+        return Number(this.fighterElement.innerText);
+    }
+    get barrierCount(): number {
+        return Number(this.barrierElement.innerText);
+    }
+    get wizardCount(): number {
+        return Number(this.wizardElement.innerText);
+    }
+    get potionCount(): number {
+        return Number(this.potionElement.innerText);
+    }
+    get coinCount(): number {
+        return Number(this.coinElement.innerText);
+    }
 }

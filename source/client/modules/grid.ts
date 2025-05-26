@@ -1,31 +1,31 @@
-import { remove } from "dojo/dom-class";
-import { GameElement } from "../framework/elements/gameElement";
-import { Slot } from "../definitions";
-import { ListenerElement } from "../framework/elements/listenerElement";
-import { ListenerConfig } from "../framework/types";
-import { Cards, Card } from "./cards";
-import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { delay } from "../framework/utils/gameUtils";
-import { GameEventBus } from "../framework/core/eventBus/gameEventBus";
-import { Animator } from "../framework/animations/animator";
-import { Logger } from "../framework/core/logger";
+import { remove } from 'dojo/dom-class';
+import { GameElement } from '../framework/elements/gameElement';
+import { Slot } from '../definitions';
+import { ListenerElement } from '../framework/elements/listenerElement';
+import { ListenerConfig } from '../framework/types';
+import { Cards, Card } from './cards';
+import { RegroupChickenArmy } from '../regroupchickenarmy';
+import { delay } from '../framework/utils/gameUtils';
+import { GameEventBus } from '../framework/core/eventBus/gameEventBus';
+import { Animator } from '../framework/animations/animator';
+import { Logger } from '../framework/core/logger';
 
 export class Grid extends ListenerElement {
-
     PARENT_ID = `playerArea_${this.id}`;
     ELEMENT_ID = `mapContainer_${this.id}`;
     HTML_DEFINITION = `<div id="mapContainer_${this.id}" class="mapContainer"></div>`;
-    override get renderWithParent() { return false };
+    override get renderWithParent() {
+        return false;
+    }
 
     get listeners(): ListenerConfig {
         return {
-            "cardPlaced": { callback: this.doCardPlaced },
+            cardPlaced: { callback: this.doCardPlaced },
 
-            "cardPrePlaced": { callback: this.doCardPrePlaced, isCustomEvent: true },
-            "mouseHitboxCollision": { callback: this.doMouseHitboxCollision, isCustomEvent: true }
-        }
-    };
-
+            cardPrePlaced: { callback: this.doCardPrePlaced, isCustomEvent: true },
+            mouseHitboxCollision: { callback: this.doMouseHitboxCollision, isCustomEvent: true },
+        };
+    }
 
     scrollmap: ScrollmapWithZoomNS.ScrollmapWithZoom;
     gridDiv: HTMLDivElement;
@@ -38,16 +38,16 @@ export class Grid extends ListenerElement {
 
     private initializeGrid(): void {
         // Create empty grid with all cells set to 0xF
-        this.grid = Array(this.GRID_SIZE).fill(0).map(() =>
-            Array(this.GRID_SIZE).fill(0xF)
-        );
+        this.grid = Array(this.GRID_SIZE)
+            .fill(0)
+            .map(() => Array(this.GRID_SIZE).fill(0xf));
 
         // Set middle tiles to 0xE (empty)
         const midPoint = Math.floor(this.GRID_SIZE / 2) - 1;
-        this.grid[midPoint][midPoint] = 0xE;
-        this.grid[midPoint][midPoint + 1] = 0xE;
-        this.grid[midPoint + 1][midPoint] = 0xE;
-        this.grid[midPoint + 1][midPoint + 1] = 0xE;
+        this.grid[midPoint][midPoint] = 0xe;
+        this.grid[midPoint][midPoint + 1] = 0xe;
+        this.grid[midPoint + 1][midPoint] = 0xe;
+        this.grid[midPoint + 1][midPoint + 1] = 0xe;
     }
 
     public override afterRenderThis(force: boolean): void {
@@ -64,12 +64,16 @@ export class Grid extends ListenerElement {
         this.scrollmap.createCompletely($(this.element));
         this.scrollmap.zoomingOptions.bWheelZooming = false;
         this.scrollmap.bEnableScrolling = false;
-        document.querySelectorAll(".scrollmap_button_wrapper, .scrollmap_icon_always_visible").forEach(e => e.remove());
+        document
+            .querySelectorAll('.scrollmap_button_wrapper, .scrollmap_icon_always_visible')
+            .forEach((e) => e.remove());
 
-        this.scrollmap.scrollable_div.insertAdjacentHTML('beforeend', `
-			<div id="grid_${this.id}" class="grid">
+        this.scrollmap.scrollable_div.insertAdjacentHTML(
+            'beforeend',
+            `<div id="grid_${this.id}" class="grid">
 			</div>
-		  `);
+		  `,
+        );
         const grid = document.getElementById(`grid_${this.id}`) as HTMLDivElement;
         this.gridDiv = grid;
         if (this.grid.length !== this.grid[0].length) {
@@ -78,12 +82,14 @@ export class Grid extends ListenerElement {
         const size = this.grid.length;
         for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
-                grid.insertAdjacentHTML(`beforeend`, `<div id="player_${this.id}_cell_${y}_${x}" class="cell" data-y="${y}" data-x="${x}"></div>`);
+                grid.insertAdjacentHTML(
+                    `beforeend`,
+                    `<div id="player_${this.id}_cell_${y}_${x}" class="cell" data-y="${y}" data-x="${x}"></div>`,
+                );
             }
-
         }
-        this.scrollmap.surface_div.style.cursor = "default";
-        this.scrollmap.scrollable_div.style.opacity = "1";
+        this.scrollmap.surface_div.style.cursor = 'default';
+        this.scrollmap.scrollable_div.style.opacity = '1';
 
         const midpoint = Math.floor(this.GRID_SIZE / 2) - 1;
         this.activateCellsAroundPosition(midpoint, midpoint);
@@ -101,12 +107,14 @@ export class Grid extends ListenerElement {
         }
 
         // Track min/max positions of active cells
-        let minCol = Infinity, maxCol = -Infinity;
-        let minRow = Infinity, maxRow = -Infinity;
+        let minCol = Infinity,
+            maxCol = -Infinity;
+        let minRow = Infinity,
+            maxRow = -Infinity;
 
-        activeCells.forEach(cell => {
-            const col = parseInt(cell.dataset["x"]);
-            const row = parseInt(cell.dataset["y"]);
+        activeCells.forEach((cell) => {
+            const col = parseInt(cell.dataset['x']);
+            const row = parseInt(cell.dataset['y']);
 
             minCol = Math.min(minCol, col);
             maxCol = Math.max(maxCol, col);
@@ -118,8 +126,10 @@ export class Grid extends ListenerElement {
         const cols = maxCol - minCol + 3;
         const rows = maxRow - minRow + 3;
 
-        minCol--; minRow--;
-        maxCol++; maxRow++;
+        minCol--;
+        minRow--;
+        maxCol++;
+        maxRow++;
         this.minCol = minCol;
         this.minRow = minRow;
 
@@ -128,18 +138,18 @@ export class Grid extends ListenerElement {
         this.gridDiv.style.gridTemplateRows = `repeat(${rows}, var(--cell-size))`;
 
         // Reposition active cells
-        activeCells.forEach(cell => {
-            const newCol = parseInt(cell.dataset["x"]) - minCol + 1;
-            const newRow = parseInt(cell.dataset["y"]) - minRow + 1;
+        activeCells.forEach((cell) => {
+            const newCol = parseInt(cell.dataset['x']) - minCol + 1;
+            const newRow = parseInt(cell.dataset['y']) - minRow + 1;
             cell.style.gridColumn = newCol.toString();
             cell.style.gridRow = newRow.toString();
         });
 
         const playedCards = this.gridDiv.querySelectorAll<HTMLDivElement>('.card');
 
-        playedCards.forEach(cell => {
-            const newCol = parseInt(cell.dataset["x"]) - minCol + 1;
-            const newRow = parseInt(cell.dataset["y"]) - minRow + 1;
+        playedCards.forEach((cell) => {
+            const newCol = parseInt(cell.dataset['x']) - minCol + 1;
+            const newRow = parseInt(cell.dataset['y']) - minRow + 1;
             cell.style.gridColumn = newCol.toString();
             cell.style.gridRow = newRow.toString();
         });
@@ -192,7 +202,7 @@ export class Grid extends ListenerElement {
 
                 const cell = document.getElementById(`player_${this.id}_cell_${_y}_${_x}`) as HTMLDivElement;
                 if (cell) {
-                    cell.classList.add("active");
+                    cell.classList.add('active');
                 }
             }
         }
@@ -202,7 +212,12 @@ export class Grid extends ListenerElement {
         Logger.debug(`Adding initial card to grid ${this.consoleId}`);
         const midpoint = Math.floor(this.GRID_SIZE / 2) - 1;
         this.addCardToGrid(card_id, midpoint, midpoint, 0);
-        const card: Card = new Card(card_id, `leaderImg_${this.id}`, `InitialCard_${this.id}`, Cards[card_id as keyof Cards]);
+        const card: Card = new Card(
+            card_id,
+            `leaderImg_${this.id}`,
+            `InitialCard_${this.id}`,
+            Cards[card_id as keyof Cards],
+        );
         card.render();
         const element = card.element;
         const animation = Animator.slideToObject
@@ -218,32 +233,34 @@ export class Grid extends ListenerElement {
         element.remove();
         this.createCardOnGrid(card_id, midpoint, midpoint);
         this.resizeGrid();
-        return new Promise(resolve => setTimeout(resolve, 1));
+        return new Promise((resolve) => setTimeout(resolve, 1));
     }
 
-    async doCardPrePlaced(event: Game.GameSpecificEventTypes["cardPrePlaced"]) {
+    async doCardPrePlaced(event: Game.GameSpecificEventTypes['cardPrePlaced']) {
         if (this.id === event.grid_id) {
             const data = event;
             const card: Card = new Card(data.cardId, this.gridDiv.id, `placedCard`, Cards[data.cardId as keyof Cards]);
             card.render();
-            card.element.classList.add("highlight");
+            card.element.classList.add('highlight');
             card.rotation = data.rotation;
-            card.element.dataset["x"] = `${data.x}`;
-            card.element.dataset["y"] = `${data.y}`;
+            card.element.dataset['x'] = `${data.x}`;
+            card.element.dataset['y'] = `${data.y}`;
             card.element.style.zIndex = `${this.cardsPlayed + 1}`;
             this.positionCardOnGrid(card.element, data.x, data.y);
             this.scrollmap.zoomToFitAndScrollToCenter();
         }
     }
 
-    async doCardPlaced(args: BGA.Notif<"cardPlaced">["args"]): Promise<void> {
+    async doCardPlaced(args: BGA.Notif<'cardPlaced'>['args']): Promise<void> {
         if (this.id === args.board_id) {
             const cardId = args.card_id;
             const posX = args.x;
             const posY = args.y;
 
             // Check if this specific card is already placed at this position in the DOM
-            const existingCards = this.gridDiv.querySelectorAll(`.card[data-card-id="${cardId}"][data-x="${posX}"][data-y="${posY}"]`);
+            const existingCards = this.gridDiv.querySelectorAll(
+                `.card[data-card-id="${cardId}"][data-x="${posX}"][data-y="${posY}"]`,
+            );
             if (existingCards.length > 0) {
                 // This specific card is already placed at this position, do nothing
                 return;
@@ -253,11 +270,10 @@ export class Grid extends ListenerElement {
 
             let sourceElement: string;
             if (args.isDeckCard) {
-                sourceElement = "deck";
+                sourceElement = 'deck';
             } else {
                 // Check if card is in the market
-                const marketCard = marketArea.cards.find(c =>
-                    Number(c.dataset["cardId"]) === cardId);
+                const marketCard = marketArea.cards.find((c) => Number(c.dataset['cardId']) === cardId);
 
                 if (marketCard) {
                     sourceElement = marketCard.id;
@@ -277,14 +293,14 @@ export class Grid extends ListenerElement {
                 .from(sourceElement)
                 .target(`player_${this.id}_cell_${posY}_${posX}`)
                 .beforeStart((element) => {
-                    element.style.setProperty("--rotation", `${args.rotation}`);
-                    element.style.setProperty("--step", "90deg");
+                    element.style.setProperty('--rotation', `${args.rotation}`);
+                    element.style.setProperty('--step', '90deg');
                     element.style.scale = `${this.scrollmap.zoom}`;
                 })
                 .duration(1000)
                 .delay(0)
                 .build();
-            if (sourceElement !== "deck") {
+            if (sourceElement !== 'deck') {
                 const element = document.getElementById(sourceElement);
                 element?.remove();
             }
@@ -299,7 +315,9 @@ export class Grid extends ListenerElement {
     createCardOnGrid(cardId: number, posX: number, posY: number, rotation: number = 0) {
         this.cardsPlayed++;
         const zIndex = this.cardsPlayed;
-        this.gridDiv.insertAdjacentHTML(this.insertPosition, `<div id="card_${this.id}_${this.cardsPlayed}"
+        this.gridDiv.insertAdjacentHTML(
+            this.insertPosition,
+            `<div id="card_${this.id}_${this.cardsPlayed}"
             class="sprite card rotatable"
             data-card-id="${cardId}" 
             data-y="${posY}"
@@ -308,7 +326,8 @@ export class Grid extends ListenerElement {
                 z-index:${zIndex};
                 --rotation:${rotation};
                 --step:90deg;
-            "></div>`);
+            "></div>`,
+        );
     }
 
     isValidPlacement(posX: number, posY: number): boolean {
@@ -326,47 +345,48 @@ export class Grid extends ListenerElement {
         return false;
     }
 
-    async doMouseHitboxCollision(event: Game.GameSpecificEventTypes["mouseHitboxCollision"]) {
+    async doMouseHitboxCollision(event: Game.GameSpecificEventTypes['mouseHitboxCollision']) {
         if (event.id != this.id) return;
         if (event.collisions.length == 4) {
             const cardId = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.cardId;
-            const x = Number(event.collisions[0].dataset["x"]);
-            const y = Number(event.collisions[0].dataset["y"]);
+            const x = Number(event.collisions[0].dataset['x']);
+            const y = Number(event.collisions[0].dataset['y']);
             this.createTemporalCardOnGrid(cardId, x, y);
         } else if (event.collisions.length > 0) {
             // Check if the collisioned cell are all empty slots if so remove the temporal card
             const grid = this.grid;
             const collisions = event.collisions;
-            const isAllEmptySlots = collisions.every(cell => grid[Number(cell.dataset["y"])][Number(cell.dataset["x"])] == Slot.NN);
+            const isAllEmptySlots = collisions.every(
+                (cell) => grid[Number(cell.dataset['y'])][Number(cell.dataset['x'])] == Slot.NN,
+            );
             if (isAllEmptySlots) {
-                document.getElementById("temporalCard")?.remove();
+                document.getElementById('temporalCard')?.remove();
             }
         } else {
-            document.getElementById("temporalCard")?.remove();
+            document.getElementById('temporalCard')?.remove();
         }
     }
 
     createTemporalCardOnGrid(cardId: number, posX: number, posY: number) {
-        document.getElementById("temporalCard")?.remove();
+        document.getElementById('temporalCard')?.remove();
         const rotation = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.rotation;
         this.gridDiv.insertAdjacentHTML(
             this.insertPosition,
-            `<div id="temporalCard" class="sprite card rotatable" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}; --step:90deg"></div>`);
-        const temporalCard = document.getElementById("temporalCard") as HTMLDivElement;
+            `<div id="temporalCard" class="sprite card rotatable" data-card-id="${cardId}" data-y="${posY}" data-x="${posX}" style="--rotation:${rotation}; --step:90deg"></div>`,
+        );
+        const temporalCard = document.getElementById('temporalCard') as HTMLDivElement;
         this.positionCardOnGrid(temporalCard, posX, posY);
-        this.addEventToElement(temporalCard, "click", this.selectLocationForCardPlacement);
+        this.addEventToElement(temporalCard, 'click', this.selectLocationForCardPlacement);
     }
 
     selectLocationForCardPlacement() {
-        let temporalCard = document.getElementById("temporalCard") as HTMLDivElement;
+        let temporalCard = document.getElementById('temporalCard') as HTMLDivElement;
 
-        const x = Number(temporalCard.dataset["x"]);
-        const y = Number(temporalCard.dataset["y"]);
-        const cardId = Number(temporalCard.dataset["cardId"]);
-        const rotation = Number(temporalCard.style.getPropertyValue("--rotation"));
+        const x = Number(temporalCard.dataset['x']);
+        const y = Number(temporalCard.dataset['y']);
+        const cardId = Number(temporalCard.dataset['cardId']);
+        const rotation = Number(temporalCard.style.getPropertyValue('--rotation'));
         temporalCard.remove();
-        GameEventBus.instance.emit("cardPrePlaced",
-            { grid_id: this.id, x, y, cardId, rotation: rotation }
-        );
+        GameEventBus.instance.emit('cardPrePlaced', { grid_id: this.id, x, y, cardId, rotation: rotation });
     }
 }

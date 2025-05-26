@@ -7,7 +7,7 @@ export enum LogLevel {
     INFO = 'INFO',
     DEBUG = 'DEBUG',
     WARNING = 'WARN',
-    ERROR = 'ERROR'
+    ERROR = 'ERROR',
 }
 
 export class Logger {
@@ -17,10 +17,10 @@ export class Logger {
 
     // Color codes for different log levels
     private static readonly colors = {
-        [LogLevel.INFO]: '#3498db',    // Blue
-        [LogLevel.DEBUG]: '#2ecc71',   // Green
+        [LogLevel.INFO]: '#3498db', // Blue
+        [LogLevel.DEBUG]: '#2ecc71', // Green
         [LogLevel.WARNING]: '#f39c12', // Orange
-        [LogLevel.ERROR]: '#e74c3c'    // Red
+        [LogLevel.ERROR]: '#e74c3c', // Red
     };
 
     /**

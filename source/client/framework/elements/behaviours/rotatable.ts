@@ -1,11 +1,10 @@
-import { Constructor } from "../types";
+import { Constructor } from '../types';
 
 export interface isRotatable {
     rotation: number;
     step: number;
     rotate(rotation: number): void;
 }
-
 
 export function Rotatable(step: number = 90) {
     return function <Class extends Constructor>(target: Class, context: ClassDecoratorContext<Class>) {
@@ -24,7 +23,7 @@ export function Rotatable(step: number = 90) {
             override initializeBehaviors() {
                 super.initializeBehaviors();
                 this.behaviorActions.push(() => {
-                    this.element.classList.add("rotatable");
+                    this.element.classList.add('rotatable');
                     this.element.style.setProperty('--rotation', `${this.rotation}`);
                     this.element.style.setProperty('--step', `${this.step}deg`);
                 });
@@ -39,5 +38,5 @@ export function Rotatable(step: number = 90) {
                 this.rotation = this.rotation + rotation;
             }
         };
-    }
+    };
 }

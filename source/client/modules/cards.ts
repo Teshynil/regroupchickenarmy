@@ -1,17 +1,16 @@
-import { Slot } from "../definitions";
-import { DynamicGameElement } from "../framework/elements/gameElement";
-import { Rotatable } from "../framework/elements/behaviours/rotatable";
+import { Slot } from '../definitions';
+import { DynamicGameElement } from '../framework/elements/gameElement';
+import { Rotatable } from '../framework/elements/behaviours/rotatable';
 
 @Rotatable(90)
 export class Card extends DynamicGameElement {
-
     public getSlots(): Slot[] {
         return this._card.getSlots(this.rotation);
     }
 
     override get HTML_DEFINITION(): string {
-        return `<div id="${this.ELEMENT_ID}" class="sprite card" data-card-id="${this.cardId}"></div>`
-    };
+        return `<div id="${this.ELEMENT_ID}" class="sprite card" data-card-id="${this.cardId}"></div>`;
+    }
 
     get cardId(): number {
         return this._card.id;
@@ -43,7 +42,7 @@ class _Card {
 
     /**
      * Examples of usage
-     * Rotation    00       01       02       03       04   
+     * Rotation    00       01       02       03       04
      * Slots    [q0][q1] [q2][q0] [q3][q2] [q1][q3] [q0][q1]
      *          [q2][q3] [q3][q1] [q1][q0] [q0][q2] [q2][q3]
      * @param rotation the rotation in iterations in clockwise direction
@@ -61,7 +60,7 @@ class _Card {
             case 3:
                 return [slots[1], slots[3], slots[0], slots[2]];
             default:
-                throw new Error("Invalid rotation");
+                throw new Error('Invalid rotation');
         }
     }
 
@@ -125,4 +124,3 @@ export class Cards {
     static 102 = new _Card(102, Slot.W2, Slot.S1, Slot.M1, Slot.F1);
     static 103 = new _Card(103, Slot.W1, Slot.S1, Slot.B2, Slot.S1);
 }
-

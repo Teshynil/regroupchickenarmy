@@ -1,5 +1,5 @@
-import { Animation, ElementOrId } from "../animation";
-import { SlideToObjectBuilder } from "./slideToObjectBuilder";
+import { Animation, ElementOrId } from '../animation';
+import { SlideToObjectBuilder } from './slideToObjectBuilder';
 
 export class SlideTemporaryObjectBuilder extends SlideToObjectBuilder {
     protected _definition: string;
@@ -34,7 +34,7 @@ export class SlideTemporaryObjectBuilder extends SlideToObjectBuilder {
             position: 'absolute',
             opacity: '0',
             left: '0px',
-            top: '0px'
+            top: '0px',
         });
         gameui.placeOnObject(this._element, this._from);
         const dojoAnimation = gameui.slideToObject(this._element, this._target, this._duration, this._delay);
@@ -51,8 +51,8 @@ export class SlideTemporaryObjectBuilder extends SlideToObjectBuilder {
             definition: this._definition,
             parent: this._parent,
             from: this._from,
-            target: this._target
-        }
+            target: this._target,
+        };
         return animation;
     }
 }

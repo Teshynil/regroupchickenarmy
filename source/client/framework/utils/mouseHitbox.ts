@@ -1,5 +1,5 @@
-import { GameEventBus } from "../core/eventBus/gameEventBus";
-import { Logger } from "../core/logger";
+import { GameEventBus } from '../core/eventBus/gameEventBus';
+import { Logger } from '../core/logger';
 
 export class MouseHitbox {
     private static _instance: MouseHitbox | null = null;
@@ -28,13 +28,18 @@ export class MouseHitbox {
      * @param hitboxSize Size of the hitbox in pixels
      * @param elementsToCollideWith Array of elements to check for collisions
      */
-    public startSession(id: number, hitboxSize: number, elementsToCollideWith: HTMLElement[], highlightCollisionables: boolean = false): void {
+    public startSession(
+        id: number,
+        hitboxSize: number,
+        elementsToCollideWith: HTMLElement[],
+        highlightCollisionables: boolean = false,
+    ): void {
         if (this.sessionActive) {
-            Logger.warn("Mouse hitbox session already active, stopping previous session");
+            Logger.warn('Mouse hitbox session already active, stopping previous session');
             this.stopSession();
         }
         if (elementsToCollideWith.length == 0) {
-            Logger.warn("No elements to collide with, stopping mouse hitbox session");
+            Logger.warn('No elements to collide with, stopping mouse hitbox session');
             return;
         }
         Logger.debug(`Starting mouse hitbox session with ${elementsToCollideWith.length} elements to collide with`);
@@ -45,9 +50,9 @@ export class MouseHitbox {
         this.elementsToCollideWith = elementsToCollideWith;
         this.highlightCollisionables = highlightCollisionables;
         if (highlightCollisionables) {
-            this.elementsToCollideWith.forEach(e => {
-                e.classList.add("highlight");
-            })
+            this.elementsToCollideWith.forEach((e) => {
+                e.classList.add('highlight');
+            });
         }
         this.currentCollisions = [];
 
@@ -60,15 +65,15 @@ export class MouseHitbox {
      */
     public stopSession(): void {
         if (!this.sessionActive) return;
-        Logger.debug("Stopping mouse hitbox session");
+        Logger.debug('Stopping mouse hitbox session');
 
         document.removeEventListener('mousemove', this.mouseMoveListener);
         this.removeHitboxElement();
 
         if (this.highlightCollisionables) {
-            this.elementsToCollideWith.forEach(e => {
-                e.classList.remove("highlight");
-            })
+            this.elementsToCollideWith.forEach((e) => {
+                e.classList.remove('highlight');
+            });
         }
         this.sessionActive = false;
         this.elementsToCollideWith = [];
@@ -91,7 +96,7 @@ export class MouseHitbox {
             opacity: '0',
             transform: 'translate(-50%, -50%)',
             border: '1px dashed rgba(255, 0, 0, 0.5)',
-            backgroundColor: 'rgba(255, 0, 0, 0.1)'
+            backgroundColor: 'rgba(255, 0, 0, 0.1)',
         });
 
         document.body.appendChild(this.hitboxElement);
@@ -128,7 +133,7 @@ export class MouseHitbox {
         const hitboxRect = this.hitboxElement.getBoundingClientRect();
         const newCollisions: HTMLElement[] = [];
 
-        this.elementsToCollideWith.forEach(element => {
+        this.elementsToCollideWith.forEach((element) => {
             const elementRect = element.getBoundingClientRect();
 
             if (
@@ -146,7 +151,7 @@ export class MouseHitbox {
 
             GameEventBus.instance.emit('mouseHitboxCollision', {
                 id: this.hitboxId,
-                collisions: this.currentCollisions
+                collisions: this.currentCollisions,
             });
         }
     }

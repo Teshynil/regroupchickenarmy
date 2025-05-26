@@ -14,7 +14,7 @@ export enum Slot {
     _1, //Unused
     _2, //Unused
     EE, //Empty slot
-    NN  //Null
+    NN, //Null
 }
 
 export interface Player extends BGA.GamePlayer {

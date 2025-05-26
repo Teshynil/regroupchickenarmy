@@ -1,5 +1,5 @@
-import { Animation, ElementOrId } from "../animation";
-import { CommonAnimationBuilder } from "./commonAnimationBuilder";
+import { Animation, ElementOrId } from '../animation';
+import { CommonAnimationBuilder } from './commonAnimationBuilder';
 
 export class SlideToObjectBuilder extends CommonAnimationBuilder {
     protected _element: ElementOrId;
@@ -28,8 +28,8 @@ export class SlideToObjectBuilder extends CommonAnimationBuilder {
         const animation = new Animation(this._id, this._element, dojoAnimation, this._waitFor, this._waitForDuration);
         animation.debugData = {
             element: this._element,
-            target: this._target
-        }
+            target: this._target,
+        };
         return animation;
     }
 }

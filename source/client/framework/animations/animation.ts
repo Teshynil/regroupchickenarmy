@@ -29,7 +29,7 @@ export class Animation {
         element: ElementOrId,
         animation: DojoJS.Animation,
         waitFor?: string,
-        waitForDuration: number = 3000
+        waitForDuration: number = 3000,
     ) {
         this.id = id;
         this.element = element;

@@ -1,5 +1,5 @@
-import { Animation, AnimationCallback } from "../animation";
-import { Logger } from "../../core/logger";
+import { Animation, AnimationCallback } from '../animation';
+import { Logger } from '../../core/logger';
 
 export abstract class CommonAnimationBuilder {
     protected _id: string;
@@ -11,11 +11,11 @@ export abstract class CommonAnimationBuilder {
     protected _beforeStartCallbacks: AnimationCallback[] = [];
     protected _afterEndCallbacks: AnimationCallback[] = [];
 
-    protected constructor() { };
+    protected constructor() {}
 
     static builder() {
-        throw new Error("Not Expected");
-    };
+        throw new Error('Not Expected');
+    }
 
     public id(id: string): this {
         this._id = id;
