@@ -1,1 +1,14 @@
-{}
+{
+    "150": {
+        "name": "Fastforward Battle Animations",
+        "values": {
+            "0": {
+                "name": "Off"
+            },
+            "1": {
+                "name": "On"
+            }
+        },
+        "default": 0
+    }
+}

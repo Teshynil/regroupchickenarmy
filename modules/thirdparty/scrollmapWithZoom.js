@@ -1638,7 +1638,7 @@ var ScrollmapWithZoomNS;
                 height_changed: this._bHeightChanged,
                 btns_visible: this._bBtnsVisible,
             };
-            appLocalStorage.setItem(this._localStorageKey, JSON.stringify(settings));
+            //appLocalStorage.setItem(this._localStorageKey, JSON.stringify(settings));
         }
         static _saveGameSettings() {
             SWZ.debug("_saveGameSettings");
@@ -1646,7 +1646,7 @@ var ScrollmapWithZoomNS;
                 time: Date.now(),
                 optionsChanged: this._optionsChanged
             };
-            appLocalStorage.setItem(ScrollmapWithZoom.localStorageGameKey, JSON.stringify(gameSettings));
+            //appLocalStorage.setItem(ScrollmapWithZoom.localStorageGameKey, JSON.stringify(gameSettings));
         }
         _onvisibility_changehandler(e) {
             if (document.visibilityState === "hidden") {

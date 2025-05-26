@@ -57,7 +57,6 @@ class RoundSetupStateHandler implements StateHandlerInterface
         // Step 6: Fully eliminate players
         foreach ($playersToEliminate as $playerId => $playerData) {
             $game->eliminatePlayer($playerId);
-            $game->DbQuery("UPDATE player SET player_score = -100 WHERE player_id = $playerId");
             // Notify all players about the elimination
             $game->notifyAllPlayers('leaderEliminated', clienttranslate('${player_name} has been eliminated with ${health} health'), [
                 'player_name' => $playerData['player_name'],
@@ -169,6 +168,7 @@ class RoundSetupStateHandler implements StateHandlerInterface
             $game->notifyAllPlayers('gameWinner', $message, [
                 'player_name' => $winner['name'],
                 'player_id' => $winner['id'],
+                'leader_id' => $winner['leader_id'],
                 'health' => $winner['health'],
                 'is_tiebreaker' => $winner['is_tiebreaker']
             ]);
@@ -185,7 +185,8 @@ class RoundSetupStateHandler implements StateHandlerInterface
 
             $game->notifyAllPlayers('gameWinner', clienttranslate('${player_name} is the last player standing and wins the game!'), [
                 'player_name' => $winnerName,
-                'player_id' => $winnerId
+                'player_id' => $winnerId,
+                'leader_id' => $remainingPlayers[$winnerId]['leader_id']
             ]);
 
             $game->gamestate->nextState('gameOver');
@@ -205,6 +206,7 @@ class RoundSetupStateHandler implements StateHandlerInterface
             $game->notifyAllPlayers('gameWinner', $message, [
                 'player_name' => $winner['name'],
                 'player_id' => $winner['id'],
+                'leader_id' => $winner['leader_id'],
                 'health' => $winner['health'],
                 'is_tiebreaker' => $winner['is_tiebreaker']
             ]);
@@ -261,7 +263,7 @@ class RoundSetupStateHandler implements StateHandlerInterface
 
         $marketCards = Market::getAllMarketCards($game);
 
-        $game->notifyAllPlayers("marketUpdate", clienttranslate("The Market has been updated"), [
+        $game->notifyAllPlayers("marketUpdate", "", [
             "cards" => $marketCards,
             "cardsInDeck" => Market::getCardsInDeck($game)
         ]);

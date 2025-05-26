@@ -1,6 +1,6 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { ListenerElement } from "../framework/elements/listenerElement";
-import { ListenerConfig } from "../framework/core/types";
+import { ListenerConfig } from "../framework/types";
 import { GameElement } from "../framework/elements/gameElement";
 import { Animator } from "../framework/animations/animator";
 import { Logger } from "../framework/core/logger";
@@ -26,9 +26,6 @@ export class LeaderSelection extends ListenerElement {
     ];
 
     override HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}"></div>`;
-
-    // No need to manually render or destroy leaders as they are now children
-    // and will be automatically rendered/destroyed with the parent
 
     async select(_element: HTMLDivElement, leader_id: number, _noop: boolean = false) {
         RegroupChickenArmy.game.ajaxcall(`/${RegroupChickenArmy.game.game_name}/${RegroupChickenArmy.game.game_name}/selectLeader.html`, {

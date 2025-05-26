@@ -1,14 +1,29 @@
 @keyframes selectableAnimation {
     0% {
-        box-shadow: 0 0 0px 0px var(--selectable-color);
+        background-position: 0 0, 100% 100%, 0 100%, 100% 0;
     }
 
     to {
-        box-shadow: 0 0 7px 0px var(--selectable-color);
+        background-position: 100% 0, 0 100%, 0 0, 100% 100%;
     }
 }
 
 .selectable {
-    box-shadow: 0 0 0px 0px var(--selectable-color);
-    animation: selectableAnimation 1s ease-in-out infinite alternate;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--selectable-color) 50%, transparent 0),
+        linear-gradient(90deg, var(--selectable-color) 50%, transparent 0),
+        linear-gradient(0deg, var(--selectable-color) 50%, transparent 0),
+        linear-gradient(0deg, var(--selectable-color) 50%, transparent 0);
+    background-position: 0 0, 100% 100%, 0 100%, 100% 0;
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 0.4vw 0.2vw, 0.4vw 0.2vw, 0.2vw 0.4vw, 0.2vw 0.4vw;
+    animation: selectableAnimation 6s linear infinite;
+    pointer-events: none;
+    z-index: 800;
+}
+
+body.lockedInterface .selectable {
+    display: none;
 }

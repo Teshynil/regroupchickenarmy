@@ -1,8 +1,8 @@
 import { GameElement } from "./gameElement";
-import { GameEventBus } from "../core/gameEventBus";
+import { GameEventBus } from "../core/eventBus/gameEventBus";
 import { Logger } from "../core/logger";
-import { NotifCallback, BoardEventCallback, ListenerConfig } from "../core/types";
-import { BGAEventBus } from "../core/bgaEventBus";
+import { NotifCallback, GameEventCallback, ListenerConfig, GameEventTypes } from "../types";
+import { BGAEventBus } from "../core/eventBus/bgaEventBus";
 
 export abstract class ListenerElement extends GameElement {
     abstract get listeners(): ListenerConfig;
@@ -24,12 +24,12 @@ export abstract class ListenerElement extends GameElement {
             }
             if (listener.isCustomEvent) {
                 const boundCallback = listener.callback.bind(_this);
-                const boardEventType = eventType as keyof Game.BoardEventTypes;
+                const boardEventType = eventType as keyof GameEventTypes;
                 // Store the subscription ID instead of the handle
                 this._listenersHandlers[boardEventType] =
                     GameEventBus.instance.subscribe(
                         boardEventType,
-                        boundCallback as BoardEventCallback<typeof boardEventType>
+                        boundCallback as GameEventCallback<typeof boardEventType>
                     );
             } else {
                 // Setup BGA notification listener (existing functionality)
@@ -54,7 +54,7 @@ export abstract class ListenerElement extends GameElement {
         if (handle) {
             if (listener.isCustomEvent) {
                 // For custom events, handle is a string subscription ID
-                GameEventBus.instance.unsubscribe(eventType as keyof Game.BoardEventTypes, handle as string);
+                GameEventBus.instance.unsubscribe(eventType as keyof GameEventTypes, handle as string);
             } else {
                 // For BGA notifications, handle is a DojoJS.Handle
                 BGAEventBus.instance.unsubscribe(eventType as keyof BGA.NotifTypes, handle as string);

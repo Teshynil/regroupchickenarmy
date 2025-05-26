@@ -1,8 +1,5 @@
 import { GameElement } from "../framework/elements/gameElement";
-import { ListenerElement } from "../framework/elements/listenerElement";
-import { ListenerConfig } from "../framework/core/types";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
-import { Animator } from "../framework/animations/animator";
 
 export class PlayerPanel extends GameElement {
     PARENT_ID = `board`;
@@ -25,7 +22,7 @@ class LeaderPanel extends GameElement {
     get isRTL() { return this.id % 2 == 1 ? "rtl" : "" };
 
     HTML_DEFINITION: string = `<div id="${this.ELEMENT_ID}" class="leaderPanel ${this.isRTL}">
-                <div id="healthMarker_${this.id}" class="healthMarker">30</div>
+                <div id="healthMarker_${this.id}" class="healthMarker"></div>
                     <div id="leaderImg_${this.id}" class="leaderImg sprite leaderSprites leader_${this.id}">
                     <div id="playerTokenHolder_${this.id}" class="sprite gui playerToken"></div>
                     </div>
@@ -44,6 +41,8 @@ class LeaderPanel extends GameElement {
 
     set health(val: number) {
         this.healthElement.innerText = val.toString();
+        const player_id = RegroupChickenArmy.game.getPlayerIdFromLeaderId(this.id);
+        document.getElementById(`player_score_${player_id}`).innerText = val.toString();
     }
 
     set hasPlayerToken(val: boolean) {
@@ -62,22 +61,22 @@ class ResourcePanel extends GameElement {
 
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}" class="resourcePanel ${this.isRTL}">
                 <div class="resource Defense_Physic sprite gui shieldTile" id="resourceContainer_${this.id}">
-                    <span id="defPhy_${this.id}" class="resourceCounter">0</span>
+                    <span id="defPhy_${this.id}" class="resourceCounter"></span>
                 </div>
                 <div class="resource Attack_Physic sprite gui fighterTile" id="resourceContainer_${this.id}">
-                    <span id="atkPhy_${this.id}" class="resourceCounter">0</span>
+                    <span id="atkPhy_${this.id}" class="resourceCounter"></span>
                 </div>
                 <div class="resource Defense_Magic sprite gui barrierTile" id="resourceContainer_${this.id}">
-                    <span id="defMag_${this.id}" class="resourceCounter">0</span>
+                    <span id="defMag_${this.id}" class="resourceCounter"></span>
                 </div>
                 <div class="resource Attack_Magic sprite gui wizardTile" id="resourceContainer_${this.id}">
-                    <span id="atkMag_${this.id}" class="resourceCounter">0</span>
+                    <span id="atkMag_${this.id}" class="resourceCounter"></span>
                 </div>
                 <div class="resource Potion sprite gui potionTile" id="resourceContainer_${this.id}">
-                    <span id="potion_${this.id}" class="resourceCounter">0</span>
+                    <span id="potion_${this.id}" class="resourceCounter"></span>
                 </div>
                 <div class="resource Coin sprite gui coinTile" id="resourceContainer_${this.id}">
-                    <span id="coins_${this.id}" class="resourceCounter">0</span>
+                    <span id="coins_${this.id}" class="resourceCounter"></span>
                 </div>
                 <div class="player-name" id="playerName_${this.id}"></div>
 			</div>`;

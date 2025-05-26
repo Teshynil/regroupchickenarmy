@@ -98,14 +98,14 @@ export class AttackPhaseContainer extends GameElement {
         const animation = Animator.cssAnimation
             .element(this.damageContainers[attackerId].element)
             .animationClass("animate")
-            .duration(1000)
+            .duration(400)
             .build();
         await Animator.play(animation);
 
         await delay(1000);
 
         const defenders = Object.values(attackData.attack_results);
-        const duration = 1000;
+        const promiseList: Promise<void>[] = [];
         for (const defender of defenders) {
             const damageContainer = this.damageContainers[defender.leader_id];
             RegroupChickenArmy.game.placeOnObject(damageContainer.element, `leaderPanel_${defender.leader_id}`);
@@ -113,15 +113,16 @@ export class AttackPhaseContainer extends GameElement {
             const animation = Animator.cssAnimation
                 .element(damageContainer.element)
                 .animationClass("animate")
-                .duration(duration)
+                .duration(400)
                 .shouldEnqueue(false)
                 .build();
-            Animator.play(animation);
+            promiseList.push(Animator.play(animation));
             if (damageContainer.damageText.isRendered()) {
                 damageContainer.damageText.show();
             }
         }
-        await delay(duration);
+        await Promise.all(promiseList);
+        await delay(1000);
     }
 
     async runHealAnimation(healData: BGA.Notif<"healExecuted">["args"]) {

@@ -23,11 +23,16 @@
 		"type": "manager",
 		//"action": "stGameSetup",
 		"transitions": {
-			"": "leaderSelection"
+			"": "gamePreparation"
 		}
 	},
-
-	// Note: ID=2: your first state. If not, change the transition in the gameSetup above.
+	"gamePreparation": {
+		"type": "game",
+		"transitions": {
+			"skipSelection": "prepareBoards",
+			"leaderSelection": "leaderSelection"
+		}
+	},
 	"leaderSelection": {
 		"description": "${actplayer} must select a leader",
 		"descriptionmyturn": "${you} must select a leader",
@@ -63,7 +68,8 @@
 		"transitions": {
 			"startRound": "playerTurn",
 			"gameOver": "gameEnd"
-		}
+		},
+		"updateGameProgression": true
 	},
 	"playerTurn": {
 		"description": "${actplayer} must play a card",

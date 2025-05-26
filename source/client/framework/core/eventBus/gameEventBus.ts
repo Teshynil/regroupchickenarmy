@@ -1,4 +1,4 @@
-import { BoardEventCallback } from "./types";
+import { GameEventCallback, GameEventTypes } from "../../types";
 
 export class GameEventBus {
     private static _instance: GameEventBus;
@@ -18,7 +18,7 @@ export class GameEventBus {
      * @param callback The callback function to execute when event is emitted
      * @returns A subscription ID that can be used to unsubscribe
      */
-    subscribe(eventType: keyof Game.BoardEventTypes, callback: BoardEventCallback<keyof Game.BoardEventTypes>): string {
+    subscribe(eventType: keyof GameEventTypes, callback: GameEventCallback<keyof GameEventTypes>): string {
         if (!this._listeners.has(eventType)) {
             this._listeners.set(eventType, new Map());
         }
@@ -34,7 +34,7 @@ export class GameEventBus {
      * @param eventType The event type to unsubscribe from
      * @param subscriptionId The subscription ID returned from subscribe
      */
-    unsubscribe(eventType: keyof Game.BoardEventTypes, subscriptionId: string): void {
+    unsubscribe(eventType: keyof GameEventTypes, subscriptionId: string): void {
         if (this._listeners.has(eventType)) {
             this._listeners.get(eventType)!.delete(subscriptionId);
         }
@@ -45,7 +45,7 @@ export class GameEventBus {
      * @param eventType The event type to emit
      * @param detail The data to pass to subscribers
      */
-    emit(eventType: keyof Game.BoardEventTypes, detail: Game.BoardEventTypes[keyof Game.BoardEventTypes]): void {
+    emit(eventType: keyof GameEventTypes, detail: GameEventTypes[keyof GameEventTypes]): void {
         if (this._listeners.has(eventType)) {
             this._listeners.get(eventType)!.forEach(callback => {
                 callback(detail);
@@ -53,3 +53,4 @@ export class GameEventBus {
         }
     }
 }
+

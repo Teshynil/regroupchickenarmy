@@ -90,11 +90,12 @@ class AtkPhaseStateHandler implements StateHandlerInterface
     {
         $game->trace("Executing AtkPhase state");
 
-        // Calculate all potential damages
         $damageResults = self::calculateDamageForAllLeaders($game);
 
-        // Get players in correct order
         $orderedPlayers = Players::getRemainingPlayersInOrder($game);
+
+        // Get eliminated players to keep applying damage
+        $eliminatedPlayers = Players::getEliminatedPlayers($game);
 
         // Execute attacks in order
         foreach ($orderedPlayers as $attackerId => $attackerData) {
@@ -141,6 +142,22 @@ class AtkPhaseStateHandler implements StateHandlerInterface
                 ];
             }
 
+            // Apply damage to eliminated players
+            foreach ($eliminatedPlayers as $eliminatedPlayerId => $eliminatedPlayerData) {
+                $eliminatedLeaderId = (int) $eliminatedPlayerData['leader_id'];
+
+                $currentHealth = $game->getUniqueValueFromDB(
+                    "SELECT health FROM resources WHERE leader_id = $eliminatedLeaderId"
+                );
+
+                $newHealth = $currentHealth - $physicalAttack - $magicalAttack;
+
+                $game->DbQuery("UPDATE resources SET health = $newHealth WHERE leader_id = $eliminatedLeaderId");
+                $game->DbQuery("UPDATE player SET player_score = $newHealth WHERE player_id = $eliminatedPlayerId");
+            }
+
+
+
             // Notify all players about the attack results
             $game->notifyAllPlayers("attackExecuted", clienttranslate('${player_name} attacks all other players ${attack_results_formatted}'), [
                 'leader_id' => $attackerLeaderId,
@@ -151,6 +168,7 @@ class AtkPhaseStateHandler implements StateHandlerInterface
                 'attack_results' => $attackResults
             ]);
         }
+        
 
         // Move to healing phase
         $game->gamestate->nextState("atkPhaseEnded");

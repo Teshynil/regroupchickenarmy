@@ -2,11 +2,11 @@ import { remove } from "dojo/dom-class";
 import { GameElement } from "../framework/elements/gameElement";
 import { Slot } from "../definitions";
 import { ListenerElement } from "../framework/elements/listenerElement";
-import { ListenerConfig } from "../framework/core/types";
+import { ListenerConfig } from "../framework/types";
 import { Cards, Card } from "./cards";
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { delay } from "../framework/utils/gameUtils";
-import { GameEventBus } from "../framework/core/gameEventBus";
+import { GameEventBus } from "../framework/core/eventBus/gameEventBus";
 import { Animator } from "../framework/animations/animator";
 import { Logger } from "../framework/core/logger";
 
@@ -221,7 +221,7 @@ export class Grid extends ListenerElement {
         return new Promise(resolve => setTimeout(resolve, 1));
     }
 
-    async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]) {
+    async doCardPrePlaced(event: Game.GameSpecificEventTypes["cardPrePlaced"]) {
         if (this.id === event.grid_id) {
             const data = event;
             const card: Card = new Card(data.cardId, this.gridDiv.id, `placedCard`, Cards[data.cardId as keyof Cards]);
@@ -326,7 +326,7 @@ export class Grid extends ListenerElement {
         return false;
     }
 
-    async doMouseHitboxCollision(event: Game.BoardEventTypes["mouseHitboxCollision"]) {
+    async doMouseHitboxCollision(event: Game.GameSpecificEventTypes["mouseHitboxCollision"]) {
         if (event.id != this.id) return;
         if (event.collisions.length == 4) {
             const cardId = RegroupChickenArmy.game.board.centralArea.marketArea.cardRotationWindow.card.cardId;

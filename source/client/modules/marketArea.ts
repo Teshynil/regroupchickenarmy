@@ -1,8 +1,9 @@
 import { RegroupChickenArmy } from "../regroupchickenarmy";
 import { MouseHitbox } from "../framework/utils/mouseHitbox";
 import { ListenerElement } from "../framework/elements/listenerElement";
-import { ListenerConfig } from "../framework/core/types";
+import { GameEventTypes, ListenerConfig } from "../framework/types";
 import { Cards, Card } from "./cards";
+import { makeHtmlElementSelectable, removeHtmlElementSelectable } from "../framework/elements/behaviours/selectable";
 
 export class MarketArea extends ListenerElement {
     PARENT_ID = "centralArea";
@@ -49,20 +50,20 @@ export class MarketArea extends ListenerElement {
 
     prepareAvailableCards() {
         if (RegroupChickenArmy.game.board.isActive) {
-            this.deck.classList.add("selectable");
+            makeHtmlElementSelectable(this.deck);
             for (let i = 0; i < 3; i++) {
                 const leader_id = RegroupChickenArmy.game.getLeaderIdFromPlayerId();
                 const availableCoins = RegroupChickenArmy.game.playerAreas.at(leader_id).panel.resourcePanel.coinCount;
                 const cardCost = 2 - i;
                 if (availableCoins >= cardCost) {
-                    this.cards[i].classList.add("selectable");
+                    makeHtmlElementSelectable(this.cards[i]);
                 } else {
-                    this.cards[i].classList.remove("selectable");
+                    removeHtmlElementSelectable(this.cards[i]);
                 }
                 this.addEventToElement(this.cards[i], "click", () => this.preSelectCard(i, 0));
             }
         } else {
-            this.deck.classList.remove("selectable");
+            removeHtmlElementSelectable(this.deck);
         }
     }
 
@@ -82,7 +83,9 @@ export class MarketArea extends ListenerElement {
 
     async doBlockMarket(args: BGA.Notif<"deckCardPicked">["args"]): Promise<void> {
         if (args.player_id == RegroupChickenArmy.game.player_id) {
-            this.preSelectCard(-1, args.card_id);
+            if(RegroupChickenArmy.game.isInterfaceUnlocked()){
+                this.preSelectCard(-1, args.card_id);
+            }
         }
     }
 
@@ -192,8 +195,12 @@ export class CardRotationWindow extends ListenerElement {
     PARENT_ID = `centralArea`;
     ELEMENT_ID = `cardRotationArea`;
     HTML_DEFINITION = `<div id="${this.ELEMENT_ID}">
-        <div id="cardRotation_ccw" class="cardRotation_btn"></div>
-        <div id="cardRotation_cw" class="cardRotation_btn"></div>
+        <div id="cardRotation_ccw" class="cardRotation_btn">
+        <div class="selectable"></div>
+        </div>
+        <div id="cardRotation_cw" class="cardRotation_btn">
+        <div class="selectable"></div>
+        </div>
     </div>`;
 
     card: Card;
@@ -240,7 +247,7 @@ export class CardRotationWindow extends ListenerElement {
         this.cardRotation_cw.style.display = "block";
     }
 
-    async doCardPrePlaced(event: Game.BoardEventTypes["cardPrePlaced"]): Promise<void> {
+    async doCardPrePlaced(event: GameEventTypes["cardPrePlaced"]): Promise<void> {
         if (this.id == event.cardId) {
             MouseHitbox.instance.stopSession();
             this.card.hide();

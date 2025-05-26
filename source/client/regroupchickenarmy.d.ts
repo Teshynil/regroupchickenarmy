@@ -92,6 +92,8 @@ declare namespace BGA {
 		"gameWinner": {
 			player_name: string,
 			player_id: number,
+			leader_id: number,
+			is_tiebreaker?: boolean,
 			health?: number
 		};
 		"healExecuted": {
@@ -111,10 +113,30 @@ declare namespace BGA {
 
 }
 
-/** Custom DOM events used in the game */
+
 declare namespace Game {
-	interface BoardEventTypes {
+
+	interface GameSpecificEventTypes {
 		"cardPrePlaced": { grid_id: number, x: number, y: number, cardId: number, rotation: number };
 		"mouseHitboxCollision": { id: number, collisions: HTMLElement[] };
 	}
+
+	/**
+	 * Game-specific settings extension
+	 */
+	interface GameSpecificSettings {
+		// Board settings
+		boardZoomLevel?: number;
+		boardPosition?: { x: number, y: number };
+
+		// UI preferences
+		selectedLeader?: number;
+		cardPlacementMode?: 'click' | 'drag';
+		showResourceTooltips?: boolean;
+
+		// Game preferences
+		autoConfirmPlacement?: boolean;
+		highlightPossiblePlacements?: boolean;
+	}
+
 }

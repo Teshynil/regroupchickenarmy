@@ -29,6 +29,7 @@ import { LeaderSelection } from "./modules/leaderSelection";
 import { Player } from "./definitions";
 import { Cards } from "./modules/cards";
 import { Logger } from "./framework/core/logger";
+import { StateId } from "./build/states";
 
 
 /** See Gamegui for more information. */
@@ -126,7 +127,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
     // Simulate a market update
     this.board.centralArea.marketArea.doUpdateMarket(gamedatas["market"]);
 
-    if (gamedatas.gamestate.id > 4) { // Check if we are already playing the game
+    if (gamedatas.gamestate.id > StateId["prepareBoards"]) { // Check if we are already playing the game
       this.board.centralArea.leaderSelection.destroy();
       const player = gamedatas.players[this.player_id] as Player;
       if (this.board.isActive) {
@@ -157,7 +158,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
       }
       for (const playerArea of this.playerAreas) {
         if (playerArea == null) continue;
-        playerArea?.grid.resizeGrid();
+        playerArea.grid.resizeGrid();
       }
     }
     for (player_id in gamedatas.players) {
@@ -198,6 +199,12 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
     this.board.isActive = this.isCurrentPlayerActive();
     this.board.waitAnimations();
+    if (_state.id > StateId["prepareBoards"]) {
+      for (const playerArea of this.playerAreas) {
+        if (playerArea == null) continue;
+        playerArea.grid.resizeGrid();
+      }
+    }
     switch (stateName) {
       case "leaderSelection":
         this.board.centralArea.marketArea.hide();
@@ -316,72 +323,7 @@ export class RegroupChickenArmy extends CommonMixer(Gamegui) {
 
   /** See Gamegui#setupNotifications for more information. */
   override setupNotifications = () => {
-    Logger.info("notifications subscriptions setup");
-
-    this.subscribeNotif('boardsInitialized', this.onBoardsInitialized);
-    this.subscribeNotif('gameWinner', this.onGameWinner);
-    this.notifqueue.setSynchronous('boardsInitialized', 2000);
   };
-
-  private async onBoardsInitialized(notif: BGA.Notif<"boardsInitialized">): Promise<void> {
-    Logger.info("Entering Notification Boards initialized");
-    this.board.centralArea.leaderSelection.destroy();
-    this.board.centralArea.marketArea.show();
-    // Process initial cards
-    const playerCards = notif.args.playersCards;
-    for (const playerArea of this.playerAreas) {
-      if (playerArea == null) continue;
-      const playerAreaId = playerArea.id;
-      if (playerCards[playerAreaId] == null) {
-        playerArea.destroy();
-        this.playerAreas[playerAreaId] = null;
-      }
-    }
-
-    for (const playerArea in notif.args.playersCards) {
-      this.playerAreas.at(Number(playerArea)).grid.render();
-    }
-
-    this.board.doAddInitialsCards(notif.args);
-
-    // Process initial resources
-    const playerResources = notif.args.playersResources;
-    for (const leaderId in playerResources) {
-      const playerArea = this.playerAreas.find(area => area.grid.id === parseInt(leaderId));
-      if (playerArea) {
-        const resourceData = playerResources[leaderId];
-        this.board.doUpdateResources({
-          player_id: resourceData.player_id,
-          leader_id: parseInt(leaderId),
-          resources: resourceData.resources
-        } as unknown as BGA.Notif<"resourcesUpdated">["args"]);
-      }
-    }
-  }
-
-  private onGameWinner(notif: BGA.Notif<"gameWinner">): void {
-    Logger.info("Game winner notification", notif);
-
-    // Show a message announcing the winner
-    let message = _('${player_name} wins the game!').replace('${player_name}', notif.args.player_name);
-
-    // If health is provided, include it in the message
-    if (notif.args.health !== undefined) {
-      message = _('${player_name} wins with ${health} health!').replace('${player_name}', notif.args.player_name).replace('${health}', notif.args.health.toString());
-    }
-
-    this.showMessage(message, 'info');
-
-    // Highlight the winner's board
-    const winnerId = notif.args.player_id;
-    const winnerLeaderId = this.getLeaderIdFromPlayerId(winnerId);
-    const winnerArea = this.playerAreas.find(area => area && area.id === winnerLeaderId);
-
-    if (winnerArea) {
-      winnerArea.element.classList.add('game-winner');
-      winnerArea.panel.leaderPanel.element.classList.add('winner');
-    }
-  }
 
 }
 

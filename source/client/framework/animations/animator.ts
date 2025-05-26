@@ -1,20 +1,24 @@
-import { Animation } from "./animation";
-import { Logger } from "../../framework/core/logger";
-import { SlideToObjectBuilder } from "./builders/slideToObjectBuilder";
-import { SlideToObjectPosBuilder } from "./builders/slideToObjectPosBuilder";
-import { SlideTemporaryObjectBuilder } from "./builders/slideTemporaryObject";
-import { CssAnimationBuilder } from "./builders/cssAnimation";
+import { Animation } from './animation';
+import { Logger } from '../../framework/core/logger';
+import { SlideToObjectBuilder } from './builders/slideToObjectBuilder';
+import { SlideToObjectPosBuilder } from './builders/slideToObjectPosBuilder';
+import { SlideTemporaryObjectBuilder } from './builders/slideTemporaryObject';
+import { CssAnimationBuilder } from './builders/cssAnimation';
 
 export class Animator {
     private static _instance: Animator | null = null;
-    private animationQueue: { animation: Animation, resolve: () => void }[] = [];
+    private animationQueue: { animation: Animation; resolve: () => void }[] = [];
     private runningAnimations: Map<string, Animation> = new Map();
     private isProcessingQueue: boolean = false;
-    private waitingForDependencies: Map<string, { animation: Animation, resolve: () => void, timeoutId: number }> = new Map();
+    private waitingForDependencies: Map<string, { animation: Animation; resolve: () => void; timeoutId: number }> =
+        new Map();
     private animationTimeouts: Map<string, number> = new Map();
+    public fastforwardAnimations: boolean = false;
     private static DEFAULT_TIMEOUT_BUFFER: number = 300;
+    public static readonly FAST_FORWARD_MULTIPLIER = 4;
+    public static readonly FAST_FORWARD_MINIMUM_DURATION = 250;
 
-    private constructor() { }
+    private constructor() {}
 
     /**
      * Get the singleton instance of the AnimationControl
@@ -27,7 +31,11 @@ export class Animator {
     }
 
     get isQueueEmpty() {
-        return this.animationQueue.length === 0 && this.runningAnimations.size === 0 && this.waitingForDependencies.size === 0;
+        return (
+            this.animationQueue.length === 0 &&
+            this.runningAnimations.size === 0 &&
+            this.waitingForDependencies.size === 0
+        );
     }
 
     /**
@@ -47,14 +55,16 @@ export class Animator {
             // If this animation depends on another animation
             if (animation.waitFor) {
                 const dependencyRunning = this.runningAnimations.has(animation.waitFor);
-                const dependencyQueued = this.animationQueue.some(item => item.animation.id === animation.waitFor);
+                const dependencyQueued = this.animationQueue.some((item) => item.animation.id === animation.waitFor);
 
                 if (dependencyRunning || dependencyQueued) {
                     Logger.debug(`Animation ${animation.id} waiting for ${animation.waitFor}`);
 
                     // Set a timeout in case the dependency takes too long
                     const timeoutId = setTimeout(() => {
-                        Logger.warn(`Timeout waiting for animation ${animation.waitFor}, proceeding with ${animation.id}`);
+                        Logger.warn(
+                            `Timeout waiting for animation ${animation.waitFor}, proceeding with ${animation.id}`,
+                        );
                         this.waitingForDependencies.delete(animation.id);
                         this.animationQueue.push({ animation, resolve });
                         this.processQueue();
@@ -64,7 +74,7 @@ export class Animator {
                     this.waitingForDependencies.set(animation.id, {
                         animation,
                         resolve,
-                        timeoutId
+                        timeoutId,
                     });
                     return;
                 }
@@ -130,6 +140,18 @@ export class Animator {
     private processAsyncAnimation(animation: Animation, resolve: () => void, shouldContinueQueue = true): void {
         Logger.debug(`Playing animation: ${animation.id}`);
 
+        if (this.fastforwardAnimations) {
+            animation.duration = Math.max(
+                Animator.FAST_FORWARD_MINIMUM_DURATION,
+                Math.floor(animation.duration / Animator.FAST_FORWARD_MULTIPLIER),
+            );
+            animation.delay = Math.max(
+                Animator.FAST_FORWARD_MINIMUM_DURATION,
+                Math.floor(animation.duration / Animator.FAST_FORWARD_MULTIPLIER),
+            );
+            animation.dojoAnimation.duration = animation.duration;
+            animation.dojoAnimation.delay = animation.delay;
+        }
         // Mark this animation as running
         animation.isRunning = true;
         this.runningAnimations.set(animation.id, animation);
@@ -146,7 +168,10 @@ export class Animator {
                     try {
                         callback(element, animation);
                     } catch (error) {
-                        Logger.error(`Error executing afterEnd callback for timed out animation ${animation.id}:`, error);
+                        Logger.error(
+                            `Error executing afterEnd callback for timed out animation ${animation.id}:`,
+                            error,
+                        );
                     }
                 }
             }
@@ -161,7 +186,7 @@ export class Animator {
         this.animationTimeouts.set(animation.id, timeoutId);
 
         animation.dojoAnimation.play();
-        dojo.connect(animation.dojoAnimation, "onEnd", () => {
+        dojo.connect(animation.dojoAnimation, 'onEnd', () => {
             Logger.debug(`Animation completed: ${animation.id}`);
 
             // Clear the timeout since animation completed normally
@@ -227,8 +252,6 @@ export class Animator {
         }
     }
 
-
-
     public static get slideToObject(): SlideToObjectBuilder {
         return SlideToObjectBuilder.builder();
     }
@@ -271,7 +294,7 @@ export class Animator {
 
         // Connect all beforeStart callbacks to the animation's onBegin event
         for (const callback of animation.beforeStartCallbacks) {
-            dojo.connect(animation.dojoAnimation, "onBegin", () => {
+            dojo.connect(animation.dojoAnimation, 'onBegin', () => {
                 try {
                     callback(element, animation);
                 } catch (error) {
@@ -282,7 +305,7 @@ export class Animator {
 
         // Connect all afterEnd callbacks to the animation's onEnd event
         for (const callback of animation.afterEndCallbacks) {
-            dojo.connect(animation.dojoAnimation, "onEnd", () => {
+            dojo.connect(animation.dojoAnimation, 'onEnd', () => {
                 try {
                     callback(element, animation);
                 } catch (error) {

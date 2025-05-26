@@ -11,6 +11,7 @@ export abstract class GameElement {
 
     protected _id: number = 0;
     private _element?: HTMLDivElement;
+    private _consoleId: string = '';
     private _enabledForEvents: boolean = true;
 
     protected behaviorActions: Function[] = [];
@@ -261,7 +262,30 @@ export abstract class GameElement {
     public afterDestroy() { };
 
     public get consoleId() {
-        return `${this.constructor.name}:${this.id}`
+        if (this._consoleId !== '') return this._consoleId;
+
+        // Try to find a meaningful class name by traversing the prototype chain
+        let className = '';
+        let proto = Object.getPrototypeOf(this);
+        let depth = 0;
+        const maxDepth = 10; // Prevent infinite loops
+        
+        while (!className && proto && depth < maxDepth) {
+            const currentName = proto.constructor.name;
+            if (currentName && currentName !== '' && currentName !== 'Object') {
+                className = currentName;
+                break;
+            }
+            proto = Object.getPrototypeOf(proto);
+            depth++;
+        }
+        
+        // If no meaningful name was found, fall back to the direct constructor name
+        if (!className) {
+            className = this.constructor.name || 'UnknownElement';
+        }
+        this._consoleId = `${className}:${this.id}`;
+        return `${className}:${this.id}`;
     }
 }
 

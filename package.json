@@ -7,5 +7,7 @@
     "dependencies": {
         "teshynil-bga-template": "github:Teshynil/teshynil-bga-template",
         "typescript": "^5.7.3"
+    },
+    "devDependencies": {
     }
 }

@@ -15,12 +15,15 @@ class Resources
     const DEFAULT_POTION = 0;
     const DEFAULT_COIN = 0;
     const DEFAULT_HEALTH = 30;
+    const DEFAULT_HEALTH_TWO_PLAYERS = 15;
 
     /**
      * Initialize resources for a player's leader
      */
     public static function initializeResources(Game $game, int $leaderId): void
     {
+        $health = $game->getPlayersNumber() == 2 ? self::DEFAULT_HEALTH_TWO_PLAYERS : self::DEFAULT_HEALTH;
+
         $game->DbQuery(
             "INSERT INTO `resources`
             (`leader_id`, `fighter`, `wizard`, `shield`, `barrier`, `potion`, `coin`, `health`)
@@ -32,7 +35,7 @@ class Resources
                 " . self::DEFAULT_BARRIER . ",
                 " . self::DEFAULT_POTION . ",
                 " . self::DEFAULT_COIN . ",
-                " . self::DEFAULT_HEALTH . "
+                $health
             )"
         );
 
@@ -41,22 +44,7 @@ class Resources
         );
 
         if ($playerId) {
-            $game->DbQuery("UPDATE player SET player_score = 30 WHERE player_id = $playerId");
-        }
-    }
-
-    /**
-     * Initialize resources for all players
-     */
-    public static function initializeAllResources(Game $game): void
-    {
-        $players = Players::getRemainingPlayers($game);
-
-        foreach ($players as $player) {
-            $leaderId = $player['leader_id'];
-            if ($leaderId) {
-                self::initializeResources($game, $leaderId);
-            }
+            $game->DbQuery("UPDATE player SET player_score = $health WHERE player_id = $playerId");
         }
     }
 

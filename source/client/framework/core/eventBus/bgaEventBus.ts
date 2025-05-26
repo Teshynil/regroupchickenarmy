@@ -1,6 +1,6 @@
-import { NotifCallback } from "./types";
-import dojo = require("dojo");
-import { Logger } from "./logger";
+import { NotifCallback } from '../../types';
+import dojo = require('dojo');
+import { Logger } from '../logger';
 
 export class BGAEventBus {
     private static _instance: BGAEventBus;
@@ -16,14 +16,15 @@ export class BGAEventBus {
 
     handleNotification(eventType: keyof BGA.NotifTypes, notif: BGA.Notif<keyof BGA.NotifTypes>) {
         Logger.info(`Entering Notification ${eventType}`);
+        Logger.debug(`Notification ${eventType} args: `, notif.args);
         const minDuration = 500;
         const minDurationNoText = 1;
         const formattedMessage = gameui.format_string_recursive(notif.log, notif.args);
-        const additionalWait = formattedMessage !== "" ? minDuration : minDurationNoText;
+        const additionalWait = formattedMessage !== '' ? minDuration : minDurationNoText;
 
         const promiseList: Promise<void>[] = [];
         if (this._listeners.has(eventType)) {
-            this._listeners.get(eventType)!.forEach(callback => {
+            this._listeners.get(eventType)!.forEach((callback) => {
                 promiseList.push(callback(notif.args));
             });
         } else {
@@ -67,4 +68,3 @@ export class BGAEventBus {
         }
     }
 }
-

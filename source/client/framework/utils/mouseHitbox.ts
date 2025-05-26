@@ -1,4 +1,4 @@
-import { GameEventBus } from "../core/gameEventBus";
+import { GameEventBus } from "../core/eventBus/gameEventBus";
 import { Logger } from "../core/logger";
 
 export class MouseHitbox {

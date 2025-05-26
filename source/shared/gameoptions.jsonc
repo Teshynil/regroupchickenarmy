@@ -11,5 +11,23 @@
  * This file is enforced by schema file located at 'bga-ts-template/template/schema'. If you are using VS Code, this schema file will be linked to this file automatically if 'generate-vscode-files' is set to true in 'template.config.jsonc. Hover over any fields for more information.
  */
 {
-	"$schema": "../../node_modules/teshynil-bga-template/schema/gameoptions.schema.json"
+    "$schema": "../../node_modules/teshynil-bga-template/schema/gameoptions.schema.json",
+
+    "100": {
+        // Remove this display condition when variant rule is implemented
+        "displaycondition": [{ "type": "maxplayers", "value": 1 }],
+        "name": "Leader Inherent Resources",
+        "values": {
+            "0": {
+                "name": "Off",
+                "tmdisplay": ""
+            },
+            "1": {
+                "name": "On",
+                "tmdisplay": "Leader Inherent Resources",
+                "description": "Each leader has an inherent resource associated with them"
+            }
+        },
+        "default": 0
+    }
 }

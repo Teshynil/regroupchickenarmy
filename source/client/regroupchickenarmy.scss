@@ -7,861 +7,903 @@
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  */
-@use "framework/elements/styles/core.scss";
-@use "framework/elements/behaviours/rotatable.scss";
-@use "framework/elements/behaviours/selectable.scss";
-@use "sprites.scss";
-
+@use 'framework/elements/styles/core.scss';
+@use 'framework/elements/behaviours/rotatable.scss';
+@use 'framework/elements/behaviours/selectable.scss';
+@use 'sprites.scss';
 
 @font-face {
-	font-family: "Gagalin";
-	font-style: normal;
-	font-weight: normal;
-	ascent-override: 85%;
-	size-adjust: 135%;
-	src: url("https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.eot");
-	src: url("https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.eot?#iefix")format("embedded-opentype"),
-		url("https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2")format("woff2"),
-		url("https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff")format("woff"),
-		url("https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.ttf")format("truetype"),
-		url("https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.svg#Gagalin-Regular")format("svg");
+    font-family: 'Gagalin';
+    font-style: normal;
+    font-weight: normal;
+    ascent-override: 85%;
+    size-adjust: 135%;
+    src: url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.eot');
+    src: url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.eot?#iefix') format('embedded-opentype'),
+        url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff2') format('woff2'),
+        url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.woff') format('woff'),
+        url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.ttf') format('truetype'),
+        url('https://db.onlinewebfonts.com/t/240a7cb10b49b02c94ceddc459d385a9.svg#Gagalin-Regular') format('svg');
 }
 
 :root {
-	--cell-size: 2.63vw;
-	--animation_quick: 0.5s;
-	--animation_normal: 1s;
-	--animation_long: 2s;
-	--card-size: calc(var(--cell-size) * 2);
+    --refSize: 1vw;
+    --cell-size: calc(2.63 * var(--refSize));
+    --animation_quick: 0.5s;
+    --animation_normal: 1s;
+    --animation_long: 2s;
+    --card-size: calc(var(--cell-size) * 2);
 
-	--market-size-h: calc(var(--card-size)*2);
-	--leader0_color: #ffa500;
-	--leader1_color: #0000ff;
-	--leader2_color: #ff0000;
-	--leader3_color: #008000;
+    --market-size-h: calc(var(--card-size) * 2);
+    --leader0_color: #ffa500;
+    --leader1_color: #0000ff;
+    --leader2_color: #ff0000;
+    --leader3_color: #008000;
 
-	--fighter-color: #e65d42;
-	--wizard-color: #4286e6;
+    --fighter-color: #e65d42;
+    --wizard-color: #4286e6;
 
-	--selectable-color: green;
+    --selectable-color: green;
+    &:has(body.logs_on_additional_column) {
+        --cell-size: calc(2.23 * var(--refSize));
+    }
+
+    @media (max-width: 1024px) {
+        --refSize: calc(0.5vh + 0.5vw);
+    }
+    
 }
 
-// Main board layout
+//Main board layout
 #board {
-
-	display: grid;
-	grid-template-columns: 1fr repeat(2, 0.5fr) 1fr;
-	grid-template-rows: 1fr 0 repeat(2, var(--card-size)) 0 1fr;
-	gap: 0.5em;
-	width: 100%;
-	height: 100vh;
-	transition: grid var(--animation_quick);
-
-	.playerArea {
-		box-sizing: content-box;
-		position: relative;
-		transition: opacity var(--animation_normal), filter var(--animation_normal);
-		width: 100%;
-		height: 100%;
-		z-index: 0;
-
-		&.game-winner {
-			filter: brightness(1.2) saturate(1.2);
-			box-shadow: 0 0 20px 10px gold;
-		}
-
-		// Player area positions
-		@for $i from 0 through 3 {
-			&#playerArea_#{$i} {
-
-				@if $i ==0 {
-					grid-area: 1/1/3/3;
-				}
-
-				@if $i ==1 {
-					grid-area: 1/3/3/5;
-				}
-
-				@if $i ==2 {
-					grid-area: 5/1/7/3;
-				}
-
-				@if $i ==3 {
-					grid-area: 5/3/7/5;
-				}
-			}
-		}
-
-		.mapContainer {
-			position: absolute;
-			width: 100%;
-			height: 100% !important;
-		}
-	}
-
-	.player-eliminated {
-		filter: grayscale(1) brightness(0.9);
-		opacity: 0.8;
-	}
-
-	.playerBackground {
-		position: relative;
-		width: 100%;
-		height: 100%;
-		opacity: 0.8;
-		z-index: -1;
-		transition: filter var(--animation_long);
-
-		@for $i from 0 through 3 {
-			&#playerBackground_#{$i} {
-				@if $i ==0 {
-					grid-area: 1/1/4/3;
-				}
-
-				@if $i ==1 {
-					grid-area: 1/3/4/5;
-				}
-
-				@if $i ==2 {
-					grid-area: 4/1/7/3;
-				}
-
-				@if $i ==3 {
-					grid-area: 4/3/7/5;
-				}
-			}
-		}
-
-		&.inactive {
-			opacity: 1;
-			filter: brightness(0.5);
-		}
-	}
-
-	&.centralAreaExpanded {
-		grid-template-rows: 1fr calc(var(--cell-size) * 1.25) repeat(2, var(--card-size)) calc(var(--cell-size) * 1.25) 1fr;
-
-		#centralArea {
-			grid-template-rows: calc(var(--cell-size) * 3.5) calc(var(--card-size) * 1.25);
-		}
-	}
-
-	#centralArea {
-		grid-area: 2/2/6/4;
-
-		display: grid;
-		grid-template-columns: 1fr;
-		grid-template-rows: calc(var(--cell-size) * 3.5) 0fr;
-		gap: 0px;
-		padding: 0.6vw;
-		box-sizing: border-box;
-		border-image: url("img/Gui/GeneralBackground.webp");
-		border-image-slice: 30%;
-		border-image-repeat: round;
-		border-image-width: 4.1vw;
-		border-image-outset: 1.3vw;
-		background-image: url("img/Gui/SpriteGui_0.webp");
-		background-size: 500% 400%;
-		background-position: 0 0;
-		z-index: 2;
-
-		transition:
-			filter var(--animation_long),
-			grid var(--animation_quick);
-
-
-		#market {
-			grid-area: 1/1/2/2;
-
-			position: relative;
-			display: grid;
-			grid-template-columns: repeat(4, 1fr);
-			grid-template-rows: calc(var(--cell-size) * 2.5) var(--cell-size);
-
-			grid-template-areas:
-				"deck card0 card1 card2"
-				"  .  cost0 cost1 .";
-			column-gap: 0.2vw;
-			width: 100%;
-			height: 100%;
-			align-content: center;
-
-			&.marketUnavailable {
-				filter: grayscale(0.2);
-
-				.card {
-					cursor: default !important;
-				}
-			}
-
-			#deck {
-				grid-area: deck;
-
-				&.empty {
-					display: none;
-				}
-			}
-
-			.card {
-
-				&[data-card-id="0"]:not(.deck) {
-					display: none;
-				}
-
-				cursor: pointer;
-
-				@for $i from 0 through 2 {
-					&#market_card_#{$i} {
-						grid-area: card#{$i};
-					}
-				}
-			}
-
-
-			@for $i from 0 through 1 {
-				#market_cost_#{$i} {
-					width: var(--cell-size);
-					height: var(--cell-size);
-					grid-area: cost#{$i};
-					position: relative;
-					justify-self: center;
-					align-self: center;
-				}
-			}
-		}
-
-		#cardRotationArea {
-			grid-area: 2/1/3/2;
-
-			display: grid;
-			position: relative;
-			height: calc(var(--card-size) * 1.25);
-			grid-template-areas: "ccw card cw";
-			align-content: center;
-			justify-content: center;
-			grid-template-columns: var(--card-size) var(--card-size) var(--card-size);
-			grid-template-rows: 1fr;
-			column-gap: 0.2vw;
-			width: 100%;
-			height: 100%;
-			transition: opacity var(--animation_quick);
-
-			.card {
-				grid-area: card;
-			}
-
-			.cardRotation_btn {
-				width: var(--cell-size);
-				height: var(--card-size);
-				cursor: pointer;
-				background-repeat: no-repeat;
-				background-size: cover;
-				background-image: url("img/Gui/RotationArrows.webp");
-				align-self: center;
-
-				&#cardRotation_ccw {
-					grid-area: ccw;
-					background-position: 0 0;
-					justify-self: right;
-				}
-
-				&#cardRotation_cw {
-					grid-area: cw;
-					background-position: 100% 0;
-					justify-self: left;
-				}
-			}
-
-		}
-
-		#leaderSelectionArea {
-			grid-area: 1/1/2/2;
-
-			display: grid;
-			grid-template-columns: repeat(4, 1fr);
-			column-gap: 0.2vw;
-			width: 100%;
-			height: 100%;
-
-			.leaderImg {
-				width: var(--card-size);
-				height: var(--card-size);
-				place-self: center;
-				transition: transform var(--animation_quick), filter var(--animation_quick);
-				filter: drop-shadow(0px 5px 3px #7f6743);
-			}
-
-			@for $i from 0 through 3 {
-				#leaderSelection_#{$i} {
-					grid-area: 1/#{$i+1};
-				}
-			}
-		}
-	}
-
-	.card {
-		width: var(--card-size);
-		height: var(--card-size);
-		filter: drop-shadow(0px 5px 3px #7f6743);
-		transition: opacity var(--animation_quick);
-		position: absolute;
-
-		&::after {
-			width: var(--card-size);
-			height: var(--card-size);
-
-			transition: transform var(--animation_quick);
-		}
-	}
-
-	.playerPanel {
-		width: 100%;
-		height: 100%;
-		display: grid;
-		gap: 5px;
-		z-index: 1;
-
-		@for $i from 0 through 3 {
-			&#playerPanel_#{$i} {
-				@if $i % 2==0 {
-					grid-template-columns: calc(var(--card-size) * 2.25) 1fr;
-				}
-
-				@else {
-					grid-template-columns: 1fr calc(var(--card-size) * 2.25);
-				}
-
-				@if $i ==0 {
-					grid-area: 3/1/4/2;
-				}
-
-				@if $i ==1 {
-					grid-area: 3/4/4/5;
-				}
-
-				@if $i ==2 {
-					grid-area: 4/1/4/2;
-				}
-
-				@if $i ==3 {
-					grid-area: 4/4/4/5;
-				}
-
-			}
-		}
-
-	}
-
-	#attackPhaseBanner {
-		--size: 6;
-		position: absolute;
-		justify-self: center;
-		align-self: center;
-		background-size: contain;
-		opacity: 0;
-		background-image: url(img/Gui/Armies.webp);
-		background-repeat: no-repeat;
-		z-index: 10;
-		width: calc(var(--size) *var(--card-size));
-		height: calc(var(--size) *var(--card-size));
-		filter: drop-shadow(0px 0px 10px black) drop-shadow(0px 0px 40px rgba(0, 0, 0, 0.6)) drop-shadow(0px 0px 40px rgba(0, 0, 0, 0.6));
-
-		&.animate {
-			animation: fadeIn var(--animation_normal) ease-out both;
-		}
-	}
-
-	@keyframes fadeIn {
-		0% {
-			opacity: 0;
-		}
-
-		100% {
-			opacity: 1;
-		}
-	}
-
-	#attackPhaseContainer {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		opacity: 0;
-		background-color: hsl(0deg 0% 100% / 30%);
-		z-index: 3;
-
-		&.animate {
-			animation: fadeIn var(--animation_normal) ease-out both;
-		}
-
-		.damageContainer {
-			display: grid;
-			position: absolute;
-			width: calc(2.25 * var(--card-size));
-			height: var(--card-size);
-			grid-template-rows: 1fr;
-			align-content: center;
-			justify-content: center;
-			grid-auto-columns: max-content;
-			grid-auto-flow: column;
-
-			&.sprite-b {
-				&::before {
-					content: "";
-					display: block;
-					width: var(--card-size);
-					height: var(--card-size);
-					position: relative;
-				}
-
-				&:has(.damageText)::before {
-					margin-right: calc(-0.5* var(--cell-size));
-				}
-
-				.damageText {
-					margin-left: calc(-0.5 * var(--cell-size));
-				}
-			}
-
-			.damageText {
-				width: var(--card-size);
-				height: var(--card-size);
-
-				font-size: var(--cell-size);
-				font-family: "Gagalin", sans-serif;
-				position: relative;
-				text-align: center;
-				align-content: center;
-				color: black;
-				text-shadow: 0px 0px 5px white;
-
-				&.physical {
-					color: var(--fighter-color);
-				}
-
-				&.magical {
-					color: var(--wizard-color);
-				}
-
-				&.heal {
-					color: green;
-				}
-			}
-		}
-	}
-
-
-	// Grid system
-	.grid {
-		display: grid;
-		position: absolute;
-		grid-template-columns: repeat(14, var(--cell-size));
-		grid-template-rows: repeat(14, var(--cell-size));
-		gap: 0;
-
-		.cell {
-			width: var(--cell-size);
-			height: var(--cell-size);
-			background-color: transparent;
-			box-sizing: border-box;
-			display: none;
-
-			&.active {
-				display: block;
-			}
-		}
-
-		#temporalCard {
-			cursor: pointer;
-			z-index: 800;
-		}
-	}
-
-	// Panel components
-	.leaderPanel,
-	.resourcePanel {
-		display: grid;
-		width: 100%;
-		height: 100%;
-		transition: opacity var(--animation_long);
-
-		&.rtl {
-			direction: rtl;
-
-			>* {
-				direction: ltr;
-			}
-		}
-	}
-
-	.leaderPanel {
-		grid-template-columns: repeat(2, 1fr);
-		text-align: center;
-
-		.healthMarker {
-			width: var(--card-size);
-			height: var(--card-size);
-			justify-self: center;
-			align-self: center;
-			align-content: center;
-			font-size: calc(100vw/40);
-			font-family: 'Gagalin', sans-serif;
-			transition: opacity var(--animation_long), color var(--animation_normal);
-
-			background-size: var(--card-size);
-			background-repeat: no-repeat;
-			background-position: center;
-			background-image: url("img/Gui/GeneralBackground.webp");
-		}
-
-		&.eliminated {
-			.healthMarker {
-				color: #ff0000;
-				text-decoration: line-through;
-			}
-
-			.leaderImg {
-				filter: grayscale(100%) brightness(0.7);
-				opacity: 0.8;
-			}
-		}
-
-		&.winner {
-			.healthMarker {
-				color: gold;
-				text-shadow: 0 0 5px #ffffff;
-			}
-
-			.leaderImg {
-				filter: brightness(1.2) saturate(1.2);
-				box-shadow: 0 0 10px 5px gold;
-			}
-		}
-
-		@for $i from 0 through 3 {
-			&#leaderPanel_#{$i} {
-				@if $i % 2==1 {
-					grid-area: 1/2;
-				}
-			}
-		}
-	}
-
-	.leaderImg {
-		position: relative;
-
-		&::after {
-			width: var(--card-size);
-			height: var(--card-size);
-		}
-
-		&>.playerToken::after {
-			width: 60%;
-			height: 60%;
-			opacity: 100%;
-			z-index: 3;
-			filter: drop-shadow(0px 0px 2px #bbb) drop-shadow(0px 0px 2px #bbb);
-		}
-
-		&:not(.hasPlayerToken) .playerToken::after {
-			opacity: 0%;
-		}
-
-	}
-
-	.resourcePanel {
-		grid-template-columns: repeat(6, 1fr);
-		grid-template-rows: 1fr var(--cell-size) 1fr;
-
-		@for $i from 0 through 3 {
-			&#resourcePanel_#{$i} {
-				@if $i < 2 {
-					grid-template-areas:
-						". . . . . ."
-						"Defense_Physic Attack_Physic Defense_Magic Attack_Magic Potion Coin"
-						"PlayerName PlayerName PlayerName PlayerName PlayerName PlayerName";
-				}
-
-				@else {
-					grid-template-areas:
-						"PlayerName PlayerName PlayerName PlayerName PlayerName PlayerName"
-						"Defense_Physic Attack_Physic Defense_Magic Attack_Magic Potion Coin"
-						". . . . . .";
-				}
-			}
-		}
-
-
-		align-content: center;
-
-		.resource {
-			background-repeat: no-repeat;
-			background-size: var(--cell-size);
-			background-position: center;
-			position: relative;
-			width: var(--cell-size);
-			height: var(--cell-size);
-
-			display: grid;
-
-			grid-template: 0.5fr 1fr / 0.5fr 1fr;
-
-			$types: Defense_Physic, Attack_Physic, Defense_Magic, Attack_Magic, Potion, Coin;
-
-			@each $type in $types {
-				&.#{$type} {
-					grid-area: $type;
-				}
-			}
-
-
-			.resourceCounter {
-				grid-area: 2/2/3/3;
-
-				font-size: 1vw;
-				padding-right: 0.3vw;
-				text-align: right;
-				align-content: center;
-				font-family: "Gagalin", sans-serif;
-				position: relative;
-				display: block;
-				text-shadow: 0px 0px 5px white;
-				color: black;
-				z-index: 1;
-			}
-		}
-
-		.player-name {
-			grid-area: PlayerName;
-			font-size: 1vw;
-			text-align: center;
-			align-content: center;
-			position: relative;
-			display: block;
-			text-shadow: 0px 0px 3px #000000;
-
-			&#playerName_0 {
-				color: var(--leader0_color);
-			}
-
-			&#playerName_1 {
-				color: var(--leader1_color);
-			}
-
-			&#playerName_2 {
-				color: var(--leader2_color);
-			}
-
-			&#playerName_3 {
-				color: var(--leader3_color);
-			}
-		}
-
-	}
-
-	// Utility
-	.scrollmap_btns_flex.scrollmap_btns_divs_wrapper {
-		display: none;
-	}
-
-	.highlight::after {
-		--highlight-size: 94%;
-		content: "";
-		border: 2px dashed #ff0000b0;
-		display: block;
-		width: var(--highlight-size);
-		height: var(--highlight-size);
-		position: relative;
-		z-index: 500;
-		box-sizing: border-box;
-		margin: calc((100% - var(--highlight-size)) / 2);
-	}
-
-	//Animaciones
-	&.activePlayer {
-		#centralArea {
-			.leaderImg {
-				&:not(.selected):hover {
-					transform: scale(1.1);
-				}
-
-				&.selected {
-					filter: none !important;
-					box-shadow: none !important;
-				}
-			}
-		}
-
-		#market:not(.deckCardPicked) {
-			.card:not(.selected):hover {
-				transform: scale(1.1);
-			}
-		}
-
-		#market.deckCardPicked {
-			filter: grayscale(0.8);
-
-			.card {
-				cursor: default !important;
-				animation: none !important;
-			}
-		}
-
-		#cardRotationArea {
-			.cardRotation_btn:hover {
-				transform: scale(1.1);
-			}
-		}
-	}
-
-	.damageContainer {
-		transition: opacity var(--animation_normal);
-
-		&.animate {
-			@for $i from 0 through 3 {
-				&#damageContainer_#{$i} {
-
-					// If the first two leaders the damage animation is to the top
-					@if $i < 2 {
-						animation: moveDamageContainerTop var(--animation-duration) ease-out both;
-					}
-
-					// If the last two leaders the damage animation is to the bottom
-					@if $i >=2 {
-						animation: moveDamageContainerBottom var(--animation-duration) ease-out both;
-					}
-				}
-			}
-		}
-	}
-
-	@keyframes moveDamageContainerBottom {
-		0% {
-			transform: translateY(0%);
-		}
-
-		100% {
-			transform: translateY(calc(1*var(--card-size)));
-		}
-	}
-
-	@keyframes moveDamageContainerTop {
-		0% {
-			transform: translateY(0%);
-		}
-
-		100% {
-			transform: translateY(calc(-1*var(--card-size)));
-		}
-	}
-
-
-	// Styles for inactive player state
-	&:not(.activePlayer) {
-		.card {
-			cursor: default !important;
-		}
-	}
-
-	.damageAnimation {
-		animation: damageAnimation var(--element-animation-time) ease-out both;
-	}
-
-	.healAnimation {
-		animation: healAnimation var(--element-animation-time) 0.45s cubic-bezier(0.755, 0.050, 0.855, 0.060) both;
-		;
-	}
-
-
-	@keyframes damageAnimation {
-		0% {
-			transform: translateY(-45px) scale(3);
-			animation-timing-function: ease-in;
-			opacity: 1;
-		}
-
-		24% {
-			opacity: 1;
-		}
-
-		40% {
-			transform: translateY(-24px);
-			animation-timing-function: ease-in;
-		}
-
-		65% {
-			transform: translateY(-12px);
-			animation-timing-function: ease-in;
-		}
-
-		82% {
-			transform: translateY(-6px);
-			animation-timing-function: ease-in;
-		}
-
-		93% {
-			transform: translateY(-4px);
-			animation-timing-function: ease-in;
-			opacity: 1;
-		}
-
-		25%,
-		55%,
-		75%,
-		87% {
-			transform: translateY(0px);
-			animation-timing-function: ease-out;
-		}
-
-		100% {
-			transform: translateY(0px) scale(2);
-			animation-timing-function: ease-out;
-			opacity: 0;
-		}
-	}
-
-	@keyframes healAnimation {
-		0% {
-			transform: translateY(0) scaleY(1) scaleX(1);
-			transform-origin: 50% 0%;
-			filter: blur(0);
-			opacity: 1;
-		}
-
-		50% {
-			filter: blur(0);
-			opacity: 1;
-		}
-
-		100% {
-			transform: translateY(-1000px) scaleY(2) scaleX(0.2);
-			transform-origin: 50% 0%;
-			filter: blur(40px);
-			opacity: 0;
-		}
-	}
-
+    display: grid;
+    grid-template-columns: 1fr repeat(2, 0.5fr) 1fr;
+    grid-template-rows: 1fr 0 repeat(2, var(--card-size)) 0 1fr;
+    gap: 0.5em;
+    width: 100%;
+    height: 100vh;
+    transition: grid var(--animation_quick);
+
+    .playerArea {
+        box-sizing: content-box;
+        position: relative;
+        transition: opacity var(--animation_normal), filter var(--animation_normal);
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+
+        // Player area positions
+        @for $i from 0 through 3 {
+            &#playerArea_#{$i} {
+                @if $i ==0 {
+                    grid-area: 1/1/3/3;
+                }
+
+                @if $i ==1 {
+                    grid-area: 1/3/3/5;
+                }
+
+                @if $i ==2 {
+                    grid-area: 5/1/7/3;
+                }
+
+                @if $i ==3 {
+                    grid-area: 5/3/7/5;
+                }
+            }
+        }
+
+        .mapContainer {
+            position: absolute;
+            width: 100%;
+            height: 100% !important;
+        }
+    }
+
+    .player-eliminated {
+        filter: grayscale(1) brightness(0.9);
+        opacity: 0.8;
+    }
+
+    .playerBackground {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+        z-index: -1;
+        transition: filter var(--animation_long);
+
+        @for $i from 0 through 3 {
+            &#playerBackground_#{$i} {
+                @if $i ==0 {
+                    grid-area: 1/1/4/3;
+                }
+
+                @if $i ==1 {
+                    grid-area: 1/3/4/5;
+                }
+
+                @if $i ==2 {
+                    grid-area: 4/1/7/3;
+                }
+
+                @if $i ==3 {
+                    grid-area: 4/3/7/5;
+                }
+            }
+        }
+
+        &.inactive {
+            opacity: 1;
+            filter: brightness(0.5);
+        }
+    }
+
+    &.centralAreaExpanded {
+        grid-template-rows: 1fr calc(var(--cell-size) * 1.25) repeat(2, var(--card-size)) calc(var(--cell-size) * 1.25) 1fr;
+
+        #centralArea {
+            grid-template-rows: calc(var(--cell-size) * 3.5) calc(var(--card-size) * 1.25);
+        }
+    }
+
+    #centralArea {
+        grid-area: 2/2/6/4;
+
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: calc(var(--cell-size) * 3.5) 0fr;
+        gap: 0px;
+        padding: calc(0.6 * var(--refSize));
+        box-sizing: border-box;
+        border-image: url('img/Gui/GeneralBackground.webp');
+        border-image-slice: 30%;
+        border-image-repeat: round;
+        border-image-width: calc(4.1 * var(--refSize));
+        border-image-outset: calc(1.3 * var(--refSize));
+        background-image: url('img/Gui/SpriteGui_0.webp');
+        background-size: 500% 400%;
+        background-position: 0 0;
+        z-index: 2;
+
+        transition: filter var(--animation_long), grid var(--animation_quick);
+
+        #market {
+            grid-area: 1/1/2/2;
+
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: calc(var(--cell-size) * 2.5) var(--cell-size);
+
+            grid-template-areas:
+                'deck card0 card1 card2'
+                '  .  cost0 cost1 .';
+            column-gap: calc(0.2 * var(--refSize));
+            width: 100%;
+            height: 100%;
+            align-content: center;
+
+            &.marketUnavailable {
+                filter: grayscale(0.2);
+
+                .card {
+                    cursor: default !important;
+                }
+            }
+
+            #deck {
+                grid-area: deck;
+
+                &.empty {
+                    display: none;
+                }
+            }
+
+            .card {
+                &[data-card-id='0']:not(.deck) {
+                    display: none;
+                }
+
+                cursor: pointer;
+
+                @for $i from 0 through 2 {
+                    &#market_card_#{$i} {
+                        grid-area: card#{$i};
+                    }
+                }
+            }
+
+            @for $i from 0 through 1 {
+                #market_cost_#{$i} {
+                    width: var(--cell-size);
+                    height: var(--cell-size);
+                    grid-area: cost#{$i};
+                    position: relative;
+                    justify-self: center;
+                    align-self: center;
+                }
+            }
+        }
+
+        #cardRotationArea {
+            grid-area: 2/1/3/2;
+
+            display: grid;
+            position: relative;
+            height: calc(var(--card-size) * 1.25);
+            grid-template-areas: 'ccw card cw';
+            align-content: center;
+            justify-content: center;
+            grid-template-columns: var(--card-size) var(--card-size) var(--card-size);
+            grid-template-rows: 1fr;
+            column-gap: calc(0.2 * var(--refSize));
+            width: 100%;
+            height: 100%;
+            transition: opacity var(--animation_quick);
+
+            .card {
+                grid-area: card;
+            }
+
+            .cardRotation_btn {
+                position: relative;
+                width: var(--cell-size);
+                height: var(--card-size);
+                cursor: pointer;
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-image: url('img/Gui/RotationArrows.webp');
+                align-self: center;
+
+                &#cardRotation_ccw {
+                    grid-area: ccw;
+                    background-position: 0 0;
+                    justify-self: right;
+                }
+
+                &#cardRotation_cw {
+                    grid-area: cw;
+                    background-position: 100% 0;
+                    justify-self: left;
+                }
+            }
+        }
+
+        #leaderSelectionArea {
+            grid-area: 1/1/2/2;
+
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            column-gap: calc(0.2 * var(--refSize));
+            width: 100%;
+            height: 100%;
+
+            .leaderImg {
+                width: var(--card-size);
+                height: var(--card-size);
+                place-self: center;
+                transition: transform var(--animation_quick), filter var(--animation_quick);
+                filter: drop-shadow(0px 5px 3px #7f6743);
+            }
+
+            @for $i from 0 through 3 {
+                #leaderSelection_#{$i} {
+                    grid-area: 1 /#{$i + 1};
+                }
+            }
+        }
+    }
+
+    .card {
+        width: var(--card-size);
+        height: var(--card-size);
+        filter: drop-shadow(0px 5px 3px #7f6743);
+        transition: opacity var(--animation_quick);
+        position: absolute;
+
+        &::after {
+            width: var(--card-size);
+            height: var(--card-size);
+
+            transition: transform var(--animation_quick);
+        }
+    }
+
+    .playerPanel {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        gap: 5px;
+        z-index: 1;
+
+        @for $i from 0 through 3 {
+            &#playerPanel_#{$i} {
+                @if $i % 2==0 {
+                    grid-template-columns: calc(var(--card-size) * 2.25) 1fr;
+                } @else {
+                    grid-template-columns: 1fr calc(var(--card-size) * 2.25);
+                }
+
+                @if $i ==0 {
+                    grid-area: 3/1/4/2;
+                }
+
+                @if $i ==1 {
+                    grid-area: 3/4/4/5;
+                }
+
+                @if $i ==2 {
+                    grid-area: 4/1/4/2;
+                }
+
+                @if $i ==3 {
+                    grid-area: 4/4/4/5;
+                }
+            }
+        }
+    }
+
+    #attackPhaseBanner {
+        --size: 6;
+        position: absolute;
+        justify-self: center;
+        align-self: center;
+        background-size: contain;
+        opacity: 0;
+        background-image: url(img/Gui/Armies.webp);
+        background-repeat: no-repeat;
+        z-index: 10;
+        width: calc(var(--size) * var(--card-size));
+        height: calc(var(--size) * var(--card-size));
+        filter: drop-shadow(0px 0px 10px black) drop-shadow(0px 0px 40px rgba(0, 0, 0, 0.6));
+
+        &.animate {
+            animation: fadeIn var(--animation_normal) ease-out both;
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        0% {
+            opacity: 1;
+        }
+
+        100% {
+            opacity: 0;
+        }
+    }
+
+    #attackPhaseContainer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        background-color: hsl(0deg 0% 100% / 15%);
+        z-index: 3;
+
+        &.animate {
+            animation: fadeIn var(--animation_normal) ease-out both;
+        }
+
+        .damageContainer {
+            display: grid;
+            position: absolute;
+            width: calc(2.25 * var(--card-size));
+            height: var(--card-size);
+            grid-template-rows: 1fr;
+            align-content: center;
+            justify-content: center;
+            grid-auto-columns: max-content;
+            grid-auto-flow: column;
+
+            &.sprite-b {
+                &::before {
+                    content: '';
+                    display: block;
+                    width: var(--card-size);
+                    height: var(--card-size);
+                    position: relative;
+                }
+
+                &:has(.damageText)::before {
+                    margin-right: calc(-0.5 * var(--cell-size));
+                }
+
+                .damageText {
+                    margin-left: calc(-0.5 * var(--cell-size));
+                }
+            }
+
+            .damageText {
+                width: var(--card-size);
+                height: var(--card-size);
+
+                font-size: var(--cell-size);
+                font-family: 'Gagalin', sans-serif;
+                position: relative;
+                text-align: center;
+                align-content: center;
+                color: black;
+                text-shadow: 0px 0px 5px white;
+
+                &.physical {
+                    color: var(--fighter-color);
+                }
+
+                &.magical {
+                    color: var(--wizard-color);
+                }
+
+                &.heal {
+                    color: green;
+                }
+            }
+        }
+    }
+
+    // Grid system
+    .grid {
+        display: grid;
+        position: absolute;
+        grid-template-columns: repeat(14, var(--cell-size));
+        grid-template-rows: repeat(14, var(--cell-size));
+        gap: 0;
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            background-color: transparent;
+            box-sizing: border-box;
+            display: none;
+
+            &.active {
+                display: block;
+            }
+        }
+
+        #temporalCard {
+            cursor: pointer;
+            z-index: 800;
+        }
+    }
+
+    // Panel components
+    .leaderPanel,
+    .resourcePanel {
+        display: grid;
+        width: 100%;
+        height: 100%;
+        transition: opacity var(--animation_long);
+
+        &.rtl {
+            direction: rtl;
+
+            > * {
+                direction: ltr;
+            }
+        }
+    }
+
+    .leaderPanel {
+        grid-template-columns: repeat(2, 1fr);
+        text-align: center;
+
+        .healthMarker {
+            width: var(--card-size);
+            height: var(--card-size);
+            justify-self: center;
+            align-self: center;
+            align-content: center;
+            font-size: calc(100 * var(--refSize) / 40);
+            font-family: 'Gagalin', sans-serif;
+            transition: opacity var(--animation_long), color var(--animation_normal);
+
+            background-size: var(--card-size);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-image: url('img/Gui/GeneralBackground.webp');
+        }
+
+        &.eliminated {
+            .healthMarker {
+                color: #ff0000;
+                text-decoration: line-through;
+            }
+
+            .leaderImg {
+                filter: grayscale(100%) brightness(0.7);
+                opacity: 0.8;
+            }
+        }
+
+        @for $i from 0 through 3 {
+            &#leaderPanel_#{$i} {
+                @if $i % 2==1 {
+                    grid-area: 1/2;
+                }
+            }
+        }
+    }
+
+    .leaderImg {
+        width: var(--card-size);
+        height: var(--card-size);
+        position: relative;
+
+        &::after {
+            width: var(--card-size);
+            height: var(--card-size);
+        }
+
+        & > .playerToken::after {
+            width: 60%;
+            height: 60%;
+            opacity: 100%;
+            z-index: 3;
+            filter: drop-shadow(0px 0px 2px #bbb) drop-shadow(0px 0px 2px #bbb);
+        }
+
+        &:not(.hasPlayerToken) .playerToken::after {
+            opacity: 0%;
+        }
+    }
+
+    .resourcePanel {
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: 1fr var(--cell-size) 1fr;
+
+        @for $i from 0 through 3 {
+            &#resourcePanel_#{$i} {
+                @if $i < 2 {
+                    grid-template-areas:
+                        '. . . . . .'
+                        'Defense_Physic Attack_Physic Defense_Magic Attack_Magic Potion Coin'
+                        'PlayerName PlayerName PlayerName PlayerName PlayerName PlayerName';
+                } @else {
+                    grid-template-areas:
+                        'PlayerName PlayerName PlayerName PlayerName PlayerName PlayerName'
+                        'Defense_Physic Attack_Physic Defense_Magic Attack_Magic Potion Coin'
+                        '. . . . . .';
+                }
+            }
+        }
+
+        align-content: center;
+
+        .resource {
+            background-repeat: no-repeat;
+            background-size: var(--cell-size);
+            background-position: center;
+            position: relative;
+            width: var(--cell-size);
+            height: var(--cell-size);
+
+            display: grid;
+
+            grid-template: 0.5fr 1fr / 0.5fr 1fr;
+
+            $types: Defense_Physic, Attack_Physic, Defense_Magic, Attack_Magic, Potion, Coin;
+
+            @each $type in $types {
+                &.#{$type} {
+                    grid-area: $type;
+                }
+            }
+
+            .resourceCounter {
+                grid-area: 2/2/3/3;
+
+                font-size: calc(1 * var(--refSize));
+                padding-right: calc(0.3 * var(--refSize));
+                text-align: right;
+                align-content: center;
+                font-family: 'Gagalin', sans-serif;
+                position: relative;
+                display: block;
+                text-shadow: 0px 0px 5px white;
+                color: black;
+                z-index: 1;
+            }
+        }
+
+        .player-name {
+            grid-area: PlayerName;
+            font-size: calc(1 * var(--refSize));
+            text-align: center;
+            align-content: center;
+            position: relative;
+            display: block;
+            text-shadow: 0px 0px 3px #000000;
+
+            &#playerName_0 {
+                color: var(--leader0_color);
+            }
+
+            &#playerName_1 {
+                color: var(--leader1_color);
+            }
+
+            &#playerName_2 {
+                color: var(--leader2_color);
+            }
+
+            &#playerName_3 {
+                color: var(--leader3_color);
+            }
+        }
+    }
+
+    // Utility
+    .scrollmap_btns_flex.scrollmap_btns_divs_wrapper {
+        display: none;
+    }
+
+    .highlight::after {
+        --highlight-size: 94%;
+        content: '';
+        border: 2px dashed #ff0000b0;
+        display: block;
+        width: var(--highlight-size);
+        height: var(--highlight-size);
+        position: relative;
+        z-index: 500;
+        box-sizing: border-box;
+        margin: calc((100% - var(--highlight-size)) / 2);
+    }
+
+    //Animaciones
+    &.activePlayer {
+        #centralArea {
+            .leaderImg {
+                &:not(.selected):hover {
+                    transform: scale(1.1);
+                }
+
+                &.selected {
+                    filter: none !important;
+                    box-shadow: none !important;
+                }
+            }
+        }
+
+        #market:not(.deckCardPicked) {
+            .card:not(.selected):hover {
+                transform: scale(1.1);
+            }
+        }
+
+        #market.deckCardPicked {
+            filter: grayscale(0.8);
+
+            .card {
+                cursor: default !important;
+                animation: none !important;
+                .selectable {
+                    display: none;
+                }
+            }
+        }
+
+        #cardRotationArea {
+            .cardRotation_btn:hover {
+                transform: scale(1.1);
+            }
+        }
+    }
+
+    .damageContainer {
+        transition: opacity var(--animation-duration, var(--animation_normal));
+
+        &.animate {
+            @for $i from 0 through 3 {
+                &#damageContainer_#{$i} {
+                    // If the first two leaders the damage animation is to the top
+                    @if $i < 2 {
+                        animation: moveDamageContainerTop var(--animation-duration, var(--animation_normal)) ease-out both;
+                    }
+
+                    // If the last two leaders the damage animation is to the bottom
+                    @if $i >=2 {
+                        animation: moveDamageContainerBottom var(--animation-duration, var(--animation_normal)) ease-out both;
+                    }
+                }
+            }
+        }
+    }
+
+    @keyframes moveDamageContainerBottom {
+        0% {
+            transform: translateY(0%);
+        }
+
+        100% {
+            transform: translateY(calc(1 * var(--card-size)));
+        }
+    }
+
+    @keyframes moveDamageContainerTop {
+        0% {
+            transform: translateY(0%);
+        }
+
+        100% {
+            transform: translateY(calc(-1 * var(--card-size)));
+        }
+    }
+
+    #winnerBackdrop {
+        background-color: #101010;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        z-index: 50;
+        opacity: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr calc(4 * var(--card-size)) 1fr;
+
+        &.animate {
+            &.fadeIn {
+                animation: fadeIn var(--animation-duration) ease-out both;
+            }
+
+            &.fadeOut {
+                animation: fadeOut var(--animation-duration) ease-out both;
+            }
+        }
+
+        #winnerText {
+            font-size: calc(4 * var(--refSize));
+            text-align: center;
+            align-content: end;
+            text-shadow: 0px 0px 3px #000000;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        #winnerImg #winnerImgHolder {
+            position: relative;
+            width: calc(4 * var(--card-size));
+            height: calc(4 * var(--card-size));
+            place-self: center;
+            opacity: 0;
+        }
+
+        #winnerName {
+            font-size: calc(4 * var(--refSize));
+            text-align: center;
+            align-content: baseline;
+            text-shadow: 0px 0px 3px #000000;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+    }
+
+    #tempWinnerImg {
+        position: absolute;
+        width: var(--card-size);
+        height: var(--card-size);
+        transition: width var(--animation-duration) linear, height var(--animation-duration) linear;
+        z-index: 51;
+    }
+
+    // Styles for inactive player state
+    &:not(.activePlayer) {
+        .card {
+            cursor: default !important;
+        }
+    }
+
+    .damageAnimation {
+        animation: damageAnimation var(--element-animation-time) ease-out both;
+    }
+
+    .healAnimation {
+        animation: healAnimation var(--element-animation-time) 0.45s cubic-bezier(0.755, 0.05, 0.855, 0.06) both;
+    }
+
+    @keyframes damageAnimation {
+        0% {
+            transform: translateY(-45px) scale(3);
+            animation-timing-function: ease-in;
+            opacity: 1;
+        }
+
+        24% {
+            opacity: 1;
+        }
+
+        40% {
+            transform: translateY(-24px);
+            animation-timing-function: ease-in;
+        }
+
+        65% {
+            transform: translateY(-12px);
+            animation-timing-function: ease-in;
+        }
+
+        82% {
+            transform: translateY(-6px);
+            animation-timing-function: ease-in;
+        }
+
+        93% {
+            transform: translateY(-4px);
+            animation-timing-function: ease-in;
+            opacity: 1;
+        }
+
+        25%,
+        55%,
+        75%,
+        87% {
+            transform: translateY(0px);
+            animation-timing-function: ease-out;
+        }
+
+        100% {
+            transform: translateY(0px) scale(2);
+            animation-timing-function: ease-out;
+            opacity: 0;
+        }
+    }
+
+    @keyframes healAnimation {
+        0% {
+            transform: translateY(0) scaleY(1) scaleX(1);
+            transform-origin: 50% 0%;
+            filter: blur(0);
+            opacity: 1;
+        }
+
+        50% {
+            filter: blur(0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(-1000px) scaleY(2) scaleX(0.2);
+            transform-origin: 50% 0%;
+            filter: blur(40px);
+            opacity: 0;
+        }
+    }
 }
 
 .player_score_value.eliminated {
-	font-size: 0;
+    font-size: 0;
 }
 
 .player_score_value.eliminated::before {
-	content: "X";
-	font-size: initial;
+    content: 'X';
+    font-size: initial;
 }
 
+//Remove this before production
+/*
 #loader_mask {
-	//Remove this before production
-	visibility: hidden;
+    visibility: hidden;
 }
+*/
 
 .log-card {
-	filter: drop-shadow(0px 5px 3px #7f6743);
-	position: relative;
-	display: block;
-	justify-self: center;
-	margin: 5px;
-	width: var(--cell-size);
-	height: var(--cell-size);
+    filter: drop-shadow(0px 5px 3px #7f6743);
+    position: relative;
+    display: block;
+    justify-self: center;
+    margin: 5px;
+    width: var(--cell-size);
+    height: var(--cell-size);
 }

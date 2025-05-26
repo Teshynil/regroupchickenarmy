@@ -1,1 +1,18 @@
-{}
+{
+    "100": {
+        "displaycondition": [{ "type": "maxplayers", "value": 1 }],
+        "name": "Leader Inherent Resources",
+        "values": {
+            "0": {
+                "name": "Off",
+                "tmdisplay": ""
+            },
+            "1": {
+                "name": "On",
+                "tmdisplay": "Leader Inherent Resources",
+                "description": "Each leader has an inherent resource associated with them"
+            }
+        },
+        "default": 0
+    }
+}

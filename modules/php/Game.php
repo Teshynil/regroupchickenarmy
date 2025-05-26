@@ -96,6 +96,7 @@ class Game extends \Table
         parent::__construct();
         $this->initGameStateLabels([
             'round' => 10,
+            'leaderInherentResourcesEnabled' => 100
         ]);
 
         /* example of notification decorator.
@@ -126,9 +127,12 @@ class Game extends \Table
      */
     public function getGameProgression()
     {
+        $numberOfPlayers = $this->getPlayersNumber();
+        $healthPerPlayer = $numberOfPlayers == 2 ? 15 : 30;
+
         $progress = $this->getUniqueValueFromDB("SELECT GREATEST(
             LEAST(
-                (1 -(SUM(player_score)/(30*COUNT(*))))*100
+                (1 -(SUM(player_score)/($healthPerPlayer*COUNT(*))))*100
             ,100)
         ,0) FROM `player` WHERE player_eliminated = 0;");
         $this->debug("Game progression: $progress");
@@ -331,5 +335,17 @@ class Game extends \Table
         $this->DbQuery("UPDATE resources SET health = $hp WHERE leader_id = $leader_id");
         $playerId = $this->getUniqueValueFromDB("SELECT player_id FROM playerData WHERE leader_id = $leader_id");
         $this->DbQuery("UPDATE player SET player_score = $hp WHERE player_id = $playerId");
+    }
+
+    public function debugTestWinner($leader_id): void
+    {
+        $playerId = $this->getUniqueValueFromDB("SELECT player_id FROM playerData WHERE leader_id = $leader_id");
+        $this->DbQuery("UPDATE player SET player_score_aux = 1 WHERE player_id = $playerId");
+
+        $this->notifyAllPlayers('gameWinner', clienttranslate('Debug winner set to ${player_name}'), [
+            'player_name' => $this->getActivePlayerName(),
+            'player_id' => $playerId,
+            'leader_id' => $leader_id
+        ]);
     }
 }

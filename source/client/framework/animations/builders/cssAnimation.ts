@@ -5,7 +5,7 @@ import { CommonAnimationBuilder } from "./commonAnimationBuilder";
 export class CssAnimationBuilder extends CommonAnimationBuilder {
     protected _element: ElementOrId;
 
-    protected _animationClass: string;
+    protected _animationClass: string[];
 
     protected constructor() {
         super();
@@ -20,7 +20,7 @@ export class CssAnimationBuilder extends CommonAnimationBuilder {
         return this;
     }
 
-    animationClass(animationClass: string): this {
+    animationClass(...animationClass: string[]): this {
         this._animationClass = animationClass;
         return this;
     }
@@ -38,7 +38,7 @@ export class CssAnimationBuilder extends CommonAnimationBuilder {
                 Logger.debug(`Skipping cssAnimation ${animation.id} due to animations being disabled`);
             }
             element.style.setProperty("--animation-duration", `${duration}ms`);
-            element.classList.add(this._animationClass);
+            element.classList.add(...this._animationClass);
         });
         const animation = new Animation(this._id, this._element, dojoAnimation, this._waitFor, this._waitForDuration);
         animation.debugData = {

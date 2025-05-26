@@ -48,7 +48,8 @@ class HealingPhaseStateHandler implements StateHandlerInterface
             }
 
             // Calculate new health after healing
-            $newHealth = min(30, $currentHealth + $potionAmount);
+            $healthPerPlayer = $game->getPlayersNumber() == 2 ? 15 : 30;
+            $newHealth = min($healthPerPlayer, $currentHealth + $potionAmount);
 
             $healingResults[$leaderId] = [
                 'player_id' => $playerId,

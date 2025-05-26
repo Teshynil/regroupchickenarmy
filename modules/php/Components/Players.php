@@ -41,6 +41,20 @@ class Players
         );
     }
 
+    public static function getEliminatedPlayers(Game $game)
+    {
+        $game->debug("Retrieving eliminated players with assigned leaders");
+
+        return $game->getCollectionFromDb(
+            "SELECT p.`player_id` `id`, p.`player_score` `score`, pd.`leader_id`
+             FROM `player` p
+             JOIN `playerData` pd ON p.`player_id` = pd.`player_id`
+             WHERE p.`player_eliminated` = 1
+             AND pd.`leader_id` IS NOT NULL
+             ORDER BY pd.`leader_id` ASC"
+        );
+    }
+
     /**
      * Initialize the first player for the game.
      * Sets the first player randomly and returns the ID of the first player.

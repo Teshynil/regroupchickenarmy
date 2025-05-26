@@ -55,6 +55,9 @@ class PlayerTurnStateHandler implements StateHandlerInterface
             $game->debug("Placing deck card on board");
             Boards::putCardOnBoard($game, $leaderId, $cardId, $rotation, $posX, $posY);
 
+            $game->debug("Removing card from market");
+            Market::removeMarketCard($game, $deckCardId);
+
             $game->trace("Notifying players about card placement");
             $game->notifyAllPlayers('cardPlaced', clienttranslate('${player_name} placed a card ${card_id_formatted}'), [
                 'player_name' => $game->getActivePlayerName(),
@@ -223,7 +226,7 @@ class PlayerTurnStateHandler implements StateHandlerInterface
         $game->debug("Retrieved " . count($marketCards) . " market cards");
 
         $game->trace("Notifying players about market update");
-        $game->notifyAllPlayers("marketUpdate", clienttranslate("The Market has been updated"), [
+        $game->notifyAllPlayers("marketUpdate", "", [
             "cards" => $marketCards,
             "cardsInDeck" => Market::getCardsInDeck($game)
         ]);
