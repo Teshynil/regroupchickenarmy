@@ -20,7 +20,6 @@
   "publisher_website": "https://detestablegames.com/",
   "publisher_bgg_id": 37832,
   "bgg_id": 350637,
-  "enable_3d": false,
 
   // Players
   "players": [2, 3, 4],
@@ -44,7 +43,7 @@
   "is_coop": 0,
 
   // BGA Game Information
-  "is_beta": 1,
+  "exception_on_warning": true,
   "language_dependency": false,
   "game_interface_width": {
     // >= 320, <= 740

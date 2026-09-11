@@ -85,7 +85,8 @@ export class MarketArea extends ListenerElement {
 
     async doBlockMarket(args: BGA.Notif<'deckCardPicked'>['args']): Promise<void> {
         if (args.player_id == RegroupChickenArmy.game.player_id) {
-            if (RegroupChickenArmy.game.isInterfaceUnlocked()) {
+            const isReplayFromMove = typeof g_replayFrom !== "undefined";
+            if(!isReplayFromMove){
                 this.preSelectCard(-1, args.card_id);
             }
         }

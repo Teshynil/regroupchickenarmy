@@ -1,6 +1,6 @@
 <?php
 
-namespace Bga\Games\RegroupChickenArmy\States;
+namespace Bga\Games\RegroupChickenArmy\StateHandlers;
 
 use Bga\Games\RegroupChickenArmy\Components\Players;
 use Bga\Games\RegroupChickenArmy\Components\Resources;

@@ -500,8 +500,11 @@
         .healthMarker {
             width: var(--card-size);
             height: var(--card-size);
+            display: flex;
             justify-self: center;
             align-self: center;
+            align-items: center;
+            justify-content: center;
             align-content: center;
             font-size: calc(100 * var(--refSize) / 40);
             font-family: 'Gagalin', sans-serif;

@@ -1,5 +1,5 @@
 <?php
-namespace Bga\Games\RegroupChickenArmy\States;
+namespace Bga\Games\RegroupChickenArmy\StateHandlers;
 
 use Bga\Games\RegroupChickenArmy\Game;
 

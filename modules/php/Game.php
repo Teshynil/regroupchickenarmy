@@ -67,7 +67,8 @@ class Game extends \Table
         if (str_ends_with($stateName, "Game")) {
             $stateName = substr($stateName, 0, -4);
         }
-        $className = "\\" . __NAMESPACE__ . "\\States\\" .
+        // BGA reserves the States namespace for classes extending GameState.
+        $className = "\\" . __NAMESPACE__ . "\\StateHandlers\\" .
             str_replace(
                 ' ',
                 '',
